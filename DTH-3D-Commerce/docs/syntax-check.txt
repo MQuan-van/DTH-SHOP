@@ -1,0 +1,1 @@
+Syntax parse: 18 JavaScript/JSX/MJS files, 2 CSS files, 0 errors. This is not a Vite build or runtime test.

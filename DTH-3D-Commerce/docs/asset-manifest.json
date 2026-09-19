@@ -1,0 +1,122 @@
+[
+  {
+    "file": "apex-brakes.glb",
+    "bytes": 74332,
+    "meshes": 3,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "apex-exhausts.glb",
+    "bytes": 54428,
+    "meshes": 4,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "apex-mirrors.glb",
+    "bytes": 35616,
+    "meshes": 4,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "apex-suspension.glb",
+    "bytes": 163176,
+    "meshes": 3,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "apex-wheels.glb",
+    "bytes": 61456,
+    "meshes": 4,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "studio-brakes.glb",
+    "bytes": 74332,
+    "meshes": 3,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "studio-exhausts.glb",
+    "bytes": 54428,
+    "meshes": 4,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "studio-mirrors.glb",
+    "bytes": 35616,
+    "meshes": 4,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "studio-suspension.glb",
+    "bytes": 163176,
+    "meshes": 3,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "studio-wheels.glb",
+    "bytes": 64120,
+    "meshes": 4,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "touring-brakes.glb",
+    "bytes": 74332,
+    "meshes": 3,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "touring-exhausts.glb",
+    "bytes": 54428,
+    "meshes": 4,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "touring-mirrors.glb",
+    "bytes": 35616,
+    "meshes": 4,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "touring-suspension.glb",
+    "bytes": 163176,
+    "meshes": 3,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "touring-wheels.glb",
+    "bytes": 63232,
+    "meshes": 4,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "vector-brakes.glb",
+    "bytes": 74336,
+    "meshes": 3,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "vector-exhausts.glb",
+    "bytes": 54428,
+    "meshes": 4,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "vector-mirrors.glb",
+    "bytes": 35616,
+    "meshes": 4,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "vector-suspension.glb",
+    "bytes": 163180,
+    "meshes": 3,
+    "source": "Original procedural geometry; not manufacturer data"
+  },
+  {
+    "file": "vector-wheels.glb",
+    "bytes": 62348,
+    "meshes": 4,
+    "source": "Original procedural geometry; not manufacturer data"
+  }
+]

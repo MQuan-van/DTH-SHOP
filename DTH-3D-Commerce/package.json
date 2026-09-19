@@ -1,0 +1,23 @@
+{
+  "name": "dth-3d-commerce",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Independent FYP 3D parts commerce demonstrator; not a live shop",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "engines": {
+    "node": ">=22.12.0 <23 || >=24 <25"
+  },
+  "scripts": {
+    "dev": "npm run dev --workspace frontend",
+    "dev:api": "npm run dev --workspace backend",
+    "build": "npm run build --workspace frontend",
+    "preview": "npm run preview --workspace frontend",
+    "start": "npm run start --workspace backend",
+    "seed": "npm run seed --workspace backend",
+    "check": "node tools/check-project.mjs",
+    "test": "node --test tests/domain.test.mjs tests/security.test.mjs tests/standalone.test.mjs"
+  }
+}

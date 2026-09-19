@@ -1,0 +1,20 @@
+node_modules/
+**/node_modules/
+frontend/dist/
+coverage/
+*.log
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.zip
+backups/
+data/
+# Do not store raw interviews, consent forms, real account data or credentials in Git.
+research-private/

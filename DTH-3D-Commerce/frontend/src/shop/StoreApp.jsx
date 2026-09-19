@@ -1,0 +1,177 @@
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Link, NavLink, Outlet, Route, Routes, useLocation, useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
+import { CATEGORIES, filterProducts, fitment, formatMoney, quoteOrder } from '../../../shared/domain.mjs';
+import { PREVIEW, authenticate, createOrder, deleteAccount, loadOrders, saveProduct, loadAdminProducts } from './api';
+import { StoreProvider, useStore } from './useStore';
+import './store.css';
+const Viewer3D = lazy(() => import('./Viewer3D'));
+const categoryNames = { suspension: 'Suspension', wheels: 'Wheels', exhausts: 'Exhausts', mirrors: 'Mirrors', brakes: 'Brakes' };
+function Icon({ name, ...props }) {
+  const paths = {
+    bag: <><path d="M5 7h14l1 14H4L5 7Z" /><path d="M8 8V6a4 4 0 0 1 8 0v2" /></>,
+    vehicle: <><path d="m4 10 2-5h12l2 5M3 10h18v8H3zM6 18v3m12-3v3M6 14h2m8 0h2" /></>,
+    arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
+    search: <><circle cx="10" cy="10" r="6" /><path d="m15 15 6 6" /></>,
+    cube: <><path d="m12 2 9 5v10l-9 5-9-5V7zM3 7l9 5 9-5m-9 5v10m-5-17 10 6" /></>,
+    check: <path d="m5 12 4 4L19 6" />,
+    user: <><circle cx="12" cy="8" r="4" /><path d="M4 22v-3a8 8 0 0 1 16 0v3" /></>,
+  };
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>{paths[name] || paths.arrow}</svg>;
+}
+function Dialog({ title, onClose, children }) {
+  const ref = useRef(null);
+  useEffect(() => { const el = ref.current; el.showModal(); return () => { if (el.open) el.close(); }; }, []);
+  return <dialog className="dth-dialog" ref={ref} onCancel={onClose} onClick={e => { if (e.target === ref.current) onClose(); }} aria-label={title}>
+    <div className="dth-dialog-title"><h2>{title}</h2><button onClick={onClose} aria-label="Close dialog">×</button></div>{children}
+  </dialog>;
+}
+function VehiclePicker({ onClose }) {
+  const { data, vehicleId, setVehicle } = useStore();
+  const existing = data.vehicles.find(v => v.id === vehicleId);
+  const [make, setMake] = useState(existing?.make || '');
+  const [model, setModel] = useState(existing?.model || '');
+  const [year, setYear] = useState(existing?.year ? String(existing.year) : '');
+  const unique = list => [...new Set(list)];
+  const models = unique(data.vehicles.filter(v => v.make === make).map(v => v.model));
+  const years = unique(data.vehicles.filter(v => v.make === make && v.model === model).map(v => v.year));
+  const match = data.vehicles.find(v => v.make === make && v.model === model && String(v.year) === year);
+  return <Dialog title="Find your fit." onClose={onClose}>
+    <p className="dth-muted">Choose a vehicle to filter the demo catalog. These fictional vehicles and mappings are for evaluation only.</p>
+    <form className="dth-form" onSubmit={e => { e.preventDefault(); if (match) { setVehicle(match.id); onClose(); } }}>
+      <label>Make<select value={make} required onChange={e => { setMake(e.target.value); setModel(''); setYear(''); }}><option value="">Choose make</option>{unique(data.vehicles.map(v => v.make)).map(m => <option key={m}>{m}</option>)}</select></label>
+      <label>Model<select value={model} required disabled={!make} onChange={e => { setModel(e.target.value); setYear(''); }}><option value="">Choose model</option>{models.map(m => <option key={m}>{m}</option>)}</select></label>
+      <label>Year<select value={year} required disabled={!model} onChange={e => setYear(e.target.value)}><option value="">Choose year</option>{years.map(y => <option key={y}>{y}</option>)}</select></label>
+      <button className="dth-button dth-primary" type="submit" disabled={!match}>Show matching parts <Icon name="arrow" /></button>
+      {vehicleId && <button className="dth-button dth-ghost" type="button" onClick={() => { setVehicle(''); onClose(); }}>Clear selected vehicle</button>}
+    </form>
+  </Dialog>;
+}
+function Shell() {
+  const store = useStore(), location = useLocation();
+  const [vehicleOpen, setVehicleOpen] = useState(false);
+  const vehicle = store.data.vehicles.find(v => v.id === store.vehicleId);
+  const count = store.bag.reduce((n, i) => n + i.quantity, 0);
+  useLayoutEffect(() => { document.documentElement.dataset.dthStore = 'true'; return () => { delete document.documentElement.dataset.dthStore; }; }, []);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); document.title = 'DTH — The 3D Parts Studio'; }, [location.pathname]);
+  return <div className="dth-store">
+    <a className="dth-skip" href="#dth-content">Skip to content</a>
+    <div className="dth-demo-banner">FYP DEMONSTRATOR <span>Illustrative 3D assets · Synthetic fitment · No real payments</span><b>{PREVIEW ? 'LOCAL PREVIEW' : 'MONGODB / API MODE'}</b></div>
+    <header className="dth-header">
+      <Link to="/" className="dth-brand" aria-label="DTH store home"><span className="dth-brand-symbol">///</span><span>DTH<span className="dth-brand-sub">PARTS STUDIO</span></span></Link>
+      <nav className="dth-navigation" aria-label="Main navigation"><NavLink to="/shop">Shop parts</NavLink><NavLink to="/account">My account</NavLink></nav>
+      <div className="dth-header-tools"><button className="dth-vehicle-button" onClick={() => setVehicleOpen(true)} disabled={store.loading || !!store.error}><Icon name="vehicle" /><span>{vehicle ? `${vehicle.model} · ${vehicle.year}` : 'Select your vehicle'}</span><span className="dth-lime">＋</span></button><Link to="/account" className="dth-icon-button" aria-label="Your account"><Icon name="user" /></Link><Link to="/bag" className="dth-bag-button" aria-label={`Shopping bag, ${count} items`}><Icon name="bag" /><span>{count}</span></Link></div>
+    </header>
+    <main id="dth-content" tabIndex={-1}>
+      {store.loading ? <div className="dth-empty">Loading the studio…</div> : store.error ? <div className="dth-empty"><h1>We could not load the store.</h1><p role="alert">{store.error}</p><button className="dth-button dth-primary" onClick={store.refresh}>Try again</button><p>Check the API, MongoDB and the seed step. API mode never silently switches to preview data.</p></div> : <Outlet context={{ chooseVehicle: () => setVehicleOpen(true) }} />}
+    </main>
+    <footer className="dth-footer"><Link to="/" className="dth-footer-brand">DTH<span> / PARTS STUDIO</span></Link><p>Inspect the design. Check the demo fit. Explore with confidence.</p><div><span>COMP1682 · Final Year Project</span><span>Demo models are not installation guidance.</span></div></footer>
+    <div className={`dth-toast ${store.notice ? 'is-visible' : ''}`} role="status" aria-live="polite">{store.notice}</div>
+    {vehicleOpen && <VehiclePicker onClose={() => setVehicleOpen(false)} />}
+  </div>;
+}
+function ModelView({ product, hero = false }) {
+  return <Suspense fallback={<div className={`dth-viewer ${hero ? 'dth-viewer-hero' : ''}`}><img className="dth-model-still" src={product.imageUrl} alt={product.name} /><span className="dth-scene-loading">Preparing 3D viewer…</span></div>}><Viewer3D key={product.id} product={product} hero={hero} /></Suspense>;
+}
+function ProductCard({ product }) {
+  const { vehicleId, data } = useStore();
+  const match = fitment(product, vehicleId, data.vehicles);
+  return <article className="dth-product-card"><Link to={`/products/${product.slug}`} className="dth-card-image"><img src={product.imageUrl} alt={`Illustrative ${product.name}`} loading="lazy" width="960" height="720" /><span className="dth-3d-tag"><Icon name="cube" />3D VIEW</span><span className="dth-card-arrow">↗</span></Link><div className="dth-card-meta"><span>{categoryNames[product.category]}</span><span>{product.finish}</span></div><div className="dth-card-title"><h3><Link to={`/products/${product.slug}`}>{product.name}</Link></h3><span>{formatMoney(product.price)}</span></div>{vehicleId && <p className={`dth-fit dth-fit-${match.status}`}>{match.text}</p>}</article>;
+}
+function Home() {
+  const { data } = useStore();
+  const { chooseVehicle } = useOutletContext();
+  const featured = data.products.find(p => p.id === 'apex-suspension') || data.products[0];
+  if (!featured) return <div className="dth-empty">The catalog is empty. Run the catalog seed command.</div>;
+  return <>
+    <section className="dth-hero dth-container"><div className="dth-hero-copy"><div className="dth-eyebrow"><span />THE NEXT ANGLE ON YOUR BUILD</div><h1>Built to fit.<br />Made to<br /><em>stand out.</em></h1><p>Get closer before it goes on your ride. Explore parts in interactive 3D, then find the match for your selected demo vehicle.</p><div className="dth-hero-actions"><Link to="/shop" className="dth-button dth-primary">Explore the parts <Icon name="arrow" /></Link><button className="dth-text-button" onClick={chooseVehicle}><Icon name="vehicle" />Find my fit</button></div><div className="dth-hero-facts"><span><b>360°</b>Interactive inspection</span><span><b>{data.products.length}</b>Illustrative demo parts</span><span><b>01</b>Connected shopping flow</span></div></div>
+      <div className="dth-hero-stage"><div className="dth-hero-word">APEX</div><ModelView product={featured} hero /><Link className="dth-featured-caption" to={`/products/${featured.slug}`}><div><span>IN THE STUDIO / 01</span><h2>{featured.name}</h2><p>{featured.finish} · Original demo asset</p></div><span className="dth-round-arrow">↗</span></Link></div>
+    </section>
+    <section className="dth-workflow" aria-label="Shopping flow"><div className="dth-container"><span><b>01</b> SELECT YOUR VEHICLE</span><i>→</i><span><b>02</b> INSPECT IN 3D</span><i>→</i><span><b>03</b> SIMULATE YOUR ORDER</span></div></section>
+    <section className="dth-container dth-section"><div className="dth-section-heading"><div><p className="dth-eyebrow">THE COLLECTION</p><h2>Every detail. Every angle.</h2></div><Link className="dth-text-button" to="/shop">View all parts <Icon name="arrow" /></Link></div><div className="dth-category-links">{CATEGORIES.map(c => <Link key={c} to={`/shop?category=${c}`}>{categoryNames[c]}<span>↗</span></Link>)}</div><div className="dth-product-grid">{data.products.filter(p => p.featured).slice(0, 4).map(p => <ProductCard key={p.id} product={p} />)}</div></section>
+    <section className="dth-container dth-fit-banner"><div className="dth-fit-mark"><Icon name="vehicle" /></div><div><p className="dth-eyebrow">LESS GUESSWORK. A BETTER START.</p><h2>Your ride sets the direction.</h2><p>Choose make, model and year to narrow the demonstration catalog.</p></div><button className="dth-button dth-primary" onClick={chooseVehicle}>Set my vehicle <Icon name="arrow" /></button></section>
+  </>;
+}
+function Catalog() {
+  const { data, vehicleId, setVehicle } = useStore(); const { chooseVehicle } = useOutletContext();
+  const [params, setParams] = useSearchParams();
+  const search = params.get('q') || '', category = params.get('category') || '', sort = params.get('sort') || 'featured';
+  const maximum = Number(params.get('max'));
+  const maxPrice = Number.isFinite(maximum) && maximum > 0 ? maximum : 5000000;
+  const visible = filterProducts(data.products, { search, category, maxPrice, vehicleId }, data.vehicles);
+  visible.sort(sort === 'price-low' ? (a, b) => a.price - b.price : sort === 'price-high' ? (a, b) => b.price - a.price : (a, b) => Number(!!b.featured) - Number(!!a.featured));
+  function update(key, value) { const next = new URLSearchParams(params); if (value) next.set(key, value); else next.delete(key); setParams(next, { replace: true }); }
+  const vehicle = data.vehicles.find(v => v.id === vehicleId);
+  return <section className="dth-container dth-section"><div className="dth-page-heading"><p className="dth-eyebrow">THE PARTS COLLECTION</p><h1>A closer look.<br /><em>A clearer choice.</em></h1><p>All parts include a locally hosted, interactive GLB model. Prices and compatibility are for demonstration.</p></div>
+    <div className="dth-catalog-layout"><aside className="dth-filter-panel" aria-label="Product filters"><h2>Refine your build</h2><label className="dth-search"><Icon name="search" /><input aria-label="Search parts" placeholder="Search the collection" value={search} onChange={e => update('q', e.target.value)} /></label><p className="dth-filter-label">CATEGORY</p><button className={!category ? 'is-active' : ''} onClick={() => update('category', '')}>All parts <span>{data.products.length}</span></button>{CATEGORIES.map(c => <button key={c} className={category === c ? 'is-active' : ''} onClick={() => update('category', c)}>{categoryNames[c]}<span>{data.products.filter(p => p.category === c).length}</span></button>)}<label className="dth-price-filter">Maximum price <strong>{formatMoney(maxPrice)}</strong><input type="range" min="500000" max="5000000" step="50000" value={maxPrice} onChange={e => update('max', e.target.value)} /></label><div className="dth-filter-vehicle"><Icon name="vehicle" /><h3>{vehicle ? vehicle.model : 'Start with your ride'}</h3><p>{vehicle ? `${vehicle.make} · ${vehicle.year}` : 'Only show parts matching your demo vehicle.'}</p><button className="dth-button dth-ghost" onClick={chooseVehicle}>{vehicle ? 'Change vehicle' : 'Select vehicle'}</button>{vehicleId && <button className="dth-text-button" onClick={() => setVehicle('')}>Remove vehicle filter</button>}</div></aside>
+      <div><div className="dth-results-toolbar"><p><strong>{visible.length}</strong> parts {vehicle ? 'matching your demo vehicle' : 'in view'}</p><label>Sort by <select aria-label="Sort parts" value={sort} onChange={e => update('sort', e.target.value)}><option value="featured">Featured</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option></select></label></div>{visible.length ? <div className="dth-product-grid dth-catalog-grid">{visible.map(p => <ProductCard key={p.id} product={p} />)}</div> : <div className="dth-empty"><h2>No matching parts.</h2><p>Try a different category or vehicle. Unknown vehicles are not treated as compatible.</p><button className="dth-button dth-ghost" onClick={() => { setParams({}); setVehicle(''); }}>Clear all filters</button></div>}</div>
+    </div></section>;
+}
+function Product() {
+  const { slug } = useParams(); const { data, vehicleId, add } = useStore(); const { chooseVehicle } = useOutletContext();
+  const [quantity, setQuantity] = useState(1);
+  const product = data.products.find(p => p.slug === slug);
+  useEffect(() => { setQuantity(1); }, [slug]);
+  if (!product) return <NotFound />;
+  const match = fitment(product, vehicleId, data.vehicles);
+  const matches = data.vehicles.filter(v => product.vehicleIds.includes(v.id));
+  return <section className="dth-container dth-section"><nav className="dth-breadcrumb" aria-label="Breadcrumb"><Link to="/shop">All parts</Link><span>/</span><Link to={`/shop?category=${product.category}`}>{categoryNames[product.category]}</Link><span>/</span><span>{product.name}</span></nav><div className="dth-detail-grid"><div><ModelView product={product} /><p className="dth-model-disclaimer">Original illustrative 3D model. Geometry, dimensions and finish do not certify a real product. A static preview is available inside the viewer.</p></div><div className="dth-product-info"><p className="dth-eyebrow">DTH / {categoryNames[product.category].toUpperCase()}</p><h1>{product.name}</h1><p className="dth-detail-price">{formatMoney(product.price)} <span>DEMO PRICE</span></p><p className="dth-product-description">{product.description}</p><div className="dth-finish"><span style={{ background: product.accent || '#cbd4dc' }} /><div><small>FINISH</small><strong>{product.finish}</strong></div></div><div className={`dth-fit-box dth-fit-${match.status}`}><Icon name={match.status === 'compatible' ? 'check' : 'vehicle'} /><div><strong>{match.text}</strong><p>Based on synthetic demo mappings, not manufacturer verification.</p></div><button className="dth-text-button" onClick={chooseVehicle}>Change</button></div><div className="dth-buy-row"><label className="dth-quantity">Qty<select aria-label="Product quantity" value={quantity} onChange={e => setQuantity(Number(e.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1}>{i + 1}</option>)}</select></label><button className="dth-button dth-primary" onClick={() => match.status === 'compatible' ? add(product, vehicleId, quantity) : chooseVehicle()}>{match.status === 'compatible' ? 'Add to bag' : 'Select a matching vehicle'}<Icon name="bag" /></button></div><p className="dth-muted">No real payment. No shipping or installation service.</p><details open className="dth-detail-accordion"><summary>Product information</summary><dl>{Object.entries(product.specs || {}).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{String(value)}</dd></div>)}</dl></details><details className="dth-detail-accordion"><summary>Demo compatibility dataset</summary><ul>{matches.map(v => <li key={v.id}>{v.make} {v.model} ({v.year})</li>)}</ul></details></div></div></section>;
+}
+function Bag() {
+  const store = useStore(), navigate = useNavigate();
+  const [ack, setAck] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('');
+  const key = useRef({ payload: '', id: '' });
+  const payload = JSON.stringify(store.bag);
+  if (payload !== key.current.payload) key.current = { payload, id: crypto.randomUUID() };
+  let quote = null, quoteError = '';
+  try { if (store.bag.length) quote = quoteOrder(store.bag, store.data.products, store.data.vehicles); } catch (e) { quoteError = e.message; }
+  function change(index, quantity) { if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) return; store.setBag(items => items.map((i, n) => n === index ? { ...i, quantity } : i)); }
+  async function checkout() {
+    if (busy) return;
+    setBusy(true); setError('');
+    try {
+      const order = await createOrder(store.bag, key.current.id, ack, store.data);
+      store.setLastOrder(order); store.setBag([]); navigate('/order-complete');
+    } catch (e) { setError(e.message); } finally { setBusy(false); }
+  }
+  return <section className="dth-container dth-section"><div className="dth-page-heading"><p className="dth-eyebrow">YOUR NEXT BUILD</p><h1>The bag.</h1></div>{!store.bag.length ? <div className="dth-empty"><Icon name="bag" /><h2>Ready for a new perspective?</h2><p>Your bag is empty.</p><Link className="dth-button dth-primary" to="/shop">Explore the collection</Link></div> : <div className="dth-checkout-grid"><div className="dth-bag-items">{store.bag.map((item, index) => {
+    const product = store.data.products.find(p => p.id === item.productId);
+    const vehicle = store.data.vehicles.find(v => v.id === item.vehicleId);
+    return <article className="dth-bag-item" key={`${item.productId}:${item.vehicleId}`}>
+      {product && <Link to={`/products/${product.slug}`}><img src={product.imageUrl} alt={product.name} /></Link>}<div><h2>{product?.name || 'Unavailable product'}</h2><p>{product?.finish}</p><p className="dth-fit">{vehicle ? `${vehicle.model} · ${vehicle.year} · demo mapping` : 'Unknown demo vehicle'}</p><button disabled={busy} className="dth-text-button" onClick={() => store.setBag(items => items.filter((_, n) => n !== index))} aria-label={`Remove ${product?.name || item.productId}`}>Remove</button></div><div className="dth-bag-item-end"><strong>{formatMoney((product?.price || 0) * item.quantity)}</strong><label>Qty<select disabled={busy} aria-label={`Quantity for ${product?.name || item.productId}`} value={item.quantity} onChange={e => change(index, Number(e.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1}>{i + 1}</option>)}</select></label></div></article>;
+  })}<Link className="dth-text-button" to="/shop">← Continue exploring</Link></div><aside className="dth-order-summary"><p className="dth-eyebrow">MOCK CHECKOUT</p><h2>Build summary</h2><div><span>Subtotal</span><strong>{quote ? formatMoney(quote.total) : '—'}</strong></div><div><span>Delivery</span><span>Not applicable — demo</span></div><div className="dth-total"><span>Total</span><strong>{quote ? formatMoney(quote.total) : '—'}</strong></div><p className="dth-muted">{PREVIEW ? 'Preview: the simulated result exists only in this page session. It is not sent to a server.' : 'The API rechecks product prices and demo compatibility before saving the simulated order to MongoDB.'}</p><label className="dth-checkbox"><input type="checkbox" checked={ack} disabled={busy} onChange={e => setAck(e.target.checked)} />I understand this is a demonstration, with no payment, shipment or real fitment guarantee.</label>{!PREVIEW && !store.user ? <Link className="dth-button dth-primary" to="/account?return=/bag">Sign in to continue</Link> : <button className="dth-button dth-primary" disabled={!ack || !quote || busy || store.authLoading} onClick={checkout}>{busy ? 'Creating simulated order…' : 'Place simulated order'}<Icon name="arrow" /></button>}{(quoteError || error) && <p className="dth-error" role="alert">{quoteError || error}</p>}</aside></div>}</section>;
+}
+function Completed() {
+  const { lastOrder } = useStore();
+  return <section className="dth-container dth-section dth-completed"><div className="dth-complete-mark"><Icon name="check" /></div><p className="dth-eyebrow">{lastOrder ? 'SIMULATION COMPLETE' : 'ORDER SUMMARY'}</p><h1>{lastOrder ? 'Your next build, imagined.' : 'No order in this page session.'}</h1>{lastOrder && <><p>No money was charged. No physical products will be shipped.</p><div className="dth-confirmation"><span>{lastOrder.id}</span><strong>{formatMoney(lastOrder.total)}</strong><span>{PREVIEW ? 'Local preview only — not saved to MongoDB.' : 'Simulated order saved to your account.'}</span></div></>}<Link className="dth-button dth-primary" to="/shop">Back to the collection <Icon name="arrow" /></Link></section>;
+}
+function Account() {
+  const { user, setUser, logout, authLoading } = useStore(); const navigate = useNavigate(); const [params] = useSearchParams();
+  const [mode, setMode] = useState('login'), [email, setEmail] = useState(''), [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [orders, setOrders] = useState([]);
+  useEffect(() => { if (!user) { setOrders([]); return; } let live = true; loadOrders().then(result => live && setOrders(result)).catch(e => live && setError(e.message)); return () => { live = false; }; }, [user]);
+  async function submit(e) {
+    e.preventDefault(); setBusy(true); setError('');
+    try { const result = await authenticate(mode, { email, password }); setUser(result); setPassword(''); if (params.get('return') === '/bag') navigate('/bag'); }
+    catch (e) { setError(e.message); } finally { setBusy(false); }
+  }
+  async function remove(e) {
+    e.preventDefault();
+    if (!window.confirm('Delete your account and its simulated orders? This cannot be undone.')) return;
+    setBusy(true); setError('');
+    try { await deleteAccount(password); setUser(null); setPassword(''); } catch (e) { setError(e.message); } finally { setBusy(false); }
+  }
+  if (authLoading) return <div className="dth-empty">Checking account…</div>;
+  return <section className="dth-container dth-section dth-account"><p className="dth-eyebrow">YOUR DTH STUDIO</p><h1>{user ? 'Welcome back.' : 'Your build starts here.'}</h1>{PREVIEW ? <div className="dth-notice-panel"><h2>Local preview mode</h2><p>Explore the 3D catalog, demo vehicle filtering and simulated checkout without a database. No registration or login is faked in this mode.</p><p>For real account registration and persisted demo orders, run MongoDB, start the new API and set <code>VITE_STORE_MODE=api</code>.</p><Link className="dth-button dth-primary" to="/shop">Explore the store</Link></div> : user ? <><div className="dth-account-top"><p>{user.email}</p><button className="dth-button dth-ghost" disabled={busy} onClick={async () => { setBusy(true); try { await logout(); } catch (e) { setError(e.message); } finally { setBusy(false); } }}>Sign out</button>{user.role === 'admin' && <Link to="/admin" className="dth-button dth-primary">Manage catalog</Link>}</div><h2>Simulated orders</h2>{orders.length ? <div className="dth-orders">{orders.map(order => <div key={order.id}><span>{order.id}</span><span>{new Date(order.createdAt).toLocaleDateString()}</span><strong>{formatMoney(order.total)}</strong><span>SIMULATED</span></div>)}</div> : <p className="dth-muted">No simulated orders yet.</p>}<details className="dth-detail-accordion"><summary>Delete account and demo order data</summary><form className="dth-form" onSubmit={remove}><label>Confirm password<input type="password" autoComplete="current-password" required minLength={12} maxLength={128} value={password} onChange={e => setPassword(e.target.value)} /></label><button className="dth-button dth-danger" disabled={busy}>Permanently delete demo account</button></form></details></> : <form className="dth-form dth-auth-form" onSubmit={submit}><div className="dth-auth-tabs"><button type="button" aria-pressed={mode === 'login'} onClick={() => setMode('login')}>Sign in</button><button type="button" aria-pressed={mode === 'register'} onClick={() => setMode('register')}>Create account</button></div><label>Email<input type="email" required maxLength={254} autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></label><label>Password<input type="password" required minLength={12} maxLength={128} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} /></label><p className="dth-muted">12–128 characters. Use a password unique to this demo.</p><button className="dth-button dth-primary" disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}<Icon name="arrow" /></button></form>}{error && <p role="alert" className="dth-error">{error}</p>}</section>;
+}
+function Admin() {
+  const { user, data, refresh, setNotice } = useStore();
+  const [text, setText] = useState(''), [error, setError] = useState(''), [busy, setBusy] = useState(false), [adminProducts, setAdminProducts] = useState([]);
+  useEffect(() => { if (PREVIEW || user?.role !== 'admin') return; let live = true; loadAdminProducts().then(p => live && setAdminProducts(p)).catch(e => live && setError(e.message)); return () => { live = false; }; }, [user]);
+  if (PREVIEW || user?.role !== 'admin') return <section className="dth-container dth-section"><h1>Administrator access required.</h1><p>Use API mode and an explicitly seeded admin account. The API also checks the role on every write.</p><Link to="/account">Go to account</Link></section>;
+  async function save(e) { e.preventDefault(); setBusy(true); setError(''); try { await saveProduct(JSON.parse(text)); setAdminProducts(await loadAdminProducts()); await refresh(); setNotice('Catalog record saved.'); } catch (e) { setError(e.message); } finally { setBusy(false); } }
+  return <section className="dth-container dth-section"><p className="dth-eyebrow">CATALOG ADMINISTRATION</p><h1>Manage the collection.</h1><p className="dth-muted">Minimal admin editor: create or update a product by ID. Uploading binary assets is not implemented; put GLB and preview files in the frontend public folders first. Use active:false to hide a product. Keep the ID to edit it again.</p><form className="dth-form" onSubmit={save}><label>Load a product (including inactive)<select defaultValue="" onChange={e => { const product = adminProducts.find(p => p.id === e.target.value); if (product) setText(JSON.stringify(product, null, 2)); }}><option value="" disabled>Choose a product to edit or use as a template</option>{adminProducts.map(p => <option key={p.id} value={p.id}>{p.name}{p.active ? '' : ' (inactive)'}</option>)}</select></label><label>Product record (JSON)<textarea className="dth-code-editor" value={text} onChange={e => setText(e.target.value)} spellCheck={false} required /></label><button className="dth-button dth-primary" disabled={busy}>{busy ? 'Saving…' : 'Save product record'}</button>{error && <p role="alert" className="dth-error">{error}</p>}</form></section>;
+}
+function NotFound() { return <div className="dth-empty"><p className="dth-eyebrow">404 / OFF THE GRID</p><h1>This part of the studio is empty.</h1><Link className="dth-button dth-primary" to="/shop">Back to the collection</Link></div>; }
+export default function StoreApp() {
+  return <StoreProvider><Routes><Route element={<Shell />}><Route index element={<Home />} /><Route path="shop" element={<Catalog />} /><Route path="products/:slug" element={<Product />} /><Route path="bag" element={<Bag />} /><Route path="order-complete" element={<Completed />} /><Route path="account" element={<Account />} /><Route path="admin" element={<Admin />} /><Route path="*" element={<NotFound />} /></Route></Routes></StoreProvider>;
+}

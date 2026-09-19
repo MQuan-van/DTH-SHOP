@@ -1,0 +1,380 @@
+
+> dth-3d-commerce@0.1.0 test
+> node --test tests/domain.test.mjs tests/security.test.mjs tests/standalone.test.mjs
+
+TAP version 13
+# Subtest: catalog contains exactly 20 unique active demo products
+ok 1 - catalog contains exactly 20 unique active demo products
+  ---
+  duration_ms: 1.485463
+  type: 'test'
+  ...
+# Subtest: five supported categories, four products in each
+ok 2 - five supported categories, four products in each
+  ---
+  duration_ms: 0.265622
+  type: 'test'
+  ...
+# Subtest: eight unique fictional demo vehicles
+ok 3 - eight unique fictional demo vehicles
+  ---
+  duration_ms: 0.229246
+  type: 'test'
+  ...
+# Subtest: all compatibility references resolve
+ok 4 - all compatibility references resolve
+  ---
+  duration_ms: 0.264629
+  type: 'test'
+  ...
+# Subtest: every product points at an existing valid GLB and preview file
+ok 5 - every product points at an existing valid GLB and preview file
+  ---
+  duration_ms: 20.605665
+  type: 'test'
+  ...
+# Subtest: unselected vehicle is not compatible
+ok 6 - unselected vehicle is not compatible
+  ---
+  duration_ms: 0.214303
+  type: 'test'
+  ...
+# Subtest: unknown vehicle is not compatible
+ok 7 - unknown vehicle is not compatible
+  ---
+  duration_ms: 0.097948
+  type: 'test'
+  ...
+# Subtest: known matching vehicle is compatible
+ok 8 - known matching vehicle is compatible
+  ---
+  duration_ms: 0.09289
+  type: 'test'
+  ...
+# Subtest: known unmatched vehicle is incompatible
+ok 9 - known unmatched vehicle is incompatible
+  ---
+  duration_ms: 0.240133
+  type: 'test'
+  ...
+# Subtest: missing mappings are unknown, not compatible
+ok 10 - missing mappings are unknown, not compatible
+  ---
+  duration_ms: 0.343809
+  type: 'test'
+  ...
+# Subtest: vehicle filter does not return mismatches
+ok 11 - vehicle filter does not return mismatches
+  ---
+  duration_ms: 0.23148
+  type: 'test'
+  ...
+# Subtest: unknown vehicle filter has no results
+ok 12 - unknown vehicle filter has no results
+  ---
+  duration_ms: 0.134534
+  type: 'test'
+  ...
+# Subtest: empty filters expose all 20 products
+ok 13 - empty filters expose all 20 products
+  ---
+  duration_ms: 0.090867
+  type: 'test'
+  ...
+# Subtest: search ignores case and trims whitespace
+ok 14 - search ignores case and trims whitespace
+  ---
+  duration_ms: 0.08588
+  type: 'test'
+  ...
+# Subtest: category filter respects supported category
+ok 15 - category filter respects supported category
+  ---
+  duration_ms: 0.062644
+  type: 'test'
+  ...
+# Subtest: maximum price is inclusive
+ok 16 - maximum price is inclusive
+  ---
+  duration_ms: 0.069625
+  type: 'test'
+  ...
+# Subtest: inactive products are excluded from browsing
+ok 17 - inactive products are excluded from browsing
+  ---
+  duration_ms: 0.059911
+  type: 'test'
+  ...
+# Subtest: empty cart is rejected
+ok 18 - empty cart is rejected
+  ---
+  duration_ms: 0.385152
+  type: 'test'
+  ...
+# Subtest: non-array cart is rejected
+ok 19 - non-array cart is rejected
+  ---
+  duration_ms: 0.11878
+  type: 'test'
+  ...
+# Subtest: negative quantity is rejected
+ok 20 - negative quantity is rejected
+  ---
+  duration_ms: 0.142466
+  type: 'test'
+  ...
+# Subtest: fractional quantity is rejected
+ok 21 - fractional quantity is rejected
+  ---
+  duration_ms: 0.128223
+  type: 'test'
+  ...
+# Subtest: numeric-string quantity is rejected
+ok 22 - numeric-string quantity is rejected
+  ---
+  duration_ms: 0.104197
+  type: 'test'
+  ...
+# Subtest: NaN quantity is rejected
+ok 23 - NaN quantity is rejected
+  ---
+  duration_ms: 0.085239
+  type: 'test'
+  ...
+# Subtest: more than ten per line is rejected
+ok 24 - more than ten per line is rejected
+  ---
+  duration_ms: 0.079711
+  type: 'test'
+  ...
+# Subtest: more than twenty lines is rejected
+ok 25 - more than twenty lines is rejected
+  ---
+  duration_ms: 0.081032
+  type: 'test'
+  ...
+# Subtest: duplicates are merged deterministically
+ok 26 - duplicates are merged deterministically
+  ---
+  duration_ms: 0.678274
+  type: 'test'
+  ...
+# Subtest: duplicates cannot bypass quantity cap
+ok 27 - duplicates cannot bypass quantity cap
+  ---
+  duration_ms: 0.156697
+  type: 'test'
+  ...
+# Subtest: object injection in product ID is rejected
+ok 28 - object injection in product ID is rejected
+  ---
+  duration_ms: 0.105009
+  type: 'test'
+  ...
+# Subtest: missing vehicle on a cart line is rejected
+ok 29 - missing vehicle on a cart line is rejected
+  ---
+  duration_ms: 0.130647
+  type: 'test'
+  ...
+# Subtest: server quote ignores supplied prices and totals
+ok 30 - server quote ignores supplied prices and totals
+  ---
+  duration_ms: 0.279562
+  type: 'test'
+  ...
+# Subtest: quote blocks incompatible vehicles
+ok 31 - quote blocks incompatible vehicles
+  ---
+  duration_ms: 0.142896
+  type: 'test'
+  ...
+# Subtest: quote blocks unknown vehicles
+ok 32 - quote blocks unknown vehicles
+  ---
+  duration_ms: 0.162506
+  type: 'test'
+  ...
+# Subtest: quote rejects disabled products
+ok 33 - quote rejects disabled products
+  ---
+  duration_ms: 0.116806
+  type: 'test'
+  ...
+# Subtest: quote rejects removed products
+ok 34 - quote rejects removed products
+  ---
+  duration_ms: 0.088534
+  type: 'test'
+  ...
+# Subtest: quote rejects fractional catalog price
+ok 35 - quote rejects fractional catalog price
+  ---
+  duration_ms: 0.098619
+  type: 'test'
+  ...
+# Subtest: normalized registration lowercases email
+ok 36 - normalized registration lowercases email
+  ---
+  duration_ms: 0.161524
+  type: 'test'
+  ...
+# Subtest: registration rejects missing/invalid email
+ok 37 - registration rejects missing/invalid email
+  ---
+  duration_ms: 0.116906
+  type: 'test'
+  ...
+# Subtest: registration rejects short password
+ok 38 - registration rejects short password
+  ---
+  duration_ms: 0.088494
+  type: 'test'
+  ...
+# Subtest: registration strips a requested admin role
+ok 39 - registration strips a requested admin role
+  ---
+  duration_ms: 0.069976
+  type: 'test'
+  ...
+# Subtest: valid catalog entry passes admin validation
+ok 40 - valid catalog entry passes admin validation
+  ---
+  duration_ms: 0.297289
+  type: 'test'
+  ...
+# Subtest: admin product rejects arbitrary model URLs
+ok 41 - admin product rejects arbitrary model URLs
+  ---
+  duration_ms: 0.19881
+  type: 'test'
+  ...
+# Subtest: admin product rejects traversal
+ok 42 - admin product rejects traversal
+  ---
+  duration_ms: 0.098469
+  type: 'test'
+  ...
+# Subtest: admin product rejects negative prices
+ok 43 - admin product rejects negative prices
+  ---
+  duration_ms: 0.080682
+  type: 'test'
+  ...
+# Subtest: admin product rejects unknown fitment IDs
+ok 44 - admin product rejects unknown fitment IDs
+  ---
+  duration_ms: 0.130297
+  type: 'test'
+  ...
+# Subtest: validated models cannot claim real fitment
+ok 45 - validated models cannot claim real fitment
+  ---
+  duration_ms: 0.080171
+  type: 'test'
+  ...
+# Subtest: scrypt hash does not contain plaintext and verifies
+ok 46 - scrypt hash does not contain plaintext and verifies
+  ---
+  duration_ms: 259.100089
+  type: 'test'
+  ...
+# Subtest: identical passwords receive distinct salts
+ok 47 - identical passwords receive distinct salts
+  ---
+  duration_ms: 156.744062
+  type: 'test'
+  ...
+# Subtest: invalid password hashes fail closed
+ok 48 - invalid password hashes fail closed
+  ---
+  duration_ms: 0.312211
+  type: 'test'
+  ...
+# Subtest: session tokens have 256 bits and hashes are distinct
+ok 49 - session tokens have 256 bits and hashes are distinct
+  ---
+  duration_ms: 0.626647
+  type: 'test'
+  ...
+# Subtest: cookie parser extracts only expected format
+ok 50 - cookie parser extracts only expected format
+  ---
+  duration_ms: 0.2383
+  type: 'test'
+  ...
+# Subtest: rate limiter blocks after the stated limit
+ok 51 - rate limiter blocks after the stated limit
+  ---
+  duration_ms: 0.269878
+  type: 'test'
+  ...
+# Subtest: private root workspace contains frontend and backend
+ok 52 - private root workspace contains frontend and backend
+  ---
+  duration_ms: 4.95348
+  type: 'test'
+  ...
+# Subtest: frontend has its own manifest, HTML entry and React mount
+ok 53 - frontend has its own manifest, HTML entry and React mount
+  ---
+  duration_ms: 1.994963
+  type: 'test'
+  ...
+# Subtest: frontend dependency set includes its imported runtime libraries
+ok 54 - frontend dependency set includes its imported runtime libraries
+  ---
+  duration_ms: 0.727979
+  type: 'test'
+  ...
+# Subtest: standalone router and navigation no longer require legacy pages
+ok 55 - standalone router and navigation no longer require legacy pages
+  ---
+  duration_ms: 0.984146
+  type: 'test'
+  ...
+# Subtest: backend no longer imports or mounts the legacy router
+ok 56 - backend no longer imports or mounts the legacy router
+  ---
+  duration_ms: 6.547307
+  type: 'test'
+  ...
+# Subtest: backend database default and env example are independent of old database
+ok 57 - backend database default and env example are independent of old database
+  ---
+  duration_ms: 4.765536
+  type: 'test'
+  ...
+# Subtest: cookie and browser storage do not reuse previous bundle keys
+ok 58 - cookie and browser storage do not reuse previous bundle keys
+  ---
+  duration_ms: 0.874029
+  type: 'test'
+  ...
+# Subtest: gitignore excludes secrets and installed/build artifacts but preserves env examples
+ok 59 - gitignore excludes secrets and installed/build artifacts but preserves env examples
+  ---
+  duration_ms: 1.062525
+  type: 'test'
+  ...
+# Subtest: legacy installer is not required by the independent package
+ok 60 - legacy installer is not required by the independent package
+  ---
+  duration_ms: 1.038899
+  type: 'test'
+  ...
+# Subtest: all local source imports and baseline files resolve
+ok 61 - all local source imports and baseline files resolve
+  ---
+  duration_ms: 44.985738
+  type: 'test'
+  ...
+1..61
+# tests 61
+# suites 0
+# pass 61
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 484.620483

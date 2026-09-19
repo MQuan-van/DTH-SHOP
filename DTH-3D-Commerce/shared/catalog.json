@@ -1,0 +1,604 @@
+{
+  "version": 1,
+  "demoOnly": true,
+  "vehicles": [
+    {
+      "id": "street155-2022",
+      "make": "Demo Moto",
+      "model": "Street 155",
+      "year": 2022,
+      "demoOnly": true
+    },
+    {
+      "id": "street155-2023",
+      "make": "Demo Moto",
+      "model": "Street 155",
+      "year": 2023,
+      "demoOnly": true
+    },
+    {
+      "id": "road300-2023",
+      "make": "Demo Moto",
+      "model": "Road 300",
+      "year": 2023,
+      "demoOnly": true
+    },
+    {
+      "id": "road300-2024",
+      "make": "Demo Moto",
+      "model": "Road 300",
+      "year": 2024,
+      "demoOnly": true
+    },
+    {
+      "id": "touring16-2021",
+      "make": "Demo Auto",
+      "model": "Touring 1.6",
+      "year": 2021,
+      "demoOnly": true
+    },
+    {
+      "id": "touring16-2022",
+      "make": "Demo Auto",
+      "model": "Touring 1.6",
+      "year": 2022,
+      "demoOnly": true
+    },
+    {
+      "id": "sport20-2023",
+      "make": "Demo Auto",
+      "model": "Sport 2.0",
+      "year": 2023,
+      "demoOnly": true
+    },
+    {
+      "id": "sport20-2024",
+      "make": "Demo Auto",
+      "model": "Sport 2.0",
+      "year": 2024,
+      "demoOnly": true
+    }
+  ],
+  "products": [
+    {
+      "id": "apex-suspension",
+      "slug": "apex-suspension",
+      "name": "Apex Coilover",
+      "category": "suspension",
+      "price": 2800000,
+      "currency": "VND",
+      "finish": "Acid / Graphite",
+      "accent": "#d7f55c",
+      "description": "Explore the spring, damper body and reservoir geometry. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/apex-suspension.glb",
+      "imageUrl": "/previews/dth-demo/apex-suspension.png",
+      "vehicleIds": [
+        "street155-2022",
+        "street155-2023"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Apex",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": true
+    },
+    {
+      "id": "vector-suspension",
+      "slug": "vector-suspension",
+      "name": "Vector Coilover",
+      "category": "suspension",
+      "price": 3050000,
+      "currency": "VND",
+      "finish": "Ember / Alloy",
+      "accent": "#e87c46",
+      "description": "Explore the spring, damper body and reservoir geometry. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/vector-suspension.glb",
+      "imageUrl": "/previews/dth-demo/vector-suspension.png",
+      "vehicleIds": [
+        "road300-2023",
+        "road300-2024"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Vector",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": false
+    },
+    {
+      "id": "touring-suspension",
+      "slug": "touring-suspension",
+      "name": "Touring Coilover",
+      "category": "suspension",
+      "price": 3300000,
+      "currency": "VND",
+      "finish": "Ice / Titanium",
+      "accent": "#7db0cb",
+      "description": "Explore the spring, damper body and reservoir geometry. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/touring-suspension.glb",
+      "imageUrl": "/previews/dth-demo/touring-suspension.png",
+      "vehicleIds": [
+        "touring16-2021",
+        "touring16-2022"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Touring",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": false
+    },
+    {
+      "id": "studio-suspension",
+      "slug": "studio-suspension",
+      "name": "Studio Coilover",
+      "category": "suspension",
+      "price": 3550000,
+      "currency": "VND",
+      "finish": "Sand / Graphite",
+      "accent": "#c8bba5",
+      "description": "Explore the spring, damper body and reservoir geometry. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/studio-suspension.glb",
+      "imageUrl": "/previews/dth-demo/studio-suspension.png",
+      "vehicleIds": [
+        "sport20-2023",
+        "sport20-2024"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Studio",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": false
+    },
+    {
+      "id": "apex-wheels",
+      "slug": "apex-wheels",
+      "name": "Apex Alloy wheel",
+      "category": "wheels",
+      "price": 3200000,
+      "currency": "VND",
+      "finish": "Acid / Graphite",
+      "accent": "#d7f55c",
+      "description": "Inspect the spoke pattern, hub and rim profile in a real-time 3D view. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/apex-wheels.glb",
+      "imageUrl": "/previews/dth-demo/apex-wheels.png",
+      "vehicleIds": [
+        "street155-2022",
+        "street155-2023"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Apex",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": true
+    },
+    {
+      "id": "vector-wheels",
+      "slug": "vector-wheels",
+      "name": "Vector Alloy wheel",
+      "category": "wheels",
+      "price": 3450000,
+      "currency": "VND",
+      "finish": "Ember / Alloy",
+      "accent": "#e87c46",
+      "description": "Inspect the spoke pattern, hub and rim profile in a real-time 3D view. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/vector-wheels.glb",
+      "imageUrl": "/previews/dth-demo/vector-wheels.png",
+      "vehicleIds": [
+        "road300-2023",
+        "road300-2024"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Vector",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": false
+    },
+    {
+      "id": "touring-wheels",
+      "slug": "touring-wheels",
+      "name": "Touring Alloy wheel",
+      "category": "wheels",
+      "price": 3700000,
+      "currency": "VND",
+      "finish": "Ice / Titanium",
+      "accent": "#7db0cb",
+      "description": "Inspect the spoke pattern, hub and rim profile in a real-time 3D view. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/touring-wheels.glb",
+      "imageUrl": "/previews/dth-demo/touring-wheels.png",
+      "vehicleIds": [
+        "touring16-2021",
+        "touring16-2022"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Touring",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": false
+    },
+    {
+      "id": "studio-wheels",
+      "slug": "studio-wheels",
+      "name": "Studio Alloy wheel",
+      "category": "wheels",
+      "price": 3950000,
+      "currency": "VND",
+      "finish": "Sand / Graphite",
+      "accent": "#c8bba5",
+      "description": "Inspect the spoke pattern, hub and rim profile in a real-time 3D view. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/studio-wheels.glb",
+      "imageUrl": "/previews/dth-demo/studio-wheels.png",
+      "vehicleIds": [
+        "sport20-2023",
+        "sport20-2024"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Studio",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": false
+    },
+    {
+      "id": "apex-exhausts",
+      "slug": "apex-exhausts",
+      "name": "Apex Exhaust",
+      "category": "exhausts",
+      "price": 2400000,
+      "currency": "VND",
+      "finish": "Acid / Graphite",
+      "accent": "#d7f55c",
+      "description": "Explore the canister, mounting band and outlet from every angle. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/apex-exhausts.glb",
+      "imageUrl": "/previews/dth-demo/apex-exhausts.png",
+      "vehicleIds": [
+        "street155-2022",
+        "street155-2023"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Apex",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": true
+    },
+    {
+      "id": "vector-exhausts",
+      "slug": "vector-exhausts",
+      "name": "Vector Exhaust",
+      "category": "exhausts",
+      "price": 2650000,
+      "currency": "VND",
+      "finish": "Ember / Alloy",
+      "accent": "#e87c46",
+      "description": "Explore the canister, mounting band and outlet from every angle. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/vector-exhausts.glb",
+      "imageUrl": "/previews/dth-demo/vector-exhausts.png",
+      "vehicleIds": [
+        "road300-2023",
+        "road300-2024"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Vector",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": false
+    },
+    {
+      "id": "touring-exhausts",
+      "slug": "touring-exhausts",
+      "name": "Touring Exhaust",
+      "category": "exhausts",
+      "price": 2900000,
+      "currency": "VND",
+      "finish": "Ice / Titanium",
+      "accent": "#7db0cb",
+      "description": "Explore the canister, mounting band and outlet from every angle. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/touring-exhausts.glb",
+      "imageUrl": "/previews/dth-demo/touring-exhausts.png",
+      "vehicleIds": [
+        "touring16-2021",
+        "touring16-2022"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Touring",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": false
+    },
+    {
+      "id": "studio-exhausts",
+      "slug": "studio-exhausts",
+      "name": "Studio Exhaust",
+      "category": "exhausts",
+      "price": 3150000,
+      "currency": "VND",
+      "finish": "Sand / Graphite",
+      "accent": "#c8bba5",
+      "description": "Explore the canister, mounting band and outlet from every angle. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/studio-exhausts.glb",
+      "imageUrl": "/previews/dth-demo/studio-exhausts.png",
+      "vehicleIds": [
+        "sport20-2023",
+        "sport20-2024"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Studio",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": false
+    },
+    {
+      "id": "apex-mirrors",
+      "slug": "apex-mirrors",
+      "name": "Apex Mirror set",
+      "category": "mirrors",
+      "price": 650000,
+      "currency": "VND",
+      "finish": "Acid / Graphite",
+      "accent": "#d7f55c",
+      "description": "Examine the mirror pair, stem design and surface treatment. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/apex-mirrors.glb",
+      "imageUrl": "/previews/dth-demo/apex-mirrors.png",
+      "vehicleIds": [
+        "street155-2022",
+        "street155-2023"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Apex",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": true
+    },
+    {
+      "id": "vector-mirrors",
+      "slug": "vector-mirrors",
+      "name": "Vector Mirror set",
+      "category": "mirrors",
+      "price": 900000,
+      "currency": "VND",
+      "finish": "Ember / Alloy",
+      "accent": "#e87c46",
+      "description": "Examine the mirror pair, stem design and surface treatment. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/vector-mirrors.glb",
+      "imageUrl": "/previews/dth-demo/vector-mirrors.png",
+      "vehicleIds": [
+        "road300-2023",
+        "road300-2024"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Vector",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": false
+    },
+    {
+      "id": "touring-mirrors",
+      "slug": "touring-mirrors",
+      "name": "Touring Mirror set",
+      "category": "mirrors",
+      "price": 1150000,
+      "currency": "VND",
+      "finish": "Ice / Titanium",
+      "accent": "#7db0cb",
+      "description": "Examine the mirror pair, stem design and surface treatment. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/touring-mirrors.glb",
+      "imageUrl": "/previews/dth-demo/touring-mirrors.png",
+      "vehicleIds": [
+        "touring16-2021",
+        "touring16-2022"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Touring",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": false
+    },
+    {
+      "id": "studio-mirrors",
+      "slug": "studio-mirrors",
+      "name": "Studio Mirror set",
+      "category": "mirrors",
+      "price": 1400000,
+      "currency": "VND",
+      "finish": "Sand / Graphite",
+      "accent": "#c8bba5",
+      "description": "Examine the mirror pair, stem design and surface treatment. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/studio-mirrors.glb",
+      "imageUrl": "/previews/dth-demo/studio-mirrors.png",
+      "vehicleIds": [
+        "sport20-2023",
+        "sport20-2024"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Studio",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": false
+    },
+    {
+      "id": "apex-brakes",
+      "slug": "apex-brakes",
+      "name": "Apex Brake set",
+      "category": "brakes",
+      "price": 1500000,
+      "currency": "VND",
+      "finish": "Acid / Graphite",
+      "accent": "#d7f55c",
+      "description": "Inspect the disc and caliper layout from multiple viewpoints. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/apex-brakes.glb",
+      "imageUrl": "/previews/dth-demo/apex-brakes.png",
+      "vehicleIds": [
+        "street155-2022",
+        "street155-2023"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Apex",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": true
+    },
+    {
+      "id": "vector-brakes",
+      "slug": "vector-brakes",
+      "name": "Vector Brake set",
+      "category": "brakes",
+      "price": 1750000,
+      "currency": "VND",
+      "finish": "Ember / Alloy",
+      "accent": "#e87c46",
+      "description": "Inspect the disc and caliper layout from multiple viewpoints. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/vector-brakes.glb",
+      "imageUrl": "/previews/dth-demo/vector-brakes.png",
+      "vehicleIds": [
+        "road300-2023",
+        "road300-2024"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Vector",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": false
+    },
+    {
+      "id": "touring-brakes",
+      "slug": "touring-brakes",
+      "name": "Touring Brake set",
+      "category": "brakes",
+      "price": 2000000,
+      "currency": "VND",
+      "finish": "Ice / Titanium",
+      "accent": "#7db0cb",
+      "description": "Inspect the disc and caliper layout from multiple viewpoints. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/touring-brakes.glb",
+      "imageUrl": "/previews/dth-demo/touring-brakes.png",
+      "vehicleIds": [
+        "touring16-2021",
+        "touring16-2022"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Touring",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": false
+    },
+    {
+      "id": "studio-brakes",
+      "slug": "studio-brakes",
+      "name": "Studio Brake set",
+      "category": "brakes",
+      "price": 2250000,
+      "currency": "VND",
+      "finish": "Sand / Graphite",
+      "accent": "#c8bba5",
+      "description": "Inspect the disc and caliper layout from multiple viewpoints. Original illustrative FYP model; not a manufacturer product or a dimensionally verified part.",
+      "modelUrl": "/models/dth-demo/studio-brakes.glb",
+      "imageUrl": "/previews/dth-demo/studio-brakes.png",
+      "vehicleIds": [
+        "sport20-2023",
+        "sport20-2024"
+      ],
+      "active": true,
+      "demoOnly": true,
+      "assetLicense": "Original illustrative project asset",
+      "specs": {
+        "Collection": "Studio",
+        "Asset purpose": "Visual prototype only",
+        "Fitment source": "Synthetic demo mapping",
+        "Payment": "Simulation only"
+      },
+      "featured": false
+    }
+  ]
+}

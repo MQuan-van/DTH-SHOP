@@ -4,20 +4,11 @@ import { CATEGORIES, filterProducts, fitment, formatMoney, quoteOrder } from '..
 import { PREVIEW, authenticate, createOrder, deleteAccount, loadOrders, saveProduct, loadAdminProducts } from './api';
 import { StoreProvider, useStore } from './useStore';
 import './store.css';
+import Icon from './components/StoreIcon.jsx';
+import ProductCard from './components/ProductCard.jsx';
+import HomePage from './home/HomePage.jsx';
 const Viewer3D = lazy(() => import('./Viewer3D'));
 const categoryNames = { suspension: 'Suspension', wheels: 'Wheels', exhausts: 'Exhausts', mirrors: 'Mirrors', brakes: 'Brakes' };
-function Icon({ name, ...props }) {
-  const paths = {
-    bag: <><path d="M5 7h14l1 14H4L5 7Z" /><path d="M8 8V6a4 4 0 0 1 8 0v2" /></>,
-    vehicle: <><path d="m4 10 2-5h12l2 5M3 10h18v8H3zM6 18v3m12-3v3M6 14h2m8 0h2" /></>,
-    arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
-    search: <><circle cx="10" cy="10" r="6" /><path d="m15 15 6 6" /></>,
-    cube: <><path d="m12 2 9 5v10l-9 5-9-5V7zM3 7l9 5 9-5m-9 5v10m-5-17 10 6" /></>,
-    check: <path d="m5 12 4 4L19 6" />,
-    user: <><circle cx="12" cy="8" r="4" /><path d="M4 22v-3a8 8 0 0 1 16 0v3" /></>,
-  };
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>{paths[name] || paths.arrow}</svg>;
-}
 function Dialog({ title, onClose, children }) {
   const ref = useRef(null);
   useEffect(() => { const el = ref.current; el.showModal(); return () => { if (el.open) el.close(); }; }, []);
@@ -58,7 +49,7 @@ function Shell() {
     <div className="dth-demo-banner">FYP DEMONSTRATOR <span>Illustrative 3D assets · Synthetic fitment · No real payments</span><b>{PREVIEW ? 'LOCAL PREVIEW' : 'MONGODB / API MODE'}</b></div>
     <header className="dth-header">
       <Link to="/" className="dth-brand" aria-label="DTH store home"><span className="dth-brand-symbol">///</span><span>DTH<span className="dth-brand-sub">PARTS STUDIO</span></span></Link>
-      <nav className="dth-navigation" aria-label="Main navigation"><NavLink to="/shop">Shop parts</NavLink><NavLink to="/account">My account</NavLink></nav>
+      <nav className="dth-navigation" aria-label="Main navigation"><NavLink to="/" end>Studio</NavLink><NavLink to="/shop">Shop parts</NavLink><NavLink to="/account">My account</NavLink></nav>
       <div className="dth-header-tools"><button className="dth-vehicle-button" onClick={() => setVehicleOpen(true)} disabled={store.loading || !!store.error}><Icon name="vehicle" /><span>{vehicle ? `${vehicle.model} · ${vehicle.year}` : 'Select your vehicle'}</span><span className="dth-lime">＋</span></button><Link to="/account" className="dth-icon-button" aria-label="Your account"><Icon name="user" /></Link><Link to="/bag" className="dth-bag-button" aria-label={`Shopping bag, ${count} items`}><Icon name="bag" /><span>{count}</span></Link></div>
     </header>
     <main id="dth-content" tabIndex={-1}>
@@ -71,25 +62,6 @@ function Shell() {
 }
 function ModelView({ product, hero = false }) {
   return <Suspense fallback={<div className={`dth-viewer ${hero ? 'dth-viewer-hero' : ''}`}><img className="dth-model-still" src={product.imageUrl} alt={product.name} /><span className="dth-scene-loading">Preparing 3D viewer…</span></div>}><Viewer3D key={product.id} product={product} hero={hero} /></Suspense>;
-}
-function ProductCard({ product }) {
-  const { vehicleId, data } = useStore();
-  const match = fitment(product, vehicleId, data.vehicles);
-  return <article className="dth-product-card"><Link to={`/products/${product.slug}`} className="dth-card-image"><img src={product.imageUrl} alt={`Illustrative ${product.name}`} loading="lazy" width="960" height="720" /><span className="dth-3d-tag"><Icon name="cube" />3D VIEW</span><span className="dth-card-arrow">↗</span></Link><div className="dth-card-meta"><span>{categoryNames[product.category]}</span><span>{product.finish}</span></div><div className="dth-card-title"><h3><Link to={`/products/${product.slug}`}>{product.name}</Link></h3><span>{formatMoney(product.price)}</span></div>{vehicleId && <p className={`dth-fit dth-fit-${match.status}`}>{match.text}</p>}</article>;
-}
-function Home() {
-  const { data } = useStore();
-  const { chooseVehicle } = useOutletContext();
-  const featured = data.products.find(p => p.id === 'apex-suspension') || data.products[0];
-  if (!featured) return <div className="dth-empty">The catalog is empty. Run the catalog seed command.</div>;
-  return <>
-    <section className="dth-hero dth-container"><div className="dth-hero-copy"><div className="dth-eyebrow"><span />THE NEXT ANGLE ON YOUR BUILD</div><h1>Built to fit.<br />Made to<br /><em>stand out.</em></h1><p>Get closer before it goes on your ride. Explore parts in interactive 3D, then find the match for your selected demo vehicle.</p><div className="dth-hero-actions"><Link to="/shop" className="dth-button dth-primary">Explore the parts <Icon name="arrow" /></Link><button className="dth-text-button" onClick={chooseVehicle}><Icon name="vehicle" />Find my fit</button></div><div className="dth-hero-facts"><span><b>360°</b>Interactive inspection</span><span><b>{data.products.length}</b>Illustrative demo parts</span><span><b>01</b>Connected shopping flow</span></div></div>
-      <div className="dth-hero-stage"><div className="dth-hero-word">APEX</div><ModelView product={featured} hero /><Link className="dth-featured-caption" to={`/products/${featured.slug}`}><div><span>IN THE STUDIO / 01</span><h2>{featured.name}</h2><p>{featured.finish} · Original demo asset</p></div><span className="dth-round-arrow">↗</span></Link></div>
-    </section>
-    <section className="dth-workflow" aria-label="Shopping flow"><div className="dth-container"><span><b>01</b> SELECT YOUR VEHICLE</span><i>→</i><span><b>02</b> INSPECT IN 3D</span><i>→</i><span><b>03</b> SIMULATE YOUR ORDER</span></div></section>
-    <section className="dth-container dth-section"><div className="dth-section-heading"><div><p className="dth-eyebrow">THE COLLECTION</p><h2>Every detail. Every angle.</h2></div><Link className="dth-text-button" to="/shop">View all parts <Icon name="arrow" /></Link></div><div className="dth-category-links">{CATEGORIES.map(c => <Link key={c} to={`/shop?category=${c}`}>{categoryNames[c]}<span>↗</span></Link>)}</div><div className="dth-product-grid">{data.products.filter(p => p.featured).slice(0, 4).map(p => <ProductCard key={p.id} product={p} />)}</div></section>
-    <section className="dth-container dth-fit-banner"><div className="dth-fit-mark"><Icon name="vehicle" /></div><div><p className="dth-eyebrow">LESS GUESSWORK. A BETTER START.</p><h2>Your ride sets the direction.</h2><p>Choose make, model and year to narrow the demonstration catalog.</p></div><button className="dth-button dth-primary" onClick={chooseVehicle}>Set my vehicle <Icon name="arrow" /></button></section>
-  </>;
 }
 function Catalog() {
   const { data, vehicleId, setVehicle } = useStore(); const { chooseVehicle } = useOutletContext();
@@ -173,5 +145,5 @@ function Admin() {
 }
 function NotFound() { return <div className="dth-empty"><p className="dth-eyebrow">404 / OFF THE GRID</p><h1>This part of the studio is empty.</h1><Link className="dth-button dth-primary" to="/shop">Back to the collection</Link></div>; }
 export default function StoreApp() {
-  return <StoreProvider><Routes><Route element={<Shell />}><Route index element={<Home />} /><Route path="shop" element={<Catalog />} /><Route path="products/:slug" element={<Product />} /><Route path="bag" element={<Bag />} /><Route path="order-complete" element={<Completed />} /><Route path="account" element={<Account />} /><Route path="admin" element={<Admin />} /><Route path="*" element={<NotFound />} /></Route></Routes></StoreProvider>;
+  return <StoreProvider><Routes><Route element={<Shell />}><Route index element={<HomePage />} /><Route path="shop" element={<Catalog />} /><Route path="products/:slug" element={<Product />} /><Route path="bag" element={<Bag />} /><Route path="order-complete" element={<Completed />} /><Route path="account" element={<Account />} /><Route path="admin" element={<Admin />} /><Route path="*" element={<NotFound />} /></Route></Routes></StoreProvider>;
 }

@@ -1,0 +1,14 @@
+/* Home-only tokens and shell treatment. Other routes retain their existing styles. */
+.home-studio { --home-accent:#d7f55c;--home-muted:#a5b2a8;--home-line:#9aaa892b;--home-mono:'Cascadia Code','SFMono-Regular',Consolas,monospace; }
+html[data-dth-home="true"] .dth-header { min-height:79px;padding-block:13px;background:#101416ed; }
+html[data-dth-home="true"] .dth-navigation { gap:28px; }
+html[data-dth-home="true"] .dth-navigation a { min-height:44px;display:flex;align-items:center; }
+html[data-dth-home="true"] .dth-demo-banner { min-height:28px;padding-block:6px;background:#202820;font-size:8px; }
+.home-section { position:relative;scroll-margin-top:100px; }
+.home-studio .home-eyebrow { display:block;font:9px var(--home-mono);letter-spacing:.15em;color:var(--home-muted); }
+.home-studio .home-title { font-size:clamp(26px,3vw,40px);letter-spacing:-.045em;line-height:1.15;font-weight:550;margin-top:12px; }
+.home-studio .home-heading { display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:30px; }
+.home-studio .home-link { min-height:44px;display:inline-flex;align-items:center;gap:13px;font-size:11px;color:var(--home-accent); }
+.home-studio .home-link svg { width:17px;height:17px; }
+.home-studio[data-motion="off"] *, .home-studio[data-motion="off"] *::before, .home-studio[data-motion="off"] *::after { animation-play-state:paused!important;scroll-behavior:auto!important; }
+@media(max-width:650px) { html[data-dth-home="true"] .dth-header { min-height:76px;padding-block:10px;gap:12px; }html[data-dth-home="true"] .dth-navigation { gap:20px; }.home-studio .home-heading { align-items:start;flex-direction:column;gap:8px; }.home-studio .dth-container { width:calc(100% - 36px); } }

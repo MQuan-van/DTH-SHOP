@@ -18,3 +18,6 @@ backups/
 data/
 # Do not store raw interviews, consent forms, real account data or credentials in Git.
 research-private/
+
+# Local source backups made by the Home Stage updater
+.home-stage-backups/

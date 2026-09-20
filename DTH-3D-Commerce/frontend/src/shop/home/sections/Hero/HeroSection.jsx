@@ -31,7 +31,12 @@ export default function HeroSection({ config, motion, motionEnabled, reduced, on
   const [selectedId, setSelectedId] = useState(() => exhibits[0]?.product.id);
   const activeExhibit = exhibits.find(item => item.product.id === selectedId) || exhibits[0];
   const ref = useRef(null), sceneApi = useRef(null), inspectButton = useRef(null);
-  const [inspect, setInspect] = useState(false), [still, setStill] = useState(false), [wireframe, setWireframe] = useState(false);
+  // const [inspect, setInspect] = useState(false), [still, setStill] = useState(false), [wireframe, setWireframe] = useState(false);
+  // Cho phép kéo xoay sản phẩm ngay từ đầu.
+  const [inspect, setInspect] = useState(true);
+
+  const [still, setStill] = useState(false);
+  const [wireframe, setWireframe] = useState(false)
   const [loadState, setLoadState] = useState({ key: '', status: 'loading' });
   const active = useStageActivity(ref);
   const modelKey = activeExhibit?.product.modelUrl || '';
@@ -40,8 +45,14 @@ export default function HeroSection({ config, motion, motionEnabled, reduced, on
   const onFailure = useCallback(() => { setLoadState({ key: modelKey, status: 'unavailable' }); setInspect(false); }, [modelKey]);
   useEntrance(ref, motionEnabled, { duration: motion.entranceMs, stagger: motion.staggerMs });
   const product = activeExhibit?.product;
-  useEffect(() => {
-    setInspect(false); setStill(false); setWireframe(false);
+  // useEffect(() => {
+  //   setInspect(false); setStill(false); setWireframe(false);
+  // }, [product?.id, product?.modelUrl]);
+    useEffect(() => {
+    // Đổi sang phuộc, bánh xe hoặc pô thì vẫn kéo xoay được ngay.
+    setInspect(true);
+    setStill(false);
+    setWireframe(false);
   }, [product?.id, product?.modelUrl]);
   useEffect(() => {
     if (!inspect) return;
@@ -57,11 +68,28 @@ export default function HeroSection({ config, motion, motionEnabled, reduced, on
   const vehicle = data.vehicles.find(v => v.id === vehicleId);
   const fallback = still || status === 'unavailable';
   const liveMotion = motionEnabled && active && !inspect && !fallback;
-  const annotationVisible = config.annotations && !inspect;
-  function showStill() {
-    setInspect(false);
-    setStill(value => !value);
-    if (still) setLoadState({ key: modelKey, status: 'loading' });
+  // const annotationVisible = config.annotations && !inspect;\
+  const annotationVisible = config.annotations;
+  // function showStill() {
+  //   setInspect(false);
+  //   setStill(value => !value);
+  //   if (still) setLoadState({ key: modelKey, status: 'loading' });
+  // }
+    function showStill() {
+    const nextStill = !still;
+
+    setStill(nextStill);
+
+    // Ảnh tĩnh: tắt tương tác.
+    // Quay về mô hình 3D: bật tương tác lại.
+    setInspect(!nextStill);
+
+    if (!nextStill) {
+      setLoadState({
+        key: modelKey,
+        status: 'loading',
+      });
+    }
   }
   function reset() { sceneApi.current?.reset(); }
   const serial = String(current + 1).padStart(2, '0');

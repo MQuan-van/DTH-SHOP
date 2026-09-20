@@ -18,14 +18,49 @@ function StudioLighting({ settings }) {
     room.dispose(); pmrem.dispose(); invalidate();
     return () => { scene.environment = previous; scene.environmentIntensity = previousIntensity; target.dispose(); };
   }, [gl, scene, invalidate, settings.environmentIntensity]);
-  return <>
-    <ambientLight intensity={0.7} />
-    <hemisphereLight args={['#f3f6ef', '#182129', 1.25]} />
-    <directionalLight position={[-3, 5, 5]} intensity={settings.keyIntensity} color="#ffffff" />
-    <directionalLight position={[3, 1, -2]} intensity={settings.rimIntensity} color="#daefa9" />
-    <directionalLight position={[-4, -1, -3]} intensity={2} color="#7eadd6" />
-  </>;
-}
+//   return <>
+//     <ambientLight intensity={0.7} />
+//     <hemisphereLight args={['#f3f6ef', '#182129', 1.25]} />
+//     <directionalLight position={[-3, 5, 5]} intensity={settings.keyIntensity} color="#ffffff" />
+//     <directionalLight position={[3, 1, -2]} intensity={settings.rimIntensity} color="#daefa9" />
+//     <directionalLight position={[-4, -1, -3]} intensity={2} color="#7eadd6" />
+//   </>;
+// }
+    return (
+      <>
+        <ambientLight
+          color="#ffffff"
+          intensity={settings.ambientIntensity ?? 0.25}
+        />
+
+        <hemisphereLight
+          args={[
+            '#ffffff',
+            '#303030',
+            settings.hemisphereIntensity ?? 0.5,
+          ]}
+        />
+
+        <directionalLight
+          position={[-3, 5, 5]}
+          color="#ffffff"
+          intensity={settings.keyIntensity ?? 2.0}
+        />
+
+        <directionalLight
+          position={[3, 1, -2]}
+          color="#ffffff"
+          intensity={settings.rimIntensity ?? 1.0}
+        />
+
+        <directionalLight
+          position={[-4, -1, -3]}
+          color="#ffffff"
+          intensity={settings.fillIntensity ?? 0.4}
+        />
+      </>
+    );
+  }
 function ModelRig({ product, exhibit, settings, active, motionEnabled, inspect, wireframe, onReady, rig }) {
   const { scene } = useGLTF(product.modelUrl);
   const { invalidate } = useThree();
@@ -35,10 +70,67 @@ function ModelRig({ product, exhibit, settings, active, motionEnabled, inspect, 
     const materials = new Map();
     copy.traverse(object => {
       if (!object.isMesh) return;
-      const clone = material => {
-        if (!materials.has(material.uuid)) materials.set(material.uuid, material.clone());
-        return materials.get(material.uuid);
-      };
+      // const clone = material => {
+      //   if (!materials.has(material.uuid)) materials.set(material.uuid, material.clone());
+      //   return materials.get(material.uuid);
+      // };
+        const clone = material => {
+    if (!material) return material;
+
+    // Một material dùng chung cho nhiều mesh chỉ cần clone một lần.
+    if (materials.has(material.uuid)) {
+      return materials.get(material.uuid);
+    }
+
+    // Chỉ sửa bản sao, không sửa material gốc đang được dùng chung.
+    const fixed = material.clone();
+
+    // Chỉ áp dụng cho bộ model demo cũ của project này.
+    const isDemoModel =
+      /\/models\/dth-demo\/(apex|vector|touring|studio)-(suspension|wheels|exhausts|mirrors|brakes)\.glb(?:[?#].*)?$/
+        .test(product.modelUrl);
+
+    // Các màu sRGB gốc trong bộ tạo model đã gửi.
+    const originalPalette = [
+      [215, 245, 92],   // Xanh lime — Apex
+      [165, 174, 183],  // Kim loại bạc
+      [37, 43, 51],    // Graphite
+      [22, 25, 29],    // Cao su tối
+      [232, 124, 70],  // Cam — Vector
+      [125, 176, 203], // Xanh — Touring
+      [200, 187, 165], // Beige — Studio
+      [125, 163, 177], // Mặt gương
+    ];
+
+    if (isDemoModel && fixed.color?.isColor && !fixed.map) {
+      // Nhận diện đúng giá trị màu bị lưu sai trong model demo.
+      const originalRGB = originalPalette.find(([r, g, b]) => {
+        const epsilon = 0.000001;
+
+        return (
+          Math.abs(fixed.color.r - r / 255) < epsilon &&
+          Math.abs(fixed.color.g - g / 255) < epsilon &&
+          Math.abs(fixed.color.b - b / 255) < epsilon
+        );
+      });
+
+      if (originalRGB) {
+        const [r, g, b] = originalRGB;
+
+        // Khai báo rõ đầu vào là sRGB để Three.js chuyển đúng
+        // sang không gian màu linear dùng cho tính toán ánh sáng.
+        fixed.color.setRGB(
+          r / 255,
+          g / 255,
+          b / 255,
+          THREE.SRGBColorSpace
+        );
+      }
+    }
+
+    materials.set(material.uuid, fixed);
+    return fixed;
+  };
       object.material = Array.isArray(object.material) ? object.material.map(clone) : clone(object.material);
     });
     copy.updateMatrixWorld(true);
@@ -47,7 +139,8 @@ function ModelRig({ product, exhibit, settings, active, motionEnabled, inspect, 
     const size = bounds.getSize(new THREE.Vector3());
     const scale = exhibit.modelSize / (Math.max(size.x, size.y, size.z) || 1);
     return { copy, center, scale, materials: [...materials.values()] };
-  }, [scene, exhibit.modelSize]);
+  // }, [scene, exhibit.modelSize]);
+  }, [scene, exhibit.modelSize, product.modelUrl]);
   useEffect(() => {
     model.materials.forEach(material => { material.wireframe = wireframe; material.needsUpdate = true; });
     invalidate();
@@ -125,15 +218,23 @@ function ContextLifecycle({ onFailure }) {
   }, [gl, onFailure]);
   return null;
 }
-function NoWebGL({ onFailure }) { useEffect(() => onFailure(), [onFailure]); return null; }
+// function NoWebGL({ onFailure }) { useEffect(() => onFailure(), [onFailure]); return null; }
 const HeroScene = forwardRef(function HeroScene({ product, exhibit, settings, active, motionEnabled, inspect, wireframe, onReady, onFailure }, apiRef) {
   const rig = useRef(null);
   return <Canvas key={product.modelUrl} dpr={[1, settings.maxDpr]}
     camera={{ position: settings.camera, fov: settings.fov, near: 0.1, far: 40 }}
     frameloop={active && motionEnabled && !inspect ? 'always' : 'demand'}
     gl={{ alpha: true, antialias: true, powerPreference: 'default' }}
-    onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = settings.exposure; }}
-    fallback={<NoWebGL onFailure={onFailure} />}>
+    // onCreated={({ gl }) => { 
+    //   gl.toneMapping = THREE.ACESFilmicToneMapping;
+    //   gl.toneMappingExposure = settings.exposure; }}
+    onCreated={({ gl }) => {
+      gl.toneMapping = THREE.NeutralToneMapping;
+      gl.toneMappingExposure = settings.exposure ?? 1.0;
+      gl.outputColorSpace = THREE.SRGBColorSpace;
+    }}
+    // fallback={<NoWebGL onFailure={onFailure} />}>
+    fallback={null}>
     <ContextLifecycle onFailure={onFailure} />
     <StudioLighting settings={settings} />
     <Suspense fallback={null}>

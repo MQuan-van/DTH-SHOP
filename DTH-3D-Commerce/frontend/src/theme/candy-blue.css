@@ -1,0 +1,174 @@
+/*
+ * DTH / Candy Blue + Pearl White
+ * UI colours only. Never recolour <img>, <canvas>, GLB materials or finish swatches.
+ * Loaded once from src/index.css. html:root specificity keeps lazy route CSS
+ * from restoring the former charcoal/lime palette.
+ */
+html:root {
+  color-scheme: light;
+  --candy-blue: #0066e6;
+  --candy-deep: #003a8c;
+  --candy-highlight: #53abff; /* Decoration only; not small text on white. */
+  --candy-pearl: #f5f8fc;
+  --candy-surface: #ffffff;
+  --candy-panel: #edf3fa;
+  --candy-tint: #e9f2ff;
+  --candy-text: #0f1c2e;
+  --candy-muted: #516174;
+  --candy-line: #cfdae7; /* Decorative separators. */
+  --candy-control-line: #7b8ea5; /* Interactive control boundaries. */
+  --candy-success: #17613f;
+  --candy-warning: #8c3c16;
+  --candy-danger: #a12d36;
+  --candy-on-blue: #ffffff;
+  --candy-blue-rgb: 0, 102, 230;
+  --candy-text-rgb: 15, 28, 46;
+  color: var(--candy-text);
+  background: var(--candy-pearl);
+}
+
+/* Legacy variable names retained for compatibility with existing components. */
+html:root .dth-store {
+  --ink: var(--candy-pearl);
+  --panel: var(--candy-surface);
+  --panel-2: var(--candy-panel);
+  --line: var(--candy-line);
+  --muted: var(--candy-muted);
+  --white: var(--candy-text);
+  --lime: var(--candy-blue);
+  background: var(--candy-pearl);
+  color: var(--candy-text);
+  accent-color: var(--candy-blue);
+}
+html:root .home-studio {
+  --home-accent: var(--candy-blue);
+  --home-muted: var(--candy-muted);
+  --home-line: var(--candy-line);
+  background: var(--candy-pearl);
+  color: var(--candy-text);
+}
+html:root ::selection { background: #c6ddff; color: var(--candy-text); }
+html:root .dth-store input::placeholder,
+html:root .dth-store textarea::placeholder { color: var(--candy-muted); opacity: 1; }
+
+/* Shell / identity. Layout, breakpoints and interaction handlers are untouched. */
+html:root .dth-store .dth-header {
+  background: rgba(255,255,255,.95);
+  border-bottom-color: var(--candy-line);
+  color: var(--candy-text);
+}
+html:root .dth-store .dth-demo-banner {
+  background: var(--candy-panel);
+  color: var(--candy-muted);
+}
+html:root .dth-brand,
+html:root .dth-footer-brand { color: var(--candy-text); }
+html:root .dth-brand-symbol { color: var(--candy-blue); }
+html:root .dth-navigation a { color: var(--candy-muted); }
+html:root .dth-navigation a:hover,
+html:root .dth-navigation a.active { color: var(--candy-blue); }
+html:root .dth-bag-button span {
+  background: var(--candy-blue);
+  color: var(--candy-on-blue);
+}
+html:root .dth-eyebrow>span { box-shadow: 0 0 12px rgba(var(--candy-blue-rgb),.18); }
+html:root .dth-footer { background: var(--candy-surface); border-color: var(--candy-line); }
+
+/* Buttons: solid blue carries white labels; bright blue is used for highlights. */
+html:root .dth-primary {
+  background: var(--candy-blue)!important;
+  border-color: var(--candy-blue)!important;
+  color: var(--candy-on-blue)!important;
+  box-shadow: 0 6px 18px rgba(var(--candy-blue-rgb),.12);
+}
+html:root .dth-primary:hover:not(:disabled) {
+  background: var(--candy-deep)!important;
+  border-color: var(--candy-deep)!important;
+}
+html:root .dth-ghost {
+  background: var(--candy-surface)!important;
+  border-color: var(--candy-control-line)!important;
+  color: var(--candy-text)!important;
+}
+html:root .dth-ghost:hover:not(:disabled) { background: var(--candy-tint)!important; }
+html:root .dth-danger {
+  background: #fff2f2!important;
+  border-color: var(--candy-danger)!important;
+  color: var(--candy-danger)!important;
+}
+html:root .dth-skip,
+html:root .dth-toast {
+  background: var(--candy-blue);
+  color: var(--candy-on-blue)!important;
+  box-shadow: 0 8px 32px rgba(var(--candy-text-rgb),.17);
+}
+
+/* Home legacy cards and non-Hero routes use the same palette. */
+html:root .dth-hero-word {
+  color: rgba(var(--candy-blue-rgb),.025);
+  -webkit-text-stroke-color: rgba(var(--candy-blue-rgb),.12);
+}
+html:root .dth-workflow { background: var(--candy-surface); }
+html:root .dth-workflow i { color: var(--candy-muted); }
+html:root .dth-category-links a { background: var(--candy-surface); border-color: var(--candy-control-line); }
+html:root .dth-category-links a span { color: var(--candy-blue); }
+html:root .dth-category-links a:hover { background: var(--candy-blue); color: var(--candy-on-blue); border-color: var(--candy-blue); }
+html:root .dth-category-links a:hover span { color: var(--candy-on-blue); }
+html:root .dth-card-image { background: var(--candy-panel); border-color: var(--candy-line); }
+/* Current catalog PNGs have a baked-in charcoal background. Keep the image
+   pixels intact rather than applying a filter that also changes product colour. */
+html:root .dth-3d-tag { color: #ffffff; background: #142b4de6; }
+html:root .dth-card-arrow { color: var(--candy-highlight); }
+html:root .dth-card-title>span { color: var(--candy-text); }
+html:root .dth-fit-compatible { color: var(--candy-success)!important; }
+html:root .dth-fit-incompatible,
+html:root .dth-fit-unknown { color: var(--candy-warning)!important; }
+html:root .dth-fit-banner {
+  border-color: var(--candy-line);
+  background: linear-gradient(110deg,var(--candy-tint),var(--candy-surface));
+}
+html:root .dth-fit-mark,
+html:root .dth-featured-caption .dth-round-arrow { border-color: var(--candy-blue); color: var(--candy-blue); }
+
+/* Product-detail viewer: DOM background only, no renderer/material changes. */
+html:root .dth-viewer {
+  background: radial-gradient(ellipse at 55% 40%,#dae6f14d,transparent 70%),var(--candy-panel);
+  border-color: var(--candy-line);
+}
+html:root .dth-viewer:before {
+  background-image: linear-gradient(#0066e607 1px,transparent 1px),linear-gradient(90deg,#0066e607 1px,transparent 1px);
+}
+html:root .dth-viewer-hero { background: radial-gradient(ellipse at 50% 45%,#dae6f180,transparent 68%); }
+html:root .dth-viewer-top,
+html:root .dth-viewer-bottom { color: var(--candy-muted); }
+html:root .dth-viewer-controls { background: rgba(255,255,255,.96); border-color: var(--candy-control-line); }
+html:root .dth-viewer-controls button:hover:not(:disabled),
+html:root .dth-viewer-controls button[aria-pressed="true"] { background: var(--candy-tint); color: var(--candy-blue); }
+
+/* Catalog / forms / vehicle selection. */
+html:root .dth-search { border-color: var(--candy-control-line); background: var(--candy-surface); }
+html:root .dth-filter-panel>button.is-active { background: var(--candy-tint); color: var(--candy-blue); }
+html:root .dth-filter-vehicle { border-color: var(--candy-line); background: var(--candy-tint); }
+html:root .dth-store select,
+html:root .dth-form input,
+html:root .dth-form select,
+html:root .dth-form textarea {
+  background: var(--candy-surface);
+  border-color: var(--candy-control-line);
+  color: var(--candy-text);
+}
+html:root .dth-store select:disabled,
+html:root .dth-form input:disabled,
+html:root .dth-form textarea:disabled { background: var(--candy-panel); color: var(--candy-muted); }
+html:root .dth-detail-price>span { border-color: var(--candy-line); }
+html:root .dth-finish>span { border-color: var(--candy-line); } /* Preserve inline product swatch background. */
+html:root .dth-fit-box { border-color: var(--candy-control-line); background: var(--candy-tint); }
+html:root .dth-detail-accordion dd { color: var(--candy-text); }
+html:root .dth-bag-item img { border-color: var(--candy-line); }
+html:root .dth-order-summary { background: var(--candy-surface); border-color: var(--candy-line); }
+html:root .dth-total { border-color: var(--candy-line); }
+html:root .dth-dialog { background: var(--candy-surface); color: var(--candy-text); border-color: var(--candy-line); box-shadow: 0 30px 100px #0f1c2e30; }
+html:root .dth-dialog::backdrop { background: #0f1c2e70; }
+html:root .dth-complete-mark { background: #eaf5ed; border-color: var(--candy-success); color: var(--candy-success); }
+html:root .dth-notice-panel { background: var(--candy-surface); }
+html:root .dth-error { color: var(--candy-danger)!important; border-left-color: var(--candy-danger); }

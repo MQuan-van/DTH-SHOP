@@ -129,3 +129,56 @@
 }
 @media(max-width:359px) { .inner { padding-inline:12px; }.pitch h1 { font-size:15px; }.motionToggle { font-size:6px!important; }.topline p { font-size:6px; }.bottomline { flex-wrap:wrap;gap:0; }.utilityControls { margin-left:auto; }.exhibitTabs { width:100%;justify-content:space-between; }.scrollNote>span:last-child { display:none; } }
 @media(prefers-reduced-motion:reduce) { .orbitTrack,.orbitDot { animation:none; }.exploreLink svg { transition:none; } }
+
+
+/* Candy Blue + Pearl White: colour-only overrides.
+   Original geometry, media queries, keyframes and pause/reduced-motion rules
+   above are deliberately preserved. GLB materials are not touched here. */
+.hero { background: var(--candy-pearl); color: var(--candy-text); }
+.grid {
+  background-image: linear-gradient(#0066e609 1px,transparent 1px),linear-gradient(90deg,#0066e609 1px,transparent 1px);
+}
+.spotlight {
+  background: radial-gradient(ellipse 30% 46% at 51% 40%,#ffffffd9,transparent),radial-gradient(ellipse 48% 22% at 50% 68%,#a9c9eb33,transparent);
+}
+.topline { border-bottom-color: var(--candy-line); }
+.statusDot { background: var(--candy-blue); box-shadow: 0 0 14px #0066e620; }
+.edition, .micro, .pitch>.micro, .pitch>p { color: var(--candy-muted); }
+.backdrop span {
+  color: #0066e603;
+  -webkit-text-stroke-color: #426e9b2b;
+}
+.orbitTrack { border-color: #0066e626; border-top-color: #0066e670; border-bottom-color: #0066e65c; }
+.orbitTrack::before { border-color: #0066e623; }
+.orbitInner { border-color: #003a8c17; }
+.orbitDot::after { background: var(--candy-blue); box-shadow: 0 0 15px #53abff80; }
+.floor { background: radial-gradient(ellipse,#ffffff99 0%,#778ca945 40%,transparent 70%); }
+.floor>span { border-color: #728ead66; }
+.floor>i { border-bottom-color: var(--candy-blue); box-shadow: 0 5px 18px -10px #0066e6; }
+.exploreLink { border-bottom-color: var(--candy-blue); }
+.geometry .leader, .finish .leader { background: linear-gradient(90deg,#0066e670,#0066e630); }
+.geometry .leader::after, .finish .leader::before { border-color: var(--candy-blue); }
+.swatches>span { border-color: var(--candy-control-line); } /* Keep material colours unchanged. */
+.swatches small, .fitment>small { color: var(--candy-muted); }
+.fitment { border-top-color: var(--candy-line); }
+.compatible { color: var(--candy-success)!important; }
+.scale>span, .scale>small { color: var(--candy-muted); }
+.scale>i { border-right-color: #728ead59; background: repeating-linear-gradient(0deg,transparent 0 9px,#728ead66 9px 10px); }
+.sceneState, .sceneState>span:last-child { color: var(--candy-muted); }
+.controlDeck { border-color: var(--candy-line); background: linear-gradient(90deg,#e9f2ff99,#ffffffb3 50%,#e9f2ff70); }
+.productNumber>small, .productIdentity p>span { color: var(--candy-muted); }
+.productIdentity p { color: var(--candy-text); }
+.inspectButton { background: var(--candy-surface)!important; border-color: var(--candy-control-line)!important; color: var(--candy-blue)!important; }
+.inspectButton:hover:not(:disabled) { background: var(--candy-tint)!important; box-shadow: 0 0 28px #0066e60c; }
+.inspectButton.inspectActive { background: var(--candy-tint)!important; color: var(--candy-blue)!important; }
+.hero .productLink { background: var(--candy-blue); border-color: var(--candy-blue); color: var(--candy-on-blue); box-shadow: 0 6px 20px #0066e624; }
+.productLink>span { color: var(--candy-on-blue); }
+.hero .productLink:hover { background: var(--candy-deep); border-color: var(--candy-deep); }
+.exhibitTabs>button { color: var(--candy-muted)!important; }
+.exhibitTabs>button>span { color: var(--candy-muted); }
+.exhibitTabs>button[aria-pressed="true"], .exhibitTabs>button[aria-pressed="true"]>span { color: var(--candy-blue)!important; }
+.exhibitTabs>button[aria-pressed="true"] { border-bottom-color: var(--candy-blue)!important; }
+.utilityControls>button { color: var(--candy-muted)!important; }
+.utilityControls>button[aria-pressed="true"], .utilityControls>button:hover:not(:disabled) { color: var(--candy-blue)!important; background: var(--candy-tint); }
+.accessibleControls>button { background: var(--candy-surface); border-color: var(--candy-control-line)!important; }
+.scrollNote { border-top-color: var(--candy-line); color: var(--candy-muted); }

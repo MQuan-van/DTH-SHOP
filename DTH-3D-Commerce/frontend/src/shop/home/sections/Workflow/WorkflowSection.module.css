@@ -6,3 +6,8 @@
 .step p { font-size:10px;color:var(--home-muted);margin-top:7px; }
 .step>i { font-style:normal;color:#74806e;font-size:19px;margin-left:auto;padding-right:20px; }
 @media(max-width:650px) { .grid { gap:23px;grid-template-columns:1fr; }.section { padding-block:24px; }.step>i { display:none; }.step p { margin-top:4px; }.step h2 { font-size:12px; } }
+
+
+/* Candy palette only; preserve section order and reduced-motion behaviour. */
+.section { background: var(--candy-surface); }
+.step>i { color: var(--candy-muted); }

@@ -4,3 +4,9 @@
 .actions { display:flex;flex-direction:column;align-items:center;gap:8px; }.actions>button { font-size:11px!important; }
 @media(max-width:950px) { .section { flex-wrap:wrap;padding:28px; }.copy { min-width:250px; }.actions { margin-left:88px; } }
 @media(max-width:650px) { .section { margin-bottom:35px;padding:24px;gap:20px; }.mark { width:44px;height:44px; }.copy { min-width:0;flex-basis:calc(100% - 70px); }.copy h2 { font-size:24px!important; }.actions { margin-left:0;align-items:stretch;width:100%; }.copy>small { font-size:7px; } }
+
+
+/* Candy palette only; the selected vehicle state remains unchanged. */
+.section { background: linear-gradient(110deg,var(--candy-tint),var(--candy-surface)); border-color: var(--candy-line); }
+.mark { border-color: var(--candy-blue); }
+.copy>small { color: var(--candy-muted); }

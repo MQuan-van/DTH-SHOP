@@ -14,6 +14,7 @@ def checked(name):
     print('PASS:', name, flush=True)
 
 def screenshot(page, name):
+    page.wait_for_timeout(450)
     page.screenshot(path=str(out / (name + '.png')), full_page=True)
 
 def no_overflow(page):
@@ -28,7 +29,8 @@ with sync_playwright() as p:
         page.goto(base + '/account')
         expect(page.get_by_role('heading', name='Welcome back.')).to_be_visible()
         no_overflow(page); screenshot(page, '01-sign-in-desktop')
-        checked('Login page renders from the real built React application')
+        assert page.get_by_role('button', name='Sign in', exact=True).evaluate("e => getComputedStyle(e).backgroundColor") == 'rgb(0, 102, 204)'
+        checked('Login page renders from real React; primary button retains theme')
         page.get_by_role('button', name='Create account', exact=True).click()
         page.get_by_label('Email', exact=True).fill(email)
         page.get_by_label('Password', exact=True).fill(password)
@@ -45,7 +47,7 @@ with sync_playwright() as p:
         page.get_by_label('Model', exact=True).select_option(label='Street 155')
         page.get_by_label('Year', exact=True).select_option(label='2022')
         page.get_by_role('button', name='Save vehicle', exact=True).click()
-        expect(page.get_by_role('status').filter(has_text='Vehicle saved to your account.')).to_be_visible()
+        expect(page.locator('main p[role="status"]').filter(has_text='Vehicle saved to your account.')).to_be_visible()
         me = context.request.get(base + '/api/shop/auth/me').json()
         assert me['user']['savedVehicleId'] == 'street155-2022'
         screenshot(page, '02-saved-vehicle-desktop')
@@ -75,7 +77,7 @@ with sync_playwright() as p:
         page.goto(base + '/account')
         expect(page.get_by_role('heading', name='Your account.')).to_be_visible()
         screenshot(page, '05-overview-desktop')
-        page.get_by_role('button', name='Sign out', exact=True).click()
+        page.get_by_role('navigation', name='Account navigation').locator('..').get_by_role('button', name='Sign out', exact=True).click()
         expect(page.get_by_role('heading', name='Welcome back.')).to_be_visible()
         assert context.request.get(base + '/api/shop/auth/me').json()['user'] is None
         checked('Logout revokes server session')

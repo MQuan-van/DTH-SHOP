@@ -54,7 +54,7 @@ with sync_playwright() as p:
         checked('Vehicle picker saves through the real API')
         page.reload()
         expect(page.get_by_label('Year', exact=True)).to_have_value('2022')
-        expect(page.get_by_role('button', name=re.compile('Street 155'))).to_be_visible()
+        expect(page.locator('.dth-header .dth-vehicle-button')).to_contain_text('Street 155')
         checked('Full page reload restores saved vehicle and header selection')
         page.goto(base + '/products/apex-suspension')
         page.get_by_role('button', name='Add to bag', exact=True).click()

@@ -111,7 +111,7 @@ export default function HeroSection({ config, motion, motionEnabled, reduced, on
         <div className={styles.orbit} aria-hidden="true"><div className={styles.orbitTrack} /><div className={styles.orbitInner} /><span className={styles.orbitDot} /></div>
         <div className={styles.floor} aria-hidden="true"><span /><i /></div>
         <div className={styles.pitch} data-enter>
-          <span className={styles.micro}>A CLOSER LOOK CHANGES EVERYTHING</span>
+          {/* <span className={styles.micro}>A CLOSER LOOK CHANGES EVERYTHING</span> */}
           <h1>{config.headline[0]}<br /><em>{config.headline[1]}</em></h1>
           <p>{config.description}</p>
           <Link className={styles.exploreLink} to="/shop">Explore the collection <Icon name="arrow" /></Link>
@@ -146,10 +146,7 @@ export default function HeroSection({ config, motion, motionEnabled, reduced, on
           <small>SYNTHETIC FITMENT DATA</small>
         </div>
         <div className={styles.scale} aria-hidden="true"><span>360°</span><i /><small>FORM / FINISH / PERSPECTIVE</small></div>
-        <div className={styles.sceneState} role="status" aria-live="polite">
-          <span className={styles.statusDot} />{fallback ? 'STATIC PREVIEW' : status === 'loading' ? 'PREPARING 3D' : inspect ? 'INSPECTION MODE' : 'LIVE 3D / GLB'}
-          <span>{inspect ? 'Drag to rotate · Scroll to zoom · Esc to exit' : 'Original demo model · Not measured specifications'}</span>
-        </div>
+
       </div>
       <div className={styles.controlDeck} data-enter>
         <div className={styles.productIdentity}><span className={styles.productNumber}>{serial}<small> / {String(exhibits.length).padStart(2, '0')}</small></span><div><span className={styles.micro}>IN THE STUDIO / {activeExhibit.label.toUpperCase()}</span><h2>{product.name}</h2><p>{formatMoney(product.price)} <span>DEMO PRICE</span></p></div></div>

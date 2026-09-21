@@ -9,3 +9,9 @@
 .card:hover { background:#222c1d; }.card:hover .arrow { transform:translate(2px,-2px); }
 @media(max-width:800px) { .grid { grid-template-columns:repeat(3,minmax(0,1fr)); }.card { padding:19px 15px; }.section { padding-block:40px 20px; } }
 @media(max-width:480px) { .grid { grid-template-columns:repeat(2,minmax(0,1fr)); }.index { margin-bottom:10px; }.card:last-child { grid-column:1/-1; }.total { font-size:7px; } }
+
+/* === DTH CANDY WHITE: colours only === */
+.card { background: var(--dth-surface); border-color: var(--dth-line); }
+.index { color: var(--dth-muted); }
+.card:hover { background: var(--dth-surface-tint); }
+/* === END DTH CANDY WHITE === */

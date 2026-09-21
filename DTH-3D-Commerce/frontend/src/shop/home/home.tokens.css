@@ -12,3 +12,15 @@ html[data-dth-home="true"] .dth-demo-banner { min-height:28px;padding-block:6px;
 .home-studio .home-link svg { width:17px;height:17px; }
 .home-studio[data-motion="off"] *, .home-studio[data-motion="off"] *::before, .home-studio[data-motion="off"] *::after { animation-play-state:paused!important;scroll-behavior:auto!important; }
 @media(max-width:650px) { html[data-dth-home="true"] .dth-header { min-height:76px;padding-block:10px;gap:12px; }html[data-dth-home="true"] .dth-navigation { gap:20px; }.home-studio .home-heading { align-items:start;flex-direction:column;gap:8px; }.home-studio .dth-container { width:calc(100% - 36px); } }
+
+/* === DTH CANDY WHITE: Home palette, layout/animations unchanged === */
+.home-studio {
+  --home-accent: var(--dth-action);
+  --home-muted: var(--dth-muted);
+  --home-line: var(--dth-line);
+  background: var(--dth-page);
+  color: var(--dth-text);
+}
+html[data-dth-home="true"] .dth-header { background: var(--dth-header-glass); border-color: var(--dth-line); }
+html[data-dth-home="true"] .dth-demo-banner { background: var(--dth-surface-tint); color: var(--dth-muted); }
+/* === END DTH CANDY WHITE === */

@@ -23,7 +23,19 @@
 .motionToggle:hover { color:var(--home-accent)!important; }
 .display { position:relative; height:clamp(510px,59vh,630px); }
 .backdrop { position:absolute;inset:15px 0 auto;z-index:0;text-align:center;pointer-events:none;overflow:hidden; }
-.backdrop span { display:block;font-size:clamp(170px,23vw,328px);font-weight:850;line-height:1.05;letter-spacing:.07em;padding-left:.07em;color:#c8d1c20b;-webkit-text-stroke:1px #c8d1c228;mask-image:linear-gradient(black 20%,#0009 65%,transparent); }
+.backdrop span { 
+  display:block;
+  font-size:clamp(170px,23vw,328px);
+  font-weight:850;
+  line-height:1.05;
+  letter-spacing:.07em;
+  padding-left:.07em;
+  color:rgba(0, 102, 204, 0.045);
+  -webkit-text-stroke:1.8px rgba(0, 102, 204, 0.28);
+  text-spacing:.07em;
+  text-shadow:
+    0 0 28px rgba(0, 194, 255, 0.08);
+  mask-image:linear-gradient(black 20%,#0009 65%,transparent); }
 .orbit { position:absolute;left:50%;top:12%;width:min(42vw,510px);aspect-ratio:1;transform:translateX(-50%);pointer-events:none; }
 .orbitTrack { position:absolute;inset:0;border:1px solid #c5dca81a;border-radius:50%;border-top-color:#c8dd9a42;border-bottom-color:#c8dd9a42;animation:orbitTurn var(--ring-period,55s) linear infinite; }
 .orbitTrack::before { content:'';position:absolute;inset:12px;border:1px dashed #a7b69119;border-radius:50%; }
@@ -129,3 +141,55 @@
 }
 @media(max-width:359px) { .inner { padding-inline:12px; }.pitch h1 { font-size:15px; }.motionToggle { font-size:6px!important; }.topline p { font-size:6px; }.bottomline { flex-wrap:wrap;gap:0; }.utilityControls { margin-left:auto; }.exhibitTabs { width:100%;justify-content:space-between; }.scrollNote>span:last-child { display:none; } }
 @media(prefers-reduced-motion:reduce) { .orbitTrack,.orbitDot { animation:none; }.exploreLink svg { transition:none; } }
+
+/* === DTH CANDY WHITE: keep the stage, rings and interaction untouched === */
+.hero { background: var(--dth-page); border-color: var(--dth-line); }
+.grid { background-image: linear-gradient(rgba(0,102,204,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(0,102,204,.035) 1px,transparent 1px); }
+.spotlight { background: radial-gradient(ellipse 30% 46% at 51% 40%,rgba(0,194,255,.09),transparent),radial-gradient(ellipse 48% 22% at 50% 68%,rgba(0,102,204,.04),transparent); }
+.topline { border-color: var(--dth-line); }
+.statusDot { background: var(--dth-candy); box-shadow: 0 0 14px rgba(0,194,255,.25); }
+.edition { color: var(--dth-muted); }
+.backdrop span { color: rgba(0,102,204,.018); -webkit-text-stroke-color: rgba(0,102,204,.13); }
+.orbitTrack { border-color: rgba(0,136,184,.18); border-top-color: rgba(0,136,184,.38); border-bottom-color: rgba(0,136,184,.38); }
+.orbitTrack::before { border-color: rgba(0,136,184,.15); }
+.orbitInner { border-color: rgba(0,136,184,.12); }
+.orbitDot::after { background: var(--dth-candy); box-shadow: 0 0 15px rgba(0,194,255,.45); }
+.floor { background: radial-gradient(ellipse,rgba(0,151,207,.08) 0%,rgba(31,70,92,.10) 40%,transparent 70%); }
+.floor>span { border-color: rgba(0,147,193,.32); }
+.floor>i { border-bottom-color: rgba(0,162,214,.75); box-shadow: 0 5px 18px -10px var(--dth-candy); }
+.pitch>.micro,.pitch>p { color: var(--dth-muted); }
+.exploreLink { border-color: var(--dth-action); color: var(--dth-text); }
+.exploreLink:hover { color: var(--dth-action); }
+.geometry .leader { background: linear-gradient(90deg,rgba(0,102,204,.35),rgba(0,102,204,.16)); }
+.geometry .leader::after { border-color: var(--dth-action); }
+.finish .leader { background: linear-gradient(90deg,rgba(0,102,204,.16),rgba(0,102,204,.35)); }
+.finish .leader::before { border-color: var(--dth-action); }
+/* Do not recolour either material swatch: the first is inline catalog data. */
+.swatches>span { border-color: var(--dth-line-strong); }
+.swatches small { color: var(--dth-muted); }
+.fitment { border-color: var(--dth-line); }
+.fitment>small { color: var(--dth-muted); }
+.compatible { color: var(--dth-success)!important; }
+.scale>span,.scale>small { color: var(--dth-muted); }
+.scale>i { border-color: rgba(0,102,204,.25); background: repeating-linear-gradient(0deg,transparent 0 9px,rgba(0,102,204,.30) 9px 10px); }
+.sceneState { color: var(--dth-action); }
+.sceneState>span:last-child { color: var(--dth-muted); }
+.controlDeck { border-color: var(--dth-line); background: linear-gradient(90deg,rgba(231,245,251,.72),rgba(255,255,255,.5) 50%,rgba(231,245,251,.60)); }
+.productNumber>small { color: var(--dth-muted); }
+.productIdentity p { color: var(--dth-text); }
+.productIdentity p>span { color: var(--dth-muted); }
+.inspectButton { background: var(--dth-action)!important; color: var(--dth-on-action)!important; border-color: var(--dth-action)!important; box-shadow: 0 6px 20px rgba(0,102,204,.12); }
+.inspectButton:hover:not(:disabled) { background: var(--dth-action-hover)!important; box-shadow: 0 8px 24px rgba(0,102,204,.18); }
+.inspectButton.inspectActive { background: var(--dth-action-soft)!important; color: var(--dth-action)!important; }
+.inspectButton.inspectActive:hover:not(:disabled) { background: #D4E9FF!important; color: var(--dth-action)!important; }
+.productLink { border-color: var(--dth-line-strong); background: var(--dth-surface); color: var(--dth-text); }
+.productLink:hover { background: var(--dth-action-soft); border-color: var(--dth-action); color: var(--dth-action); }
+.exhibitTabs>button { color: var(--dth-muted)!important; }
+.exhibitTabs>button>span { color: var(--dth-muted); }
+.exhibitTabs>button[aria-pressed="true"] { color: var(--dth-action)!important; border-bottom-color: var(--dth-action)!important; }
+.exhibitTabs>button[aria-pressed="true"]>span { color: var(--dth-action); }
+.utilityControls>button { color: var(--dth-muted)!important; }
+.utilityControls>button[aria-pressed="true"],.utilityControls>button:hover:not(:disabled) { color: var(--dth-action)!important; background: var(--dth-action-soft); }
+.accessibleControls>button { border-color: var(--dth-line-strong)!important; background: var(--dth-surface); }
+.scrollNote { color: var(--dth-muted); border-color: var(--dth-line); }
+/* === END DTH CANDY WHITE === */

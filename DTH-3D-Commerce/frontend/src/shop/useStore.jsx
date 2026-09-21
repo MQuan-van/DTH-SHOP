@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { currentUser, loadCatalog, logout as apiLogout } from './api';
 const StoreContext = createContext(null);
 const CART_KEY = 'dth.commerce.bag.v1';
@@ -16,17 +16,37 @@ export function StoreProvider({ children }) {
   const [loading, setLoading] = useState(true), [error, setError] = useState('');
   const [bag, setBag] = useState(readCart);
   const [vehicleId, setVehicle] = useState(() => { const id = safeRead(VEHICLE_KEY, ''); return typeof id === 'string' ? id : ''; });
-  const [user, setUser] = useState(null), [authLoading, setAuthLoading] = useState(true);
+  const [user, setUserState] = useState(null), [authLoading, setAuthLoading] = useState(true);
   const [notice, setNotice] = useState(''), [lastOrder, setLastOrder] = useState(null);
+  const userRef = useRef(null), authEpoch = useRef(0);
+  const setUser = useCallback(next => {
+    authEpoch.current += 1;
+    const previous = userRef.current;
+    userRef.current = next;
+    setUserState(next);
+    setAuthLoading(false);
+    if (previous?.id !== next?.id) {
+      setLastOrder(null);
+      setVehicle(next?.savedVehicleId || '');
+      if (previous) setBag([]);
+    }
+  }, []);
   async function refresh() {
     setLoading(true); setError('');
     try { setData(await loadCatalog()); } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   }
   useEffect(() => { let live = true; loadCatalog().then(d => live && setData(d)).catch(e => live && setError(e.message)).finally(() => live && setLoading(false)); return () => { live = false; }; }, []);
-  useEffect(() => { let live = true; currentUser().then(u => live && setUser(u)).catch(() => {}).finally(() => live && setAuthLoading(false)); return () => { live = false; }; }, []);
-  useEffect(() => { try { localStorage.setItem(CART_KEY, JSON.stringify(bag)); } catch { /* Bag still works in memory. */ } }, [bag]);
-  useEffect(() => { try { localStorage.setItem(VEHICLE_KEY, JSON.stringify(vehicleId)); } catch { /* Private browsing may restrict storage. */ } }, [vehicleId]);
+  useEffect(() => {
+    let live = true;
+    const epoch = authEpoch.current;
+    currentUser().then(u => {
+      if (live && epoch === authEpoch.current) setUser(u);
+    }).catch(() => {}).finally(() => { if (live) setAuthLoading(false); });
+    return () => { live = false; };
+  }, [setUser]);
+  useEffect(() => { try { localStorage.setItem(CART_KEY, JSON.stringify(bag)); } catch { } }, [bag]);
+  useEffect(() => { try { localStorage.setItem(VEHICLE_KEY, JSON.stringify(vehicleId)); } catch { } }, [vehicleId]);
   useEffect(() => { if (!notice) return; const t = setTimeout(() => setNotice(''), 4500); return () => clearTimeout(t); }, [notice]);
   function add(product, chosenVehicle = vehicleId, quantity = 1) {
     if (!data.vehicles.some(v => v.id === chosenVehicle) || !product.vehicleIds?.includes(chosenVehicle)) {
@@ -38,7 +58,7 @@ export function StoreProvider({ children }) {
     setBag(items => existing ? items.map(i => `${i.productId}:${i.vehicleId}` === key ? { ...i, quantity: i.quantity + quantity } : i) : [...items, { productId: product.id, vehicleId: chosenVehicle, quantity }]);
     setNotice(`${product.name} added to your bag.`); return true;
   }
-  const value = useMemo(() => ({ data, loading, error, refresh, bag, setBag, vehicleId, setVehicle, user, setUser, authLoading, add, notice, setNotice, lastOrder, setLastOrder, logout: async () => { await apiLogout(); setUser(null); setLastOrder(null); setBag([]); } }), [data, loading, error, bag, vehicleId, user, authLoading, notice, lastOrder]);
+  const value = useMemo(() => ({ data, loading, error, refresh, bag, setBag, vehicleId, setVehicle, user, setUser, authLoading, add, notice, setNotice, lastOrder, setLastOrder, logout: async () => { await apiLogout(); setUser(null); setLastOrder(null); setBag([]); setVehicle(''); } }), [data, loading, error, bag, vehicleId, user, authLoading, notice, lastOrder]);
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
 export function useStore() { const context = useContext(StoreContext); if (!context) throw new Error('Missing StoreProvider'); return context; }

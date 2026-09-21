@@ -1,4 +1,5 @@
 import express from 'express';
+import { vehiclePreference, orderQuery, literalSearch } from '../../shared/account.mjs';
 import cors from 'cors';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -7,7 +8,7 @@ import { InputError, normalizeItems, quoteOrder, validateProduct, validateRegist
 import { Product, Vehicle, User, Session, Order } from './models.mjs';
 import { cookieToken, digest, hashPassword, randomToken, rateLimiter, verifyPassword } from './security.mjs';
 const asyncRoute = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
-const userView = user => ({ id: String(user._id), email: user.email, role: user.role });
+const userView = user => ({ id: String(user._id), email: user.email, role: user.role, savedVehicleId: user.savedVehicleId || '', createdAt: user.createdAt });
 const orderView = order => ({ id: order.id, lines: order.lines, total: order.total, subtotal: order.subtotal, delivery: order.delivery, currency: order.currency, paymentStatus: order.paymentStatus, status: order.status, demoOnly: true, createdAt: order.createdAt });
 export async function makeApp() {
   const app = express();
@@ -81,13 +82,45 @@ export async function makeApp() {
   }));
   router.delete('/auth/account', authenticated, authLimit, asyncRoute(async (req, res) => {
     if (!(await verifyPassword(req.body?.password, req.auth.user.passwordHash))) throw new InputError('Password is incorrect.', 401);
-    // Disable first: a partial deletion cannot leave the account able to sign in.
     await User.updateOne({ _id: req.auth.user._id }, { $set: { disabled: true } });
     await Session.deleteMany({ userId: req.auth.user._id });
     await Order.deleteMany({ userId: req.auth.user._id });
     await User.deleteOne({ _id: req.auth.user._id });
     const { maxAge, ...clearOptions } = cookieOptions;
     res.clearCookie('dth_commerce_session', clearOptions).json({ success: true });
+  }));
+  // Account routes share the existing authenticated middleware (cookie + CSRF + Origin).
+  router.put('/account/vehicle', authenticated, writeLimit, asyncRoute(async (req, res) => {
+    const savedVehicleId = vehiclePreference(req.body);
+    if (savedVehicleId && !await Vehicle.exists({ id: savedVehicleId })) {
+      throw new InputError('This vehicle is no longer in the catalog.', 409);
+    }
+    const user = await User.findOneAndUpdate(
+      { _id: req.auth.user._id, disabled: false },
+      { $set: { savedVehicleId } },
+      { new: true, runValidators: true }
+    );
+    if (!user) throw new InputError('Please sign in again.', 401);
+    res.json({ user: userView(user) });
+  }));
+  router.get('/account/orders', authenticated, asyncRoute(async (req, res) => {
+    const { page, pageSize, search } = orderQuery(req.query);
+    const query = { userId: req.auth.user._id };
+    if (search) query.$or = [
+      { id: { $regex: literalSearch(search), $options: 'i' } },
+      { 'lines.name': { $regex: literalSearch(search), $options: 'i' } },
+    ];
+    const [total, orders] = await Promise.all([
+      Order.countDocuments(query),
+      Order.find(query).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * pageSize).limit(pageSize).lean(),
+    ]);
+    res.json({ data: orders.map(orderView), total, page, pageSize });
+  }));
+  router.get('/account/orders/:id', authenticated, asyncRoute(async (req, res) => {
+    if (!/^[A-Z0-9-]{5,80}$/.test(req.params.id)) throw new InputError('Order not found.', 404);
+    const order = await Order.findOne({ id: req.params.id, userId: req.auth.user._id }).lean();
+    if (!order) throw new InputError('Order not found.', 404);
+    res.json({ data: orderView(order) });
   }));
   router.get('/orders', authenticated, asyncRoute(async (req, res) => { const orders = await Order.find({ userId: req.auth.user._id }).sort({ createdAt: -1 }).limit(100).lean(); res.json({ data: orders.map(orderView) }); }));
   router.post('/orders', authenticated, writeLimit, asyncRoute(async (req, res) => {
@@ -104,7 +137,6 @@ export async function makeApp() {
     const products = await Product.find({ id: { $in: items.map(i => i.productId) } }).lean();
     const vehicles = await Vehicle.find({ id: { $in: items.map(i => i.vehicleId) } }).lean();
     const quote = quoteOrder(items, products, vehicles);
-    // Demo orders do not reserve or decrement physical inventory.
     try {
       const order = await Order.create({ ...quote, ...query, requestHash, id: `DTH-${randomUUID().slice(0, 13).toUpperCase()}`, demoOnly: true, status: 'demo-confirmed' });
       res.status(201).json({ data: orderView(order) });
@@ -134,7 +166,7 @@ export async function makeApp() {
     if (error.type === 'entity.parse.failed') return res.status(400).json({ message: 'Malformed JSON.' });
     if (error.type === 'entity.too.large') return res.status(413).json({ message: 'Request is too large.' });
     if (error.code === 11000) return res.status(409).json({ message: 'A record with these details already exists.' });
-    console.error('Store API error:', error.name); // Never log request bodies, passwords or tokens.
+    console.error('Store API error:', error.name);
     res.status(500).json({ message: 'Server error. Please try again later.' });
   });
   return app;

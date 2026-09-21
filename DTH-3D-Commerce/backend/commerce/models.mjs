@@ -11,6 +11,7 @@ const Vehicle = mongoose.model('StoreVehicle', new Schema({
 }, { collection: 'store_vehicles' }));
 const User = mongoose.model('StoreUser', new Schema({
   email: { type: String, required: true, unique: true }, passwordHash: { type: String, required: true },
+  savedVehicleId: { type: String, default: '', maxlength: 80 },
   role: { type: String, enum: ['customer', 'admin'], default: 'customer' }, disabled: { type: Boolean, default: false },
 }, { timestamps: true, collection: 'store_users' }));
 const Session = mongoose.model('StoreSession', new Schema({

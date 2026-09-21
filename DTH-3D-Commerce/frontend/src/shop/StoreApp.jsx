@@ -7,6 +7,7 @@ import './store.css';
 import Icon from './components/StoreIcon.jsx';
 import ProductCard from './components/ProductCard.jsx';
 import HomePage from './home/HomePage.jsx';
+import AccountPage from './account/AccountPage.jsx';
 const Viewer3D = lazy(() => import('./Viewer3D'));
 const categoryNames = { suspension: 'Suspension', wheels: 'Wheels', exhausts: 'Exhausts', mirrors: 'Mirrors', brakes: 'Brakes' };
 function Dialog({ title, onClose, children }) {
@@ -145,5 +146,5 @@ function Admin() {
 }
 function NotFound() { return <div className="dth-empty"><p className="dth-eyebrow">404 / OFF THE GRID</p><h1>This part of the studio is empty.</h1><Link className="dth-button dth-primary" to="/shop">Back to the collection</Link></div>; }
 export default function StoreApp() {
-  return <StoreProvider><Routes><Route element={<Shell />}><Route index element={<HomePage />} /><Route path="shop" element={<Catalog />} /><Route path="products/:slug" element={<Product />} /><Route path="bag" element={<Bag />} /><Route path="order-complete" element={<Completed />} /><Route path="account" element={<Account />} /><Route path="admin" element={<Admin />} /><Route path="*" element={<NotFound />} /></Route></Routes></StoreProvider>;
+  return <StoreProvider><Routes><Route element={<Shell />}><Route index element={<HomePage />} /><Route path="shop" element={<Catalog />} /><Route path="products/:slug" element={<Product />} /><Route path="bag" element={<Bag />} /><Route path="order-complete" element={<Completed />} /><Route path="account" element={<AccountPage />} /><Route path="admin" element={<Admin />} /><Route path="*" element={<NotFound />} /></Route></Routes></StoreProvider>;
 }

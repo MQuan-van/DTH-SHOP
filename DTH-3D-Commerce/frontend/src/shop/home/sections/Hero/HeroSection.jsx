@@ -138,16 +138,18 @@ export default function HeroSection({ config, motion, motionEnabled, reduced, on
           <div className={styles.swatches} aria-label={`Illustrative finish: ${product.finish}`}><span style={{ background: product.accent || '#cbd4dc' }} /><span /><small>ILLUSTRATIVE MATERIAL</small></div>
           <span className={styles.leader} aria-hidden="true" />
         </div>
+
         <div className={`${styles.annotation} ${styles.fitment}`} data-enter>
           <span className={styles.micro}>03 / YOUR RIDE</span>
           <h2>{vehicle ? `${vehicle.model} · ${vehicle.year}` : 'The right starting point.'}</h2>
           <p className={vehicle && match.status === 'compatible' ? styles.compatible : ''}>{vehicle ? match.text : 'Select your vehicle. Explore matching parts.'}</p>
-          <button type="button" onClick={chooseVehicle}><Icon name="vehicle" />{vehicle ? 'Change vehicle' : 'Find my fit'}<span>↗</span></button>
-          <small>SYNTHETIC FITMENT DATA</small>
         </div>
-        <div className={styles.scale} aria-hidden="true"><span>360°</span><i /><small>FORM / FINISH / PERSPECTIVE</small></div>
+
+        <div className={styles.scale} aria-hidden="true"><span>360°</span><i />
+        <small>FORM / FINISH / PERSPECTIVE</small></div>
 
       </div>
+    
       <div className={styles.controlDeck} data-enter>
         <div className={styles.productIdentity}><span className={styles.productNumber}>{serial}<small> / {String(exhibits.length).padStart(2, '0')}</small></span><div><span className={styles.micro}>IN THE STUDIO / {activeExhibit.label.toUpperCase()}</span><h2>{product.name}</h2><p>{formatMoney(product.price)} <span>DEMO PRICE</span></p></div></div>
         <div className={styles.primaryActions}>

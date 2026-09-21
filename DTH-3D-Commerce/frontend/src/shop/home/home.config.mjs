@@ -21,8 +21,8 @@ export const HOME_CONFIG = {
   },
   hero: {
     eyebrow: 'DTH / THE DIGITAL SHOWROOM',
-    headline: ['Not just a part.', 'A new perspective.'],
-    description: 'Look closer. Explore the form. Then find the match for your ride.',
+    headline: [' ', 'New arrivals'],
+    description: 'Ship from the Malaysia Factory for 10-15 business days. Free shipping for first five orders. Limited stock available.',
     inspectLabel: 'Inspect in 3D',
     productLinkLabel: 'View product',
     annotations: true,

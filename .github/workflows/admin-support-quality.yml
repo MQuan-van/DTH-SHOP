@@ -2,8 +2,6 @@ name: Admin Support quality
 on:
   push:
     branches: [feat/admin-support-studio]
-  pull_request:
-    paths: ['DTH-3D-Commerce/**', '.github/workflows/admin-support-quality.yml']
 permissions:
   contents: read
 jobs:
@@ -17,17 +15,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Prepare source snapshot for isolated review
+      - name: Resolve image-decoder dependency in isolated workspace
+        working-directory: DTH-3D-Commerce
         run: |
-          mkdir -p /tmp/dth-review
-          git archive HEAD DTH-3D-Commerce .github/workflows | tar -x -C /tmp/dth-review
-      - name: Install locked application dependencies
-        working-directory: /tmp/dth-review/DTH-3D-Commerce
-        run: npm ci
-      - name: Package review workspace
-        run: tar -czf /tmp/dth-review-workspace.tar.gz -C /tmp/dth-review .
+          npm ci
+          npm install --workspace backend --save-exact sharp
+          node -p 'require("sharp/package.json").version'
+          npm audit --json > /tmp/admin-dependency-audit.json || true
+          tar -czf /tmp/admin-image-dependency.tar.gz backend/package.json package-lock.json node_modules/sharp node_modules/@img node_modules/detect-libc node_modules/semver
       - uses: actions/upload-artifact@v4
         with:
-          name: admin-support-review-workspace
-          path: /tmp/dth-review-workspace.tar.gz
+          name: admin-image-dependency
+          path: |
+            /tmp/admin-image-dependency.tar.gz
+            /tmp/admin-dependency-audit.json
           retention-days: 1

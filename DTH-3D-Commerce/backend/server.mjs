@@ -10,9 +10,15 @@ try {
   const server = app.listen(port, host, () => console.log(`DTH demonstration API listening at http://${host}:${port}`));
   server.on('error', async error => {
     console.error(`HTTP server error (${error.code || error.name}). Check whether the port is already in use.`);
-    await mongoose.disconnect(); process.exitCode = 1;
+    app.locals.supportHub?.close(); await mongoose.disconnect(); process.exitCode = 1;
   });
-  const shutdown = () => server.close(async () => { await mongoose.disconnect(); process.exit(0); });
+  let stopping=false;
+  const shutdown = () => {
+    if(stopping)return;stopping=true;
+    app.locals.supportHub?.close();
+    const timeout=setTimeout(()=>{server.closeAllConnections();void mongoose.disconnect().finally(()=>process.exit(0));},5000);timeout.unref();
+    server.close(async () => {clearTimeout(timeout);await mongoose.disconnect();process.exit(0);});
+  };
   process.on('SIGINT', shutdown); process.on('SIGTERM', shutdown);
 } catch (error) {
   console.error(`Startup failed (${error.name}). Check MongoDB, environment settings and whether the port is available.`);

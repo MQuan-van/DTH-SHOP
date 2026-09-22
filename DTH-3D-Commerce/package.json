@@ -3,13 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "description": "Independent FYP 3D parts commerce demonstrator; not a live shop",
-  "workspaces": [
-    "frontend",
-    "backend"
-  ],
-  "engines": {
-    "node": ">=22.12.0 <23 || >=24 <25"
-  },
+  "workspaces": ["frontend", "backend"],
+  "engines": { "node": ">=22.12.0 <23 || >=24 <25" },
   "scripts": {
     "dev": "npm run dev --workspace frontend",
     "dev:api": "npm run dev --workspace backend",
@@ -21,6 +16,8 @@
     "test": "node --test tests/domain.test.mjs tests/security.test.mjs tests/standalone.test.mjs",
     "dev:flow": "npm run dev --workspace frontend -- --mode flow",
     "build:flow": "npm run build --workspace frontend -- --mode flow",
-    "test:account": "node --test tests/account.test.mjs tests/flow.test.mjs"
+    "test:account": "node --test tests/account.test.mjs tests/flow.test.mjs",
+    "test:admin": "node --test tests/support.test.mjs",
+    "admin:grant": "node backend/commerce/admin/grant.mjs"
   }
 }

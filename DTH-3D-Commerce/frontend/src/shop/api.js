@@ -68,3 +68,8 @@ export async function loadAdminProducts() { return (await request('/admin/produc
 export async function saveAccountVehicle(vehicleId) { return (await request('/account/vehicle', { method: 'PUT', body: JSON.stringify({ vehicleId }) })).user; }
 export async function loadAccountOrders({ page = 1, search = '' } = {}) { return request(`/account/orders?${new URLSearchParams({ page: String(page), q: search })}`); }
 export async function loadAccountOrder(id) { return (await request(`/account/orders/${encodeURIComponent(id)}`)).data; }
+export const studioUrl = path => `${base}${path}`;
+export async function studioRequest(path, options={}) {
+  if (MODE !== 'api') throw new Error('Admin and live support require API mode.');
+  return request(path, options);
+}

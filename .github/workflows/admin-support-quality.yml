@@ -3,32 +3,47 @@ on:
   push:
     branches: [feat/admin-support-studio]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  review:
+  prepare:
+    if: github.ref == 'refs/heads/feat/admin-support-studio'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Resolve decoder and prepare isolated workspace
+      - name: Pin the reviewed decoder and commit only its manifests on the feature branch
+        working-directory: DTH-3D-Commerce
         run: |
-          mkdir -p /tmp/dth-review
-          git archive HEAD DTH-3D-Commerce .github/workflows | tar -x -C /tmp/dth-review
-          cd /tmp/dth-review/DTH-3D-Commerce
           npm ci
-          npm install --workspace backend --save-exact sharp
-          node -p 'JSON.parse(require("node:fs").readFileSync("node_modules/sharp/package.json")).version'
-          npm audit --json > /tmp/admin-dependency-audit.json || true
-          tar -czf /tmp/admin-review.tar.gz -C /tmp/dth-review .
+          npm install --workspace backend --save-exact sharp@0.35.4
+          git add backend/package.json package-lock.json
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'build: lock sharp 0.35.4 for bounded support image decoding'
+            git push origin HEAD:feat/admin-support-studio
+          fi
+      - name: Review source, unit tests and build
+        working-directory: DTH-3D-Commerce
+        run: |
+          npm run check
+          npm test
+          npm run test:account
+          npm run test:admin
+          VITE_STORE_MODE=api npm run build
+      - name: Archive isolated review workspace
+        if: always()
+        run: |
+          mkdir -p /tmp/admin-review-source
+          git archive HEAD DTH-3D-Commerce .github/workflows | tar -x -C /tmp/admin-review-source
+          cp -a DTH-3D-Commerce/node_modules /tmp/admin-review-source/DTH-3D-Commerce/
+          tar -czf /tmp/admin-source.tar.gz -C /tmp/admin-review-source .
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: admin-review
-          path: |
-            /tmp/admin-review.tar.gz
-            /tmp/admin-dependency-audit.json
+          name: admin-source
+          path: /tmp/admin-source.tar.gz
           retention-days: 1

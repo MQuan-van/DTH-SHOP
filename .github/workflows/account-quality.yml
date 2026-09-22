@@ -8,35 +8,7 @@ on:
 permissions:
   contents: read
 jobs:
-  prepare:
-    name: Integrate reviewed Account flow source once
-    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/account-flow-first'
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    outputs:
-      source-sha: ${{ steps.source.outputs.sha }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: feat/account-flow-first
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Apply exact changes and publish source on this branch only
-        id: source
-        run: |
-          node .github/account-flow-apply.mjs
-          rm .github/account-flow-apply.mjs
-          git restore -- .github/workflows/account-quality.yml
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A -- .github DTH-3D-Commerce
-          git commit -m 'feat: integrate flow-first account studio with isolated rehearsal'
-          git push origin HEAD:feat/account-flow-first
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
   flow:
-    needs: prepare
     name: Flow first - no database
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -47,7 +19,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-          ref: ${{ needs.prepare.outputs.source-sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -84,7 +55,7 @@ jobs:
           retention-days: 7
   database:
     name: Final check - real API and MongoDB
-    needs: [prepare, flow]
+    needs: flow
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     defaults:
@@ -94,7 +65,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-          ref: ${{ needs.prepare.outputs.source-sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

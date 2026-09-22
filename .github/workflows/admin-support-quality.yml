@@ -15,18 +15,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Resolve image-decoder dependency in isolated workspace
-        working-directory: DTH-3D-Commerce
+      - name: Resolve decoder and prepare isolated workspace
         run: |
+          mkdir -p /tmp/dth-review
+          git archive HEAD DTH-3D-Commerce .github/workflows | tar -x -C /tmp/dth-review
+          cd /tmp/dth-review/DTH-3D-Commerce
           npm ci
           npm install --workspace backend --save-exact sharp
-          node -p 'require("sharp/package.json").version'
+          node -p 'JSON.parse(require("node:fs").readFileSync("node_modules/sharp/package.json")).version'
           npm audit --json > /tmp/admin-dependency-audit.json || true
-          tar -czf /tmp/admin-image-dependency.tar.gz backend/package.json package-lock.json node_modules/sharp node_modules/@img node_modules/detect-libc node_modules/semver
+          tar -czf /tmp/admin-review.tar.gz -C /tmp/dth-review .
       - uses: actions/upload-artifact@v4
         with:
-          name: admin-image-dependency
+          name: admin-review
           path: |
-            /tmp/admin-image-dependency.tar.gz
+            /tmp/admin-review.tar.gz
             /tmp/admin-dependency-audit.json
           retention-days: 1

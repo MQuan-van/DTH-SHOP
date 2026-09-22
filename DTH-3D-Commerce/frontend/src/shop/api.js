@@ -45,21 +45,18 @@ export async function currentUser() {
 }
 export async function authenticate(mode, credentials) {
   if (PREVIEW) throw new Error('Accounts are available in API mode only. No password is stored in preview mode.');
+  if (!['login', 'register'].includes(mode)) throw new Error('Unknown authentication action.');
   const result = await request(`/auth/${mode}`, { method: 'POST', body: JSON.stringify(credentials) });
+  if (!result.user?.id || typeof result.user.email !== 'string') throw new Error('The account response could not be verified. Refresh and try again.');
   return result.user;
 }
 export async function logout() {
-  if (!PREVIEW) await request('/auth/logout', { method: 'POST', body: '{}' });
+  if (!PREVIEW) {
+    try { await request('/auth/logout', { method: 'POST', body: '{}' }); }
+    catch (error) { if (error.status !== 401) throw error; }
+  }
   csrf = '';
 }
-// export async function createOrder(items, idempotencyKey, acknowledged, data) {
-//   if (!acknowledged) throw new Error('Confirm that this is a simulated order.');
-//   if (PREVIEW) {
-//     const quote = quoteOrder(items, data.products, data.vehicles);
-//     return { ...quote, id: `LOCAL-${idempotencyKey.slice(0, 8).toUpperCase()}`, createdAt: new Date().toISOString(), status: 'local-preview', demoOnly: true };
-//   }
-//   return (await request('/orders', { method: 'POST', body: JSON.stringify({ items, idempotencyKey, demoAcknowledged: true }) })).data;
-// }
 export async function createOrder(
   items,
   idempotencyKey,
@@ -154,3 +151,17 @@ export async function saveProduct(product) {
 }
 
 export async function loadAdminProducts() { return (await request('/admin/products')).data; }
+
+export async function saveAccountVehicle(vehicleId) {
+  if (PREVIEW) throw new Error('Saved vehicles require API mode.');
+  return (await request('/account/vehicle', { method: 'PUT', body: JSON.stringify({ vehicleId }) })).user;
+}
+export async function loadAccountOrders({ page = 1, search = '' } = {}) {
+  if (PREVIEW) throw new Error('Order history requires API mode.');
+  const query = new URLSearchParams({ page: String(page), q: search });
+  return request(`/account/orders?${query}`);
+}
+export async function loadAccountOrder(id) {
+  if (PREVIEW) throw new Error('Saved orders require API mode.');
+  return (await request(`/account/orders/${encodeURIComponent(id)}`)).data;
+}

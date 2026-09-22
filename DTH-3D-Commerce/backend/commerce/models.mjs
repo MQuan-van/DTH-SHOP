@@ -10,6 +10,7 @@ const Vehicle = mongoose.model('StoreVehicle', new Schema({
   id: { type: String, required: true, unique: true }, make: String, model: String, year: Number, demoOnly: { type: Boolean, default: true },
 }, { collection: 'store_vehicles' }));
 const User = mongoose.model('StoreUser', new Schema({
+  savedVehicleId: { type: String, default: '' },
   email: { type: String, required: true, unique: true }, passwordHash: { type: String, required: true },
   role: { type: String, enum: ['customer', 'admin'], default: 'customer' }, disabled: { type: Boolean, default: false },
 }, { timestamps: true, collection: 'store_users' }));
@@ -25,5 +26,6 @@ const orderSchema = new Schema({
   status: { type: String, default: 'demo-confirmed' }, demoOnly: { type: Boolean, default: true },
 }, { timestamps: true, collection: 'store_orders' });
 orderSchema.index({ userId: 1, idempotencyKey: 1 }, { unique: true });
+orderSchema.index({ userId: 1, createdAt: -1, _id: -1 });
 const Order = mongoose.model('StoreOrder', orderSchema);
 export { Product, Vehicle, User, Session, Order };

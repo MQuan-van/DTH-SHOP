@@ -1,0 +1,8 @@
+
+/* Account flow: scoped 3D controls and compact desktop identity assembly. */
+.visualControls{position:absolute;inset:auto 0 0;z-index:3;display:flex;justify-content:center;gap:8px}
+.root .visualControls .motionButton{position:static;transform:none;left:auto;bottom:auto;min-height:40px;margin:0}
+.sidebar .visual[data-compact=true]{min-height:0;aspect-ratio:1.35;margin:0 0 16px;border:1px solid #d6e4ed;border-radius:16px;background:radial-gradient(ellipse,#e0f4fd,transparent 75%)}
+.sidebar .visual[data-compact=true] .visualControls{bottom:6px}
+.root .sidebar .visualControls .motionButton{min-height:30px;font-size:10px;padding:4px 12px}
+@media(max-width:760px){.sidebar .visual[data-compact=true]{display:none}}

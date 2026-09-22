@@ -100,7 +100,9 @@ jobs:
           for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:5000/api/shop/health; then exit 0; fi; sleep 1; done
           cat /tmp/dth-account-server.log; exit 1
       - name: Browser - actual auth, shopping, checkout and reload
-        run: python tests/browser/account.py
+        run: |
+          python tests/browser/account.py
+          python tests/browser/api_failure.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

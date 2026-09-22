@@ -18,10 +18,20 @@ export default function AccountExperience({ children }) {
     change(); query.addEventListener('change', change);
     return () => query.removeEventListener('change', change);
   }, []);
+  // Rows can arrive asynchronously; decorate only new DOM, not every animation frame.
+  useEffect(() => {
+    const mark = () => {
+      root.current.querySelectorAll(`.${s.savedCard}, .${s.orderStat}, .${s.orderRow}`).forEach(card => {
+        card.setAttribute('data-depth-card', '');
+        if (card.classList.contains(s.orderRow)) card.closest('li')?.setAttribute('data-order-arrive', '');
+      });
+    };
+    const observer = new MutationObserver(mark);
+    observer.observe(root.current, { childList: true, subtree: true }); mark();
+    return () => observer.disconnect();
+  }, []);
   useLayoutEffect(() => {
     const panel = root.current.querySelector(`.${s.memberContent}`);
-    const cards = root.current.querySelectorAll(`.${s.savedCard}, .${s.orderStat}, .${s.orderRow}`);
-    cards.forEach(card => card.setAttribute('data-depth-card', ''));
     if (!panel || reduced || !panel.animate) return;
     panel.setAttribute('data-motion-panel', '');
     const receipt = new URLSearchParams(location.search).has('order');
@@ -45,7 +55,7 @@ export default function AccountExperience({ children }) {
   }
   return <MotionContext.Provider value={{ phase, reduced }}><div className={m.experience} ref={root}
     data-reduced={reduced} data-account-phase={phase}
-    style={{ '--account-enter-ms': `${motion.pageMs}ms`, '--account-stagger-ms': `${motion.staggerMs}ms` }}
+    style={{ '--flow-enter-ms': `${motion.pageMs}ms`, '--flow-row-ms': `${motion.rowMs}ms`, '--flow-stagger-ms': `${motion.staggerMs}ms` }}
     onPointerMove={point} onPointerOut={leave}
     onFocusCapture={event => { if (!user && event.target.tagName === 'INPUT') setFocus(event.target.autocomplete === 'email' ? 'identify' : 'password'); }}>
     {children}

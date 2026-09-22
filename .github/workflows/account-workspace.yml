@@ -1,0 +1,37 @@
+name: Account integration workspace
+on:
+  push:
+    branches: [feat/account-commerce]
+    paths: [.github/workflows/account-workspace.yml]
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Prepare exact source and dependencies
+        run: |
+          mkdir -p /tmp/account-workspace/base /tmp/account-workspace/prior /tmp/account-workspace/bin
+          git archive f4d6ed0cfc00b52f2667099ff1a3a7f101f028ed | tar -x -C /tmp/account-workspace/base
+          git archive ace6563ee424759ed6d56879a37a14c8c095c4c2 | tar -x -C /tmp/account-workspace/prior
+          cd /tmp/account-workspace/base/DTH-3D-Commerce
+          npm ci
+          docker pull mongo:8.0
+          cid=$(docker create mongo:8.0)
+          docker cp "$cid:/usr/bin/mongod" /tmp/account-workspace/bin/mongod
+          docker rm "$cid"
+          cd /tmp
+          tar -czf account-workspace.tar.gz account-workspace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: account-integration-workspace
+          path: /tmp/account-workspace.tar.gz
+          retention-days: 1

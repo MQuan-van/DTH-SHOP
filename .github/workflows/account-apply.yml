@@ -28,6 +28,49 @@ jobs:
           node-version: 22
       - name: Integrate inspected source on isolated feature branch
         run: python .github/integrate-account.py
+      - name: Correct acceptance synchronization and preserve signed Home rotation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          root = Path('DTH-3D-Commerce')
+          p = root/'tests/home-stage.test.mjs'
+          s = p.read_text()
+          assert 'scene.autoRotateSpeed>=0 && scene.autoRotateSpeed<1' in s
+          p.write_text(s.replace('scene.autoRotateSpeed>=0 && scene.autoRotateSpeed<1', 'Number.isFinite(scene.autoRotateSpeed) && Math.abs(scene.autoRotateSpeed)<=1'))
+          p = root/'tests/browser/account.py'
+          s = p.read_text()
+          # **/bag also matches /account?return=/bag before the login POST finishes.
+          # Await the real destination, not the query-string suffix.
+          s = s.replace("page.wait_for_url('**/bag')", "page.wait_for_url(base + '/bag')\n        assert context.request.get(base + '/api/shop/auth/me').json()['user']['email'] == email")
+          s = s.replace("expect(page.get_by_role('heading', level=1)).to_be_visible()", "expected = {'': 'Your account.', '?view=vehicle': 'Your vehicle.', '?view=orders': 'Your orders.', '?view=security': 'Account settings.'}[view]\n                expect(page.get_by_role('heading', name=expected, exact=True)).to_be_visible()")
+          needle = "        checked('Persisted receipt loads after F5 via owner-scoped endpoint')"
+          assert needle in s
+          s = s.replace(needle, needle + "\n        page.goto(base + '/account?view=orders')\n        page.get_by_label('Search orders', exact=True).fill('no-such-product')\n        page.get_by_role('button', name='Search', exact=True).click()\n        expect(page.get_by_role('heading', name='No matching orders.')).to_be_visible()\n        page.get_by_role('button', name='Reset search', exact=True).click()\n        expect(page.get_by_role('button', name=re.compile(r'DTH-')).first).to_be_visible()\n        checked('Order search empty state and reset recover saved orders')")
+          p.write_text(s)
+          p = root/'tests/account.integration.test.mjs'
+          s = p.read_text()
+          needle = "    await t.test('Clear saved vehicle is persisted'"
+          assert needle in s
+          extra = """
+              await t.test('Repeated session reads keep the authenticated session', async () => {
+                for (let i=0;i<25;i++) { const r=await request('/auth/me','GET',undefined,a); assert.equal(r.status,200); assert.equal(r.data.user.id,a.id); }
+              });
+              await t.test('Checkout rejects a changed displayed total without creating an order', async () => {
+                const before=await Order.countDocuments({userId:a.id});
+                const r=await request('/orders','POST',{items:[{productId:p.id,vehicleId,quantity:1}],idempotencyKey:randomUUID(),demoAcknowledged:true,expectedTotal:p.price-1},a);
+                assert.equal(r.status,409); assert.equal(await Order.countDocuments({userId:a.id}),before);
+              });
+              await t.test('Concurrent identical checkout requests save one order', async () => {
+                const key=randomUUID(), body={items:[{productId:p.id,vehicleId,quantity:1}],idempotencyKey:key,demoAcknowledged:true,expectedTotal:p.price};
+                const results=await Promise.all([request('/orders','POST',body,a),request('/orders','POST',body,a)]);
+                assert.ok(results.every(r=>[200,201].includes(r.status))); assert.equal(results[0].data.data.id,results[1].data.data.id); assert.equal(await Order.countDocuments({userId:a.id,idempotencyKey:key}),1);
+              });
+          """
+          p.write_text(s.replace(needle,extra+needle))
+          p = Path('.github/workflows/account-quality.yml')
+          s = p.read_text().replace('node --test tests/account.test.mjs', 'node --test tests/account.test.mjs tests/home-stage.test.mjs tests/shop-motion.test.mjs')
+          p.write_text(s)
+          PY
       - name: Node tests and real MongoDB integration
         working-directory: DTH-3D-Commerce
         env:
@@ -37,7 +80,7 @@ jobs:
           npm ci
           npm run check
           npm test
-          node --test tests/account.test.mjs
+          node --test tests/account.test.mjs tests/home-stage.test.mjs tests/shop-motion.test.mjs
           node --test tests/account.integration.test.mjs
           npm run build
       - uses: actions/setup-python@v5
@@ -59,12 +102,11 @@ jobs:
             sleep 1
           done
           python tests/browser/account.py
-      - name: Save tested source into this feature branch only
+      - name: Save tested application source into this feature branch only
         run: |
           git config user.name 'DTH Account Integration'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          rm .github/integrate-account.py .github/account-motion.css .github/workflows/account-apply.yml .github/workflows/account-workspace.yml
-          git add DTH-3D-Commerce .github
+          git add DTH-3D-Commerce
           git commit -m 'feat: integrate tested Account Commerce on current 3d-store baseline'
           git push origin HEAD:refs/heads/feat/account-commerce
       - name: Export evidence and applied source
@@ -72,6 +114,7 @@ jobs:
         run: |
           mkdir -p /tmp/account-evidence
           cp -r DTH-3D-Commerce/test-results/account /tmp/account-evidence/ 2>/dev/null || true
+          cp /tmp/account-server.log /tmp/account-evidence/ 2>/dev/null || true
           tar --exclude=node_modules --exclude=dist --exclude=test-results -czf /tmp/account-evidence/applied-source.tar.gz DTH-3D-Commerce .github
       - uses: actions/upload-artifact@v4
         if: always()

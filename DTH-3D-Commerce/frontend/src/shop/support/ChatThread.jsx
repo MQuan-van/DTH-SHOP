@@ -15,7 +15,7 @@ export default function ChatThread({conversationId,onMeta}) {
   const [messages,setMessages]=useState([]),[meta,setMeta]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState('');
   const [text,setText]=useState(''),[file,setFile]=useState(null),[preview,setPreview]=useState(''),[pending,setPending]=useState(null),[sending,setSending]=useState(false);
   const [typing,setTyping]=useState(false),[older,setOlder]=useState(false),[loadingOlder,setLoadingOlder]=useState(false),[unseen,setUnseen]=useState(false),[large,setLarge]=useState('');
-  const box=useRef(null),input=useRef(null),last=useRef(0),alive=useRef(true),requesting=useRef(false),again=useRef(false),follow=useRef(true),initialized=useRef(false),read=useRef(0),sendLock=useRef(false),typingClock=useRef(0),typingTimer=useRef(null),metaRef=useRef(onMeta);
+  const box=useRef(null),input=useRef(null),last=useRef(0),alive=useRef(true),requesting=useRef(false),again=useRef(false),follow=useRef(true),initialized=useRef(false),read=useRef(0),sendLock=useRef(false),typingClock=useRef(0),typingTimer=useRef(null),metaRef=useRef(onMeta),lastDraft=useRef(null);
   metaRef.current=onMeta;
   const base=`/chat/conversations/${conversationId}`,role=store.user?.role;
   useEffect(()=>{alive.current=true;return()=>{alive.current=false;clearTimeout(typingTimer.current);};},[]);
@@ -61,19 +61,22 @@ export default function ChatThread({conversationId,onMeta}) {
     return()=>cancelAnimationFrame(frame);
   },[messages,pending,markRead]);
   useEffect(()=>{const focus=()=>{if(!document.hidden){void reload();markRead();}};window.addEventListener('focus',focus);document.addEventListener('visibilitychange',focus);return()=>{window.removeEventListener('focus',focus);document.removeEventListener('visibilitychange',focus);};},[reload,markRead]);
+  const delivered=!!pending&&messages.some(m=>m.clientId===pending.clientId&&m.senderRole===role);
+  // A stream update can arrive before the POST acknowledgement, or after that acknowledgement was lost.
+  useEffect(()=>{if(delivered){setPending(null);setText('');setFile(null);setError('');lastDraft.current=null;if(input.current)input.current.value='';}},[delivered]);
   function type(value){setText(value);if(Date.now()-typingClock.current>1800){typingClock.current=Date.now();studioRequest(`${base}/typing`,{method:'POST',body:JSON.stringify({active:!!value})}).catch(()=>{});}}
   function pick(next){if(!next)return;if(!['image/png','image/jpeg','image/webp'].includes(next.type)||next.size>5*1024*1024){setError('Choose a JPEG, PNG or WebP up to 5 MiB.');return;}setFile(next);setError('');}
   async function send(retry=false){
     if(sendLock.current||(!retry&&!text.trim()&&!file))return;
     sendLock.current=true;setSending(true);setError('');follow.current=true;
-    let draft=retry?pending:{clientId:crypto.randomUUID(),text:text.trim(),file};
-    setPending({...draft,state:'sending'});
+    const previous=lastDraft.current;
+    let draft=retry?pending:previous&&previous.text===text.trim()&&previous.file===file?previous:{clientId:crypto.randomUUID(),text:text.trim(),file};
+    lastDraft.current=draft;setPending({...draft,state:'sending'});
     try{
-      const image=draft.image|| (draft.file?await encodeFile(draft.file):null);draft={...draft,image};
-      const result=await studioRequest(`${base}/messages`,{method:'POST',body:JSON.stringify({clientId:draft.clientId,text:draft.text,image})});
+      const image=draft.image|| (draft.file?await encodeFile(draft.file):null);draft={...draft,image};lastDraft.current=draft;
+      await studioRequest(`${base}/messages`,{method:'POST',body:JSON.stringify({clientId:draft.clientId,text:draft.text,image})});
       if(!alive.current)return;
-      // The database response, not animation completion, determines success.
-      setPending(null);setText('');setFile(null);input.current.value='';void reload();support.refresh();
+      lastDraft.current=null;setPending(null);setText('');setFile(null);input.current.value='';void reload();support.refresh();
     }catch(e){if(alive.current){setPending({...draft,state:'failed'});setError(e.message);}}
     finally{sendLock.current=false;if(alive.current)setSending(false);}
   }
@@ -81,7 +84,7 @@ export default function ChatThread({conversationId,onMeta}) {
     if(!messages.length||loadingOlder)return;setLoadingOlder(true);
     const height=box.current?.scrollHeight||0,top=box.current?.scrollTop||0;follow.current=false;
     try{const result=await studioRequest(`${base}/messages?before=${messages[0].seq}`);if(!alive.current)return;setOlder(result.hasMore);setMessages(prev=>[...new Map([...result.data,...prev].map(m=>[m.id,m])).values()].sort((a,b)=>a.seq-b.seq));requestAnimationFrame(()=>{if(box.current)box.current.scrollTop=top+box.current.scrollHeight-height;});}
-    catch(e){setError(e.message);}finally{if(alive.current)setLoadingOlder(false);}
+    catch(e){if(alive.current)setError(e.message);}finally{if(alive.current)setLoadingOlder(false);}
   }
   const otherRead=role==='admin'?meta?.customerReadSeq:meta?.staffReadSeq;
   return <section className="dth-chat" aria-label="Support conversation" onFocusCapture={markRead}>
@@ -90,7 +93,7 @@ export default function ChatThread({conversationId,onMeta}) {
       {older&&<button className="dth-chat-history" onClick={history} disabled={loadingOlder}>{loadingOlder?'Loading…':'Earlier messages'}</button>}
       {loading?<p className="dth-chat-empty">Loading conversation…</p>:!messages.length&&!pending?<div className="dth-chat-empty"><span className="dth-chat-empty-icon">↗</span><h3>Let’s find the right part.</h3><p>Ask a question or share a photo. Our support team can reply here.</p></div>:null}
       {messages.map(m=><article key={m.id} className="dth-chat-message" data-own={m.senderRole===role}><div className="dth-chat-bubble">{m.image&&<button className="dth-chat-image" onClick={()=>setLarge(studioUrl(m.image.path))} aria-label="Enlarge shared image"><img src={studioUrl(m.image.path)} alt="Shared support image" width={m.image.width} height={m.image.height} loading="lazy"/></button>}{m.text&&<p>{m.text}</p>}</div><small>{m.senderRole===role?'You':m.senderRole==='admin'?'DTH support':'Customer'} · {time(m.createdAt)}{m.senderRole===role?m.seq<=otherRead?' · Seen':' · Sent':''}</small></article>)}
-      {pending&&<article className="dth-chat-message" data-own="true"><div className="dth-chat-bubble" data-pending="true">{pending.file&&<span>Image attachment</span>}{pending.text&&<p>{pending.text}</p>}</div><small>{pending.state==='failed'?'Not sent':'Sending…'}</small>{pending.state==='failed'&&<div className="dth-chat-retry"><button onClick={()=>send(true)} disabled={sending}>Retry message</button><button onClick={()=>{setPending(null);setError('');}}>Edit draft</button></div>}</article>}
+      {pending&&!delivered&&<article className="dth-chat-message" data-own="true"><div className="dth-chat-bubble" data-pending="true">{pending.file&&<span>Image attachment</span>}{pending.text&&<p>{pending.text}</p>}</div><small>{pending.state==='failed'?'Not sent':'Sending…'}</small>{pending.state==='failed'&&<div className="dth-chat-retry"><button onClick={()=>send(true)} disabled={sending}>Retry message</button><button onClick={()=>{setPending(null);setError('');}}>Edit draft</button></div>}</article>}
     </div>
     {unseen&&<button className="dth-chat-new" onClick={()=>{follow.current=true;box.current.scrollTop=box.current.scrollHeight;setUnseen(false);markRead();}}>New messages ↓</button>}
     <div className="dth-chat-typing" role="status">{typing?<><span>•••</span> {role==='admin'?'Customer':'Support'} is typing…</>:null}</div>

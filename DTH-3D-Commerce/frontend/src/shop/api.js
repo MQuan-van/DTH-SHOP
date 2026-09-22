@@ -15,7 +15,15 @@ async function request(path, options = {}) {
       headers: { 'Content-Type': 'application/json', ...(csrf ? { 'X-CSRF-Token': csrf } : {}), ...options.headers },
     });
     const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.message || `API error (${response.status}).`);
+    // if (!response.ok) throw new Error(result.message || `API error (${response.status}).`);
+    if (!response.ok) {
+      const error = new Error(
+        result.message || `API error (${response.status}).`
+      );
+
+      error.status = response.status;
+      throw error;
+    }
     if (result.csrf) csrf = result.csrf;
     return result;
   } catch (error) {
@@ -44,13 +52,98 @@ export async function logout() {
   if (!PREVIEW) await request('/auth/logout', { method: 'POST', body: '{}' });
   csrf = '';
 }
-export async function createOrder(items, idempotencyKey, acknowledged, data) {
-  if (!acknowledged) throw new Error('Confirm that this is a simulated order.');
-  if (PREVIEW) {
-    const quote = quoteOrder(items, data.products, data.vehicles);
-    return { ...quote, id: `LOCAL-${idempotencyKey.slice(0, 8).toUpperCase()}`, createdAt: new Date().toISOString(), status: 'local-preview', demoOnly: true };
+// export async function createOrder(items, idempotencyKey, acknowledged, data) {
+//   if (!acknowledged) throw new Error('Confirm that this is a simulated order.');
+//   if (PREVIEW) {
+//     const quote = quoteOrder(items, data.products, data.vehicles);
+//     return { ...quote, id: `LOCAL-${idempotencyKey.slice(0, 8).toUpperCase()}`, createdAt: new Date().toISOString(), status: 'local-preview', demoOnly: true };
+//   }
+//   return (await request('/orders', { method: 'POST', body: JSON.stringify({ items, idempotencyKey, demoAcknowledged: true }) })).data;
+// }
+export async function createOrder(
+  items,
+  idempotencyKey,
+  acknowledged,
+  data,
+  displayedTotal
+) {
+  if (acknowledged !== true) {
+    throw new Error('Confirm that this is a simulated order.');
   }
-  return (await request('/orders', { method: 'POST', body: JSON.stringify({ items, idempotencyKey, demoAcknowledged: true }) })).data;
+
+  const quote = quoteOrder(
+    items,
+    data.products,
+    data.vehicles
+  );
+
+  const expectedTotal = displayedTotal ?? quote.total;
+
+  if (
+    !Number.isSafeInteger(expectedTotal) ||
+    expectedTotal !== quote.total
+  ) {
+    const error = new Error(
+      'The bag changed. Review the total again.'
+    );
+
+    error.status = 409;
+    throw error;
+  }
+
+  if (PREVIEW) {
+    return {
+      ...quote,
+      id: `LOCAL-${idempotencyKey.slice(0, 8).toUpperCase()}`,
+      createdAt: new Date().toISOString(),
+      status: 'local-preview',
+      demoOnly: true,
+    };
+  }
+
+  const result = await request('/orders', {
+    method: 'POST',
+    body: JSON.stringify({
+      items,
+      idempotencyKey,
+      expectedTotal,
+      demoAcknowledged: true,
+    }),
+  });
+
+  if (
+    !result.data?.id ||
+    !Array.isArray(result.data.lines)
+  ) {
+    throw new Error(
+      'Confirmation could not be read. Keep this bag and retry or check your account.'
+    );
+  }
+
+  return result.data;
+}
+
+export async function loadOrder(id) {
+  if (PREVIEW) {
+    throw new Error(
+      'Local preview orders are not saved to the API.'
+    );
+  }
+
+  const order = (
+    await request(`/orders/${encodeURIComponent(id)}`)
+  ).data;
+
+  if (
+    order?.id !== id ||
+    !Array.isArray(order.lines)
+  ) {
+    throw new Error(
+      'The saved order response could not be read. Try again.'
+    );
+  }
+
+  return order;
 }
 export async function loadOrders() { return PREVIEW ? [] : (await request('/orders')).data; }
 export async function deleteAccount(password) {

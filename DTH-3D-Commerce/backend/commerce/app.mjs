@@ -89,6 +89,28 @@ export async function makeApp() {
     const { maxAge, ...clearOptions } = cookieOptions;
     res.clearCookie('dth_commerce_session', clearOptions).json({ success: true });
   }));
+  router.get(
+    '/orders/:id',
+    authenticated,
+    asyncRoute(async (req, res) => {
+      if (!/^[A-Z0-9-]{5,80}$/.test(req.params.id)) {
+        throw new InputError('Order not found.', 404);
+      }
+
+      const order = await Order.findOne({
+        id: req.params.id,
+        userId: req.auth.user._id,
+      }).lean();
+
+      if (!order) {
+        throw new InputError('Order not found.', 404);
+      }
+
+      res.json({
+        data: orderView(order),
+      });
+    })
+  );
   router.get('/orders', authenticated, asyncRoute(async (req, res) => { const orders = await Order.find({ userId: req.auth.user._id }).sort({ createdAt: -1 }).limit(100).lean(); res.json({ data: orders.map(orderView) }); }));
   router.post('/orders', authenticated, writeLimit, asyncRoute(async (req, res) => {
     if (req.body?.demoAcknowledged !== true) throw new InputError('Confirm the simulated nature of this order.');
@@ -104,6 +126,23 @@ export async function makeApp() {
     const products = await Product.find({ id: { $in: items.map(i => i.productId) } }).lean();
     const vehicles = await Vehicle.find({ id: { $in: items.map(i => i.vehicleId) } }).lean();
     const quote = quoteOrder(items, products, vehicles);
+    // Chỉ dùng expectedTotal để phát hiện tổng tiền đã đổi.
+    // Giá lưu vào đơn vẫn được server tính từ database.
+    if (
+      !Number.isSafeInteger(req.body.expectedTotal) ||
+      req.body.expectedTotal < 0
+    ) {
+      throw new InputError(
+        'Review the current total before confirming this demo order.'
+      );
+    }
+
+    if (req.body.expectedTotal !== quote.total) {
+      throw new InputError(
+        'The catalog price changed. Refresh your bag and review the total again.',
+        409
+      );
+    }
     // Demo orders do not reserve or decrement physical inventory.
     try {
       const order = await Order.create({ ...quote, ...query, requestHash, id: `DTH-${randomUUID().slice(0, 13).toUpperCase()}`, demoOnly: true, status: 'demo-confirmed' });

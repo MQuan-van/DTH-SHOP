@@ -1,94 +1,620 @@
-import { Component, Suspense, useEffect, useRef, useState } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, useGLTF } from '@react-three/drei';
+import {
+  Component,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 
-class SceneBoundary extends Component {
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+
+import ProductImage from './catalog/components/ProductImage';
+
+// Chỉ điều khiển trang chi tiết, không thay cấu hình Home.
+const DETAIL_VIEW = {
+  exposure: 1,
+  environmentIntensity: 0.65,
+
+  autoSpeed: -3,
+  dragSpeed: 1.7,
+  zoomSpeed: 1.1,
+
+  radius: 1.3,
+  fov: 38,
+  timeoutMs: 20000,
+};
+
+const DEMO_RGB = [
+  [215, 245, 92],
+  [165, 174, 183],
+  [37, 43, 51],
+  [22, 25, 29],
+  [232, 124, 70],
+  [125, 176, 203],
+  [200, 187, 165],
+  [125, 163, 177],
+];
+
+function originalDemoColor(url, color, hasMap) {
+  const demoPath =
+    /^\/models\/dth-demo\/(apex|vector|touring|studio)-(suspension|wheels|exhausts|mirrors|brakes)\.glb$/;
+
+  if (hasMap || !color || !demoPath.test(url)) return null;
+
+  return (
+    DEMO_RGB.find(rgb =>
+      ['r', 'g', 'b'].every(
+        (key, i) => Math.abs(color[key] - rgb[i] / 255) < 1e-6
+      )
+    ) || null
+  );
+}
+
+function supports3D() {
+  try {
+    const gl = document.createElement('canvas').getContext('webgl2');
+
+    if (!gl) return false;
+
+    gl.getExtension('WEBGL_lose_context')?.loseContext();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+class ModelBoundary extends Component {
   state = { failed: false };
-  static getDerivedStateFromError() { return { failed: true }; }
-  componentDidCatch() { this.props.onFailure?.(); }
-  render() { return this.state.failed ? this.props.fallback : this.props.children; }
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  componentDidCatch(error) {
+    console.error('[DTH product 3D]', error);
+    this.props.onFailure();
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
 }
-function Model({ url, onReady }) {
-  const { scene } = useGLTF(url);
-  const [normalized] = useState(() => {
+
+function Part({ product, onReady }) {
+  const { scene } = useGLTF(product.modelUrl);
+  const { invalidate } = useThree();
+
+  const model = useMemo(() => {
     const copy = scene.clone(true);
-    const box = new THREE.Box3().setFromObject(copy);
-    const size = box.getSize(new THREE.Vector3());
-    const center = box.getCenter(new THREE.Vector3());
-    const max = Math.max(size.x, size.y, size.z) || 1;
-    copy.position.sub(center); copy.scale.multiplyScalar(2.45 / max);
-    // Center before scale through an outer group; shared materials stay immutable.
-    copy.position.multiplyScalar(2.45 / max);
-    copy.traverse(object => { if (object.isMesh) { object.castShadow = true; object.receiveShadow = true; } });
-    return copy;
+    const materials = new Map();
+
+    const clone = material => {
+      if (!materials.has(material.uuid)) {
+        const fixed = material.clone();
+
+        const rgb = originalDemoColor(
+          product.modelUrl,
+          fixed.color,
+          fixed.map
+        );
+
+        // Chỉ sửa bảng màu demo cũ.
+        // Model đã có màu đúng sẽ không bị chuyển lần hai.
+        if (rgb) {
+          fixed.color.setRGB(
+            ...rgb.map(value => value / 255),
+            THREE.SRGBColorSpace
+          );
+        }
+
+        materials.set(material.uuid, fixed);
+      }
+
+      return materials.get(material.uuid);
+    };
+
+    copy.traverse(object => {
+      if (!object.isMesh) return;
+
+      object.material = Array.isArray(object.material)
+        ? object.material.map(clone)
+        : clone(object.material);
+    });
+
+    copy.updateMatrixWorld(true);
+
+    const bounds = new THREE.Box3().setFromObject(copy);
+    const sphere = bounds.getBoundingSphere(new THREE.Sphere());
+
+    if (
+      bounds.isEmpty() ||
+      !Number.isFinite(sphere.radius) ||
+      sphere.radius <= 0
+    ) {
+      materials.forEach(material => material.dispose());
+      throw new Error('Model has no usable geometry.');
+    }
+
+    return {
+      copy,
+      center: sphere.center,
+      scale: DETAIL_VIEW.radius / sphere.radius,
+      materials,
+    };
+  }, [scene, product.modelUrl]);
+
+  useEffect(() => {
+    onReady();
+    invalidate();
+
+    return () => {
+      model.materials.forEach(material => material.dispose());
+    };
+  }, [model, onReady, invalidate]);
+
+  return (
+    <group
+      rotation={[
+        0,
+        -0.35,
+        product.category === 'suspension' ? -0.12 : 0,
+      ]}
+    >
+      <group scale={model.scale}>
+        <group position={model.center.toArray().map(value => -value)}>
+          <primitive object={model.copy} dispose={null} />
+        </group>
+      </group>
+    </group>
+  );
+}
+
+function Studio({ onFailure }) {
+  const { gl, scene, invalidate } = useThree();
+
+  useEffect(() => {
+    const previousEnvironment = scene.environment;
+    const previousIntensity = scene.environmentIntensity;
+
+    const room = new RoomEnvironment();
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const target = pmrem.fromScene(room, 0.04);
+
+    room.dispose();
+    pmrem.dispose();
+
+    scene.environment = target.texture;
+    scene.environmentIntensity = DETAIL_VIEW.environmentIntensity;
+
+    const lost = event => {
+      event.preventDefault();
+      onFailure();
+    };
+
+    gl.domElement.addEventListener('webglcontextlost', lost);
+    invalidate();
+
+    return () => {
+      gl.domElement.removeEventListener('webglcontextlost', lost);
+
+      scene.environment = previousEnvironment;
+      scene.environmentIntensity = previousIntensity;
+
+      target.dispose();
+    };
+  }, [gl, scene, invalidate, onFailure]);
+
+  return (
+    <>
+      <ambientLight intensity={0.25} />
+
+      <hemisphereLight args={['#ffffff', '#303030', 0.5]} />
+
+      <directionalLight
+        position={[-3, 5, 5]}
+        intensity={2}
+        color="#ffffff"
+      />
+
+      <directionalLight
+        position={[3, 1, -2]}
+        intensity={1}
+        color="#ffffff"
+      />
+
+      <directionalLight
+        position={[-4, -1, -3]}
+        intensity={0.4}
+        color="#ffffff"
+      />
+    </>
+  );
+}
+
+function CameraControls({
+  api,
+  active,
+  ready,
+  spin,
+  onManual,
+}) {
+  const { gl, camera, size, invalidate } = useThree();
+  const controls = useRef(null);
+
+  const vertical = THREE.MathUtils.degToRad(DETAIL_VIEW.fov);
+
+  const horizontal =
+    2 *
+    Math.atan(
+      Math.tan(vertical / 2) *
+        Math.max(1, size.width) /
+        Math.max(1, size.height)
+    );
+
+  // Tự căn camera theo tỷ lệ khung xem.
+  const distance =
+    DETAIL_VIEW.radius /
+    Math.sin(Math.min(vertical, horizontal) / 2) *
+    1.12;
+
+  useEffect(() => {
+    const control = new OrbitControls(camera, gl.domElement);
+
+    control.enablePan = false;
+    control.enableDamping = false;
+
+    control.rotateSpeed = DETAIL_VIEW.dragSpeed;
+    control.zoomSpeed = DETAIL_VIEW.zoomSpeed;
+
+    control.minPolarAngle = 0.15;
+    control.maxPolarAngle = Math.PI - 0.15;
+
+    control.minDistance = 1.65;
+    control.maxDistance = distance * 1.9;
+
+    control.autoRotateSpeed = DETAIL_VIEW.autoSpeed;
+
+    camera.position.set(0, 0, distance);
+    control.target.set(0, 0, 0);
+
+    control.update();
+    control.saveState();
+
+    const start = () => {
+      control.autoRotate = false;
+      onManual();
+    };
+
+    const change = () => invalidate();
+
+    control.addEventListener('start', start);
+    control.addEventListener('change', change);
+
+    controls.current = control;
+
+    api.current = command => {
+      control.autoRotate = false;
+      onManual();
+
+      const offset = camera.position
+        .clone()
+        .sub(control.target);
+
+      if (command === 'reset') {
+        control.reset();
+      } else {
+        if (command === 'left' || command === 'right') {
+          offset.applyAxisAngle(
+            new THREE.Vector3(0, 1, 0),
+            command === 'left' ? -0.3 : 0.3
+          );
+        } else {
+          offset.setLength(
+            THREE.MathUtils.clamp(
+              offset.length() * (command === 'in' ? 0.86 : 1.16),
+              control.minDistance,
+              control.maxDistance
+            )
+          );
+        }
+
+        camera.position.copy(control.target).add(offset);
+        control.update();
+      }
+
+      invalidate();
+    };
+
+    invalidate();
+
+    return () => {
+      control.removeEventListener('start', start);
+      control.removeEventListener('change', change);
+      control.dispose();
+
+      controls.current = null;
+      api.current = null;
+    };
+  }, [
+    camera,
+    gl,
+    distance,
+    invalidate,
+    api,
+    onManual,
+  ]);
+
+  useEffect(() => {
+    if (controls.current) {
+      controls.current.enabled = active && ready;
+    }
+
+    invalidate();
+  }, [active, ready, distance, invalidate]);
+
+  useFrame((_, delta) => {
+    if (!controls.current || !active || !ready) return;
+
+    controls.current.autoRotate = spin;
+    controls.current.update(Math.min(delta, 0.05));
   });
-  useEffect(() => { onReady(); }, [onReady]);
-  return <primitive object={normalized} dispose={null} />;
+
+  return null;
 }
-function supported() {
-  try { const canvas = document.createElement('canvas'); const gl = canvas.getContext('webgl2'); if (!gl) return false; gl.getExtension('WEBGL_lose_context')?.loseContext(); return true; } catch { return false; }
-}
-export default function Viewer3D({ product, hero = false }) {
-  const controls = useRef(null), wrapper = useRef(null);
-  const [capable] = useState(supported), [visible, setVisible] = useState(true), [failed, setFailed] = useState(false);
-  const [ready, setReady] = useState(false), [auto, setAuto] = useState(false), [manualImage, setManualImage] = useState(false);
-  const [reduced, setReduced] = useState(false);
+
+function ProductViewer({ product }) {
+  const wrapper = useRef(null);
+  const api = useRef(null);
+
+  const [capable] = useState(supports3D);
+
+  const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  const [imageMode, setImageMode] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  const [spin, setSpin] = useState(false);
+  const [active, setActive] = useState(true);
+
+  const [reduced, setReduced] = useState(
+    () => matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+
+  const stop = useCallback(() => setSpin(false), []);
+  const loaded = useCallback(() => setReady(true), []);
+
+  const failure = useCallback(() => {
+    setFailed(true);
+    setReady(false);
+    setSpin(false);
+  }, []);
+
+  const show3D =
+    capable &&
+    !!product.modelUrl &&
+    !failed &&
+    !imageMode;
+
   useEffect(() => {
     const media = matchMedia('(prefers-reduced-motion: reduce)');
-    const update = () => { setReduced(media.matches); if (media.matches) setAuto(false); };
-    update(); media.addEventListener('change', update); return () => media.removeEventListener('change', update);
-  }, []);
+
+    const update = () => {
+      setReduced(media.matches);
+      if (media.matches) stop();
+    };
+
+    media.addEventListener('change', update);
+
+    return () => media.removeEventListener('change', update);
+  }, [stop]);
+
   useEffect(() => {
-    let intersecting = true;
-    const update = () => setVisible(intersecting && !document.hidden);
-    const observer = new IntersectionObserver(([entry]) => { intersecting = entry.isIntersecting; update(); }, { threshold: .05 });
-    if (wrapper.current) observer.observe(wrapper.current);
+    let seen = true;
+
+    const update = () => {
+      setActive(seen && !document.hidden);
+    };
+
+    const observer = new IntersectionObserver(([entry]) => {
+      seen = entry.isIntersecting;
+      update();
+    });
+
+    observer.observe(wrapper.current);
+    update();
+
     document.addEventListener('visibilitychange', update);
-    return () => { observer.disconnect(); document.removeEventListener('visibilitychange', update); };
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', update);
+    };
   }, []);
-  const fallback = !capable || failed || manualImage;
-  function turn(amount) {
-    const c = controls.current; if (!c) return;
-    const offset = c.object.position.clone().sub(c.target);
-    offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), amount);
-    c.object.position.copy(c.target).add(offset); c.update();
+
+  useEffect(() => {
+    if (!show3D || ready) return;
+
+    const timer = setTimeout(failure, DETAIL_VIEW.timeoutMs);
+
+    return () => clearTimeout(timer);
+  }, [show3D, ready, attempt, failure]);
+
+  function imageOrRetry() {
+    stop();
+    setReady(false);
+
+    if (failed) {
+      useGLTF.clear(product.modelUrl);
+
+      setFailed(false);
+      setImageMode(false);
+      setAttempt(value => value + 1);
+    } else {
+      setImageMode(value => !value);
+    }
   }
-  function zoom(factor) {
-    const c = controls.current; if (!c) return;
-    const offset = c.object.position.clone().sub(c.target);
-    offset.setLength(THREE.MathUtils.clamp(offset.length() * factor, 2.3, 7));
-    c.object.position.copy(c.target).add(offset); c.update();
-  }
-  const still = <img className="dth-model-still" src={product.imageUrl} alt={`${product.name}: illustrative ${product.category} model in ${product.finish}. Not a manufacturer model.`} />;
-  return <section className={`dth-viewer ${hero ? 'dth-viewer-hero' : ''}`} ref={wrapper} aria-label={`${product.name} interactive 3D inspection`}>
-    <div className="dth-viewer-top"><span className="dth-live">{fallback ? 'STATIC PREVIEW' : 'INTERACTIVE 3D'}</span><span>ILLUSTRATIVE MODEL</span></div>
-    <div className="dth-canvas-wrap" aria-hidden="true">
-      {fallback ? still : <SceneBoundary key={product.id} fallback={still} onFailure={() => setFailed(true)}>
-        <Canvas shadows dpr={[1, 1.5]} camera={{ position: [3.2, 1.2, 4.1], fov: 39, near: .1, far: 50 }}
-          frameloop={auto && visible && !reduced ? 'always' : 'demand'}
-          gl={{ antialias: true, alpha: true, powerPreference: 'default' }} fallback={still}
-          onCreated={({ gl }) => { gl.domElement.addEventListener('webglcontextlost', () => setFailed(true), { once: true }); }}>
-          <ambientLight intensity={1.7} />
-          <hemisphereLight args={['#ffffff', '#5b6572', 2.4]} />
-          <directionalLight position={[3, 5, 4]} intensity={5} castShadow shadow-mapSize={[1024, 1024]} />
-          <directionalLight position={[-3, 1, -3]} intensity={4} color="#d8ecff" />
-          <Suspense fallback={null}><Model key={product.modelUrl} url={product.modelUrl} onReady={() => setReady(true)} /></Suspense>
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.38, 0]} receiveShadow><planeGeometry args={[30, 30]} /><shadowMaterial transparent opacity={.32} /></mesh>
-          <OrbitControls ref={controls} makeDefault enablePan={false} minDistance={2.3} maxDistance={7} minPolarAngle={.08} maxPolarAngle={Math.PI-.08} autoRotate={auto && visible && !reduced} autoRotateSpeed={.8} enableDamping dampingFactor={.12} />
-        </Canvas>
-      </SceneBoundary>}
-      {!fallback && !ready && <div className="dth-scene-loading">Loading model…</div>}
-    </div>
-    <div className="dth-viewer-bottom"><span>{fallback ? '3D unavailable or disabled. Product details remain accessible.' : 'Drag to rotate · Scroll / pinch to zoom'}</span><span>GLB / WEBGL</span></div>
-    <div className="dth-viewer-controls" aria-label="3D keyboard-accessible controls">
-      <button disabled={fallback || !ready} onClick={() => turn(-.3)} aria-label="Rotate model left">↶</button>
-      <button disabled={fallback || !ready} onClick={() => turn(.3)} aria-label="Rotate model right">↷</button>
-      <button disabled={fallback || !ready} onClick={() => zoom(.86)} aria-label="Zoom in">＋</button>
-      <button disabled={fallback || !ready} onClick={() => zoom(1.16)} aria-label="Zoom out">−</button>
-      <button disabled={fallback || !ready} onClick={() => { controls.current?.reset(); setAuto(false); }}>Reset</button>
-      <button disabled={fallback || !ready || reduced} aria-pressed={auto} onClick={() => setAuto(a => !a)}>{auto ? 'Pause' : 'Auto'}</button>
-      {capable && !failed && <button aria-pressed={manualImage} onClick={() => { setManualImage(v => !v); setReady(false); }}>{manualImage ? 'View 3D' : 'Image'}</button>}
-    </div>
-  </section>;
+
+  const live = show3D && ready;
+
+  const message = imageMode
+    ? 'Image preview'
+    : failed
+      ? '3D could not load. Image preview is still available.'
+      : !capable || !product.modelUrl
+        ? '3D is unavailable. Image preview.'
+        : ready
+          ? 'Interactive 3D ready'
+          : 'Loading 3D model…';
+
+  return (
+    <section
+      className="dth-pdv"
+      ref={wrapper}
+      aria-label={`${product.name}: product viewer`}
+    >
+      <div className="dth-pdv-heading">
+        <span>PRODUCT STUDIO / 01</span>
+        <span role="status">{message}</span>
+      </div>
+
+      <div className="dth-pdv-stage">
+        <div
+          className="dth-pdv-poster"
+          data-hidden={live}
+          aria-hidden={live}
+        >
+          <ProductImage
+            product={product}
+            className="dth-pdv-image"
+            eager
+          />
+        </div>
+
+        {show3D && (
+          <div
+            className="dth-pdv-canvas"
+            data-ready={ready}
+            aria-hidden="true"
+          >
+            <ModelBoundary
+              key={attempt}
+              onFailure={failure}
+            >
+              <Canvas
+                dpr={[1, 1.5]}
+                camera={{
+                  position: [0, 0, 5],
+                  fov: DETAIL_VIEW.fov,
+                  near: 0.1,
+                  far: 50,
+                }}
+                frameloop={
+                  active && spin && !reduced
+                    ? 'always'
+                    : 'demand'
+                }
+                gl={{
+                  antialias: true,
+                  alpha: true,
+                  powerPreference: 'default',
+                }}
+                fallback={null}
+                onCreated={({ gl }) => {
+                  gl.toneMapping = THREE.NeutralToneMapping;
+                  gl.toneMappingExposure = DETAIL_VIEW.exposure;
+                  gl.outputColorSpace = THREE.SRGBColorSpace;
+                }}
+              >
+                <Studio onFailure={failure} />
+
+                <Suspense fallback={null}>
+                  <Part product={product} onReady={loaded} />
+                </Suspense>
+
+                <CameraControls
+                  api={api}
+                  active={active}
+                  ready={ready}
+                  spin={spin && !reduced}
+                  onManual={stop}
+                />
+              </Canvas>
+            </ModelBoundary>
+          </div>
+        )}
+      </div>
+
+      <div
+        className="dth-pdv-controls"
+        role="group"
+        aria-label="3D view controls"
+      >
+        {[
+          ['left', '↶', 'Rotate left'],
+          ['right', '↷', 'Rotate right'],
+          ['in', '+', 'Zoom in'],
+          ['out', '−', 'Zoom out'],
+          ['reset', 'Reset', 'Reset view'],
+        ].map(([key, label, title]) => (
+          <button
+            key={key}
+            type="button"
+            disabled={!live}
+            aria-label={title}
+            title={title}
+            onClick={() => api.current?.(key)}
+          >
+            {label}
+          </button>
+        ))}
+
+        <button
+          type="button"
+          disabled={!live || reduced}
+          aria-pressed={spin}
+          onClick={() => setSpin(value => !value)}
+        >
+          {spin ? 'Pause rotation' : 'Auto rotate'}
+        </button>
+
+        {capable && product.modelUrl && (
+          <button type="button" onClick={imageOrRetry}>
+            {failed
+              ? 'Retry 3D'
+              : imageMode
+                ? 'View 3D'
+                : 'Image'}
+          </button>
+        )}
+      </div>
+
+      <p className="dth-pdv-help">
+        {live
+          ? 'Drag to rotate · Scroll / pinch to zoom · Dragging pauses auto rotation.'
+          : 'You can read product details and check vehicle fit without 3D.'}
+      </p>
+
+      <p className="dth-pdv-help">
+        Illustrative model · Not manufacturer measurements.
+        {reduced && ' Reduced motion is enabled.'}
+      </p>
+    </section>
+  );
+}
+
+export default function Viewer3D({ product }) {
+  return (
+    <ProductViewer
+      key={`${product.id}:${product.modelUrl}:${product.imageUrl}`}
+      product={product}
+    />
+  );
 }

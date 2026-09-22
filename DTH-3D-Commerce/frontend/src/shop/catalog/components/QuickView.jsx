@@ -388,7 +388,22 @@ export default function QuickView({
     void dismiss(onChooseVehicle);
   }
 
-  function follow(event, url) {
+  // function follow(event, url) {
+  //   // Giữ hành vi mở tab mới bằng Ctrl/Cmd/Shift + click.
+  //   if (
+  //     event.button !== 0 ||
+  //     event.ctrlKey ||
+  //     event.metaKey ||
+  //     event.shiftKey ||
+  //     event.altKey
+  //   ) {
+  //     return;
+  //   }
+
+  //   event.preventDefault();
+  //   void dismiss(() => navigate(url));
+  // }
+    function follow(event, url) {
     // Giữ hành vi mở tab mới bằng Ctrl/Cmd/Shift + click.
     if (
       event.button !== 0 ||
@@ -401,6 +416,25 @@ export default function QuickView({
     }
 
     event.preventDefault();
+
+    if (url.startsWith('/products/')) {
+      const fromShop =
+        window.location.pathname + window.location.search;
+
+      // Đi sang trang chi tiết mà không thu ảnh về thẻ rồi phóng lại.
+      session.current?.dispose();
+      session.current = null;
+
+      onClose();
+
+      navigate(url, {
+        state: { fromShop },
+      });
+
+      return;
+    }
+
+    // Các liên kết khác, ví dụ View bag, giữ hành vi đóng hiện có.
     void dismiss(() => navigate(url));
   }
 

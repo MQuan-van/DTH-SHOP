@@ -1,13 +1,14 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, Route, Routes, useLocation, useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
-import { CATEGORIES, filterProducts, fitment, formatMoney, quoteOrder } from '../../../shared/domain.mjs';
-import { PREVIEW, authenticate, createOrder, deleteAccount, loadOrders, saveProduct, loadAdminProducts } from './api';
+import { CATEGORIES, filterProducts, fitment, formatMoney,normalizeItems, quoteOrder } from '../../../shared/domain.mjs';
+import { PREVIEW, authenticate, createOrder, deleteAccount, loadOrders, saveProduct, loadAdminProducts, loadOrder } from './api';
 import { StoreProvider, useStore } from './useStore';
 import './store.css';
 import Icon from './components/StoreIcon.jsx';
 import ProductCard from './components/ProductCard.jsx';
 import HomePage from './home/HomePage.jsx';
 import ShopPage from './catalog/ShopPage';
+import ProductImage from './catalog/components/ProductImage';
 const Viewer3D = lazy(() => import('./Viewer3D'));
 const categoryNames = { suspension: 'Suspension', wheels: 'Wheels', exhausts: 'Exhausts', mirrors: 'Mirrors', brakes: 'Brakes' };
 function Dialog({ title, onClose, children }) {
@@ -80,43 +81,1236 @@ function Catalog() {
     </div></section>;
 }
 function Product() {
-  const { slug } = useParams(); const { data, vehicleId, add } = useStore(); const { chooseVehicle } = useOutletContext();
+  const { slug } = useParams();
+  const { data } = useStore();
+
+  const product = data.products.find(
+    item => item.slug === slug && item.active !== false
+  );
+
+  return product ? (
+    <ProductDetails
+      key={`${product.id}:${product.slug}`}
+      product={product}
+    />
+  ) : (
+    <NotFound />
+  );
+}
+
+function ProductDetails({ product }) {
+  const { data, vehicleId, bag, add } = useStore();
+  const { chooseVehicle } = useOutletContext();
+  const location = useLocation();
+
   const [quantity, setQuantity] = useState(1);
-  const product = data.products.find(p => p.slug === slug);
-  useEffect(() => { setQuantity(1); }, [slug]);
-  if (!product) return <NotFound />;
+  const [error, setError] = useState('');
+  const [added, setAdded] = useState(false);
+
+  const heading = useRef(null);
+
   const match = fitment(product, vehicleId, data.vehicles);
-  const matches = data.vehicles.filter(v => product.vehicleIds.includes(v.id));
-  return <section className="dth-container dth-section"><nav className="dth-breadcrumb" aria-label="Breadcrumb"><Link to="/shop">All parts</Link><span>/</span><Link to={`/shop?category=${product.category}`}>{categoryNames[product.category]}</Link><span>/</span><span>{product.name}</span></nav><div className="dth-detail-grid"><div><ModelView product={product} /><p className="dth-model-disclaimer">Original illustrative 3D model. Geometry, dimensions and finish do not certify a real product. A static preview is available inside the viewer.</p></div><div className="dth-product-info"><p className="dth-eyebrow">DTH / {categoryNames[product.category].toUpperCase()}</p><h1>{product.name}</h1><p className="dth-detail-price">{formatMoney(product.price)} <span>DEMO PRICE</span></p><p className="dth-product-description">{product.description}</p><div className="dth-finish"><span style={{ background: product.accent || '#cbd4dc' }} /><div><small>FINISH</small><strong>{product.finish}</strong></div></div><div className={`dth-fit-box dth-fit-${match.status}`}><Icon name={match.status === 'compatible' ? 'check' : 'vehicle'} /><div><strong>{match.text}</strong><p>Based on synthetic demo mappings, not manufacturer verification.</p></div><button className="dth-text-button" onClick={chooseVehicle}>Change</button></div><div className="dth-buy-row"><label className="dth-quantity">Qty<select aria-label="Product quantity" value={quantity} onChange={e => setQuantity(Number(e.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1}>{i + 1}</option>)}</select></label><button className="dth-button dth-primary" onClick={() => match.status === 'compatible' ? add(product, vehicleId, quantity) : chooseVehicle()}>{match.status === 'compatible' ? 'Add to bag' : 'Select a matching vehicle'}<Icon name="bag" /></button></div><p className="dth-muted">No real payment. No shipping or installation service.</p><details open className="dth-detail-accordion"><summary>Product information</summary><dl>{Object.entries(product.specs || {}).map(([key, value]) => <div key={key}><dt>{key}</dt><dd>{String(value)}</dd></div>)}</dl></details><details className="dth-detail-accordion"><summary>Demo compatibility dataset</summary><ul>{matches.map(v => <li key={v.id}>{v.make} {v.model} ({v.year})</li>)}</ul></details></div></div></section>;
-}
-function Bag() {
-  const store = useStore(), navigate = useNavigate();
-  const [ack, setAck] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('');
-  const key = useRef({ payload: '', id: '' });
-  const payload = JSON.stringify(store.bag);
-  if (payload !== key.current.payload) key.current = { payload, id: crypto.randomUUID() };
-  let quote = null, quoteError = '';
-  try { if (store.bag.length) quote = quoteOrder(store.bag, store.data.products, store.data.vehicles); } catch (e) { quoteError = e.message; }
-  function change(index, quantity) { if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) return; store.setBag(items => items.map((i, n) => n === index ? { ...i, quantity } : i)); }
-  async function checkout() {
-    if (busy) return;
-    setBusy(true); setError('');
+  const vehicle = data.vehicles.find(item => item.id === vehicleId);
+
+  const existing = bag.find(
+    item =>
+      item.productId === product.id &&
+      item.vehicleId === vehicleId
+  );
+
+  const remaining = Math.max(0, 10 - (existing?.quantity || 0));
+  const full = !existing && bag.length >= 20;
+
+  const validPrice =
+    Number.isSafeInteger(product.price) &&
+    product.price > 0 &&
+    product.price <= 1000000000;
+
+  const compatible = match.status === 'compatible';
+
+  const canAdd =
+    compatible &&
+    validPrice &&
+    !full &&
+    remaining > 0;
+
+  const category =
+    categoryNames[product.category] || product.category;
+
+  const matches = data.vehicles.filter(
+    item =>
+      Array.isArray(product.vehicleIds) &&
+      product.vehicleIds.includes(item.id)
+  );
+
+  const specifications = Object.entries(product.specs || {});
+
+  const source = location.state?.fromShop;
+
+  const backToShop =
+    typeof source === 'string' &&
+    /^\/shop(?:\?|$)/.test(source)
+      ? source
+      : '/shop';
+
+  const fitLabels = {
+    unselected: 'Choose your vehicle to check fit',
+    compatible: 'Matches your selected demo vehicle',
+    incompatible: 'No match in the demo dataset',
+    unknown: 'Compatibility not verified',
+  };
+
+  useEffect(() => {
+    setQuantity(1);
+    setAdded(false);
+    setError('');
+  }, [vehicleId]);
+
+  useEffect(() => {
+    setQuantity(value =>
+      Math.max(1, Math.min(value, remaining))
+    );
+  }, [remaining]);
+
+  useEffect(() => {
+    heading.current?.focus({ preventScroll: true });
+  }, []);
+
+  function buy(event) {
+    event.preventDefault();
+
+    setError('');
+    setAdded(false);
+
+    if (!compatible) {
+      chooseVehicle();
+      return;
+    }
+
+    if (
+      !canAdd ||
+      !Number.isSafeInteger(quantity) ||
+      quantity < 1 ||
+      quantity > remaining
+    ) {
+      setError(
+        'Check the quantity and demo bag limits before continuing.'
+      );
+      return;
+    }
+
     try {
-      const order = await createOrder(store.bag, key.current.id, ack, store.data);
-      store.setLastOrder(order); store.setBag([]); navigate('/order-complete');
-    } catch (e) { setError(e.message); } finally { setBusy(false); }
+      // Dùng dữ liệu catalog để kiểm tra lại giá và tương thích.
+      quoteOrder(
+        [{
+          productId: product.id,
+          vehicleId,
+          quantity,
+        }],
+        data.products,
+        data.vehicles
+      );
+
+      if (!add(product, vehicleId, quantity)) {
+        setError(
+          'Could not add this item. Check your vehicle and bag limits.'
+        );
+        return;
+      }
+
+      setAdded(true);
+      setQuantity(1);
+    } catch (error) {
+      setError(error.message);
+    }
   }
-  return <section className="dth-container dth-section"><div className="dth-page-heading"><p className="dth-eyebrow">YOUR NEXT BUILD</p><h1>The bag.</h1></div>{!store.bag.length ? <div className="dth-empty"><Icon name="bag" /><h2>Ready for a new perspective?</h2><p>Your bag is empty.</p><Link className="dth-button dth-primary" to="/shop">Explore the collection</Link></div> : <div className="dth-checkout-grid"><div className="dth-bag-items">{store.bag.map((item, index) => {
-    const product = store.data.products.find(p => p.id === item.productId);
-    const vehicle = store.data.vehicles.find(v => v.id === item.vehicleId);
-    return <article className="dth-bag-item" key={`${item.productId}:${item.vehicleId}`}>
-      {product && <Link to={`/products/${product.slug}`}><img src={product.imageUrl} alt={product.name} /></Link>}<div><h2>{product?.name || 'Unavailable product'}</h2><p>{product?.finish}</p><p className="dth-fit">{vehicle ? `${vehicle.model} · ${vehicle.year} · demo mapping` : 'Unknown demo vehicle'}</p><button disabled={busy} className="dth-text-button" onClick={() => store.setBag(items => items.filter((_, n) => n !== index))} aria-label={`Remove ${product?.name || item.productId}`}>Remove</button></div><div className="dth-bag-item-end"><strong>{formatMoney((product?.price || 0) * item.quantity)}</strong><label>Qty<select disabled={busy} aria-label={`Quantity for ${product?.name || item.productId}`} value={item.quantity} onChange={e => change(index, Number(e.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1}>{i + 1}</option>)}</select></label></div></article>;
-  })}<Link className="dth-text-button" to="/shop">← Continue exploring</Link></div><aside className="dth-order-summary"><p className="dth-eyebrow">MOCK CHECKOUT</p><h2>Build summary</h2><div><span>Subtotal</span><strong>{quote ? formatMoney(quote.total) : '—'}</strong></div><div><span>Delivery</span><span>Not applicable — demo</span></div><div className="dth-total"><span>Total</span><strong>{quote ? formatMoney(quote.total) : '—'}</strong></div><p className="dth-muted">{PREVIEW ? 'Preview: the simulated result exists only in this page session. It is not sent to a server.' : 'The API rechecks product prices and demo compatibility before saving the simulated order to MongoDB.'}</p><label className="dth-checkbox"><input type="checkbox" checked={ack} disabled={busy} onChange={e => setAck(e.target.checked)} />I understand this is a demonstration, with no payment, shipment or real fitment guarantee.</label>{!PREVIEW && !store.user ? <Link className="dth-button dth-primary" to="/account?return=/bag">Sign in to continue</Link> : <button className="dth-button dth-primary" disabled={!ack || !quote || busy || store.authLoading} onClick={checkout}>{busy ? 'Creating simulated order…' : 'Place simulated order'}<Icon name="arrow" /></button>}{(quoteError || error) && <p className="dth-error" role="alert">{quoteError || error}</p>}</aside></div>}</section>;
+
+  return (
+    <section className="dth-container dth-section dth-pdp">
+      <nav
+        className="dth-pdp-breadcrumb"
+        aria-label="Breadcrumb"
+      >
+        <Link to={backToShop}>← Back to parts</Link>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{product.name}</span>
+      </nav>
+
+      <div className="dth-pdp-layout">
+        <div className="dth-pdp-media">
+          <Suspense
+            fallback={
+              <div className="dth-pdv" aria-busy="true">
+                <div className="dth-pdv-heading">
+                  <span>PRODUCT STUDIO / 01</span>
+                  <span role="status">Preparing 3D…</span>
+                </div>
+
+                <div className="dth-pdv-stage">
+                  <ProductImage
+                    product={product}
+                    className="dth-pdv-image"
+                    eager
+                  />
+                </div>
+
+                <div className="dth-pdv-controls">
+                  {[
+                    '↶', '↷', '+', '−',
+                    'Reset', 'Auto rotate', 'Image',
+                  ].map(label => (
+                    <button key={label} disabled>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                <p className="dth-pdv-help">
+                  You can read product details and check vehicle
+                  fit without 3D.
+                </p>
+
+                <p className="dth-pdv-help">
+                  Illustrative model · Not manufacturer measurements.
+                </p>
+              </div>
+            }
+          >
+            <Viewer3D
+              key={`${product.id}:${product.modelUrl}`}
+              product={product}
+            />
+          </Suspense>
+        </div>
+
+        <div className="dth-pdp-info">
+          <p className="dth-eyebrow">DTH / {category}</p>
+
+          <h1 ref={heading} tabIndex={-1}>
+            {product.name}
+          </h1>
+
+          <p className="dth-pdp-price">
+            {validPrice
+              ? formatMoney(product.price)
+              : 'Price unavailable'}
+
+            <small>DEMO PRICE · VND</small>
+          </p>
+
+          <p className="dth-pdp-description">
+            {product.description}
+          </p>
+
+          <div className="dth-pdp-finish">
+            <span
+              style={{
+                background: product.accent || '#CBD4DC',
+              }}
+              aria-hidden="true"
+            />
+
+            <div>
+              <small>FINISH</small>
+              <strong>{product.finish}</strong>
+            </div>
+          </div>
+
+          <section
+            className="dth-pdp-fit"
+            data-status={match.status}
+            aria-label="Vehicle compatibility"
+          >
+            <strong>
+              <Icon name={compatible ? 'check' : 'vehicle'} />
+              {fitLabels[match.status] || fitLabels.unknown}
+            </strong>
+
+            {vehicle && (
+              <p>
+                {vehicle.make} {vehicle.model} · {vehicle.year}
+              </p>
+            )}
+
+            <small>
+              Based on synthetic demo mappings,
+              not manufacturer verification.
+            </small>
+
+            <div>
+              <button
+                type="button"
+                className="dth-text-button"
+                onClick={chooseVehicle}
+              >
+                {vehicleId ? 'Change vehicle' : 'Select vehicle'} →
+              </button>
+
+              {(
+                match.status === 'incompatible' ||
+                match.status === 'unknown'
+              ) && (
+                <Link to="/shop?fit=match">
+                  Browse matching parts
+                </Link>
+              )}
+            </div>
+          </section>
+
+          <form className="dth-pdp-buy" onSubmit={buy}>
+            <label>
+              Quantity
+
+              <select
+                value={quantity}
+                disabled={!canAdd}
+                onChange={event => {
+                  setQuantity(Number(event.target.value));
+                  setAdded(false);
+                }}
+              >
+                {Array.from(
+                  { length: Math.max(1, remaining) },
+                  (_, index) => (
+                    <option
+                      key={index + 1}
+                      value={index + 1}
+                    >
+                      {index + 1}
+                    </option>
+                  )
+                )}
+              </select>
+            </label>
+
+            <button
+              type="submit"
+              className="dth-button dth-primary"
+              disabled={compatible && !canAdd}
+            >
+              <Icon name="bag" />
+
+              {!compatible
+                ? 'Choose a matching vehicle'
+                : !validPrice
+                  ? 'Price unavailable'
+                  : full
+                    ? 'Bag limit reached'
+                    : !remaining
+                      ? 'Quantity limit reached'
+                      : 'Add to bag'}
+            </button>
+          </form>
+
+          <p className="dth-pdp-note">
+            Demo limit: 10 per product / vehicle, 20 bag lines.
+            No real payment or shipment.
+          </p>
+
+          {error && (
+            <p className="dth-error" role="alert">
+              {error}
+            </p>
+          )}
+
+          {added && (
+            <div className="dth-pdp-added">
+              <span>✓ Added to your bag.</span>
+              <Link to="/bag">Review bag →</Link>
+            </div>
+          )}
+
+          <details className="dth-detail-accordion" open>
+            <summary>Product information</summary>
+
+            {specifications.length ? (
+              <dl>
+                {specifications.map(([key, value]) => (
+                  <div key={key}>
+                    <dt>{key}</dt>
+                    <dd>{String(value)}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : (
+              <p className="dth-pdp-note">
+                No additional specifications have been provided.
+              </p>
+            )}
+          </details>
+
+          <details className="dth-detail-accordion">
+            <summary>
+              Vehicles in the demo mapping ({matches.length})
+            </summary>
+
+            {matches.length ? (
+              <ul>
+                {matches.map(item => (
+                  <li key={item.id}>
+                    {item.make} {item.model} · {item.year}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>
+                No matching vehicles are listed.
+                Compatibility is not verified.
+              </p>
+            )}
+          </details>
+        </div>
+      </div>
+    </section>
+  );
 }
-function Completed() {
-  const { lastOrder } = useStore();
-  return <section className="dth-container dth-section dth-completed"><div className="dth-complete-mark"><Icon name="check" /></div><p className="dth-eyebrow">{lastOrder ? 'SIMULATION COMPLETE' : 'ORDER SUMMARY'}</p><h1>{lastOrder ? 'Your next build, imagined.' : 'No order in this page session.'}</h1>{lastOrder && <><p>No money was charged. No physical products will be shipped.</p><div className="dth-confirmation"><span>{lastOrder.id}</span><strong>{formatMoney(lastOrder.total)}</strong><span>{PREVIEW ? 'Local preview only — not saved to MongoDB.' : 'Simulated order saved to your account.'}</span></div></>}<Link className="dth-button dth-primary" to="/shop">Back to the collection <Icon name="arrow" /></Link></section>;
-}
+// function Bag() {
+//   const store = useStore(), navigate = useNavigate();
+//   const [ack, setAck] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('');
+//   const key = useRef({ payload: '', id: '' });
+//   const payload = JSON.stringify(store.bag);
+//   if (payload !== key.current.payload) key.current = { payload, id: crypto.randomUUID() };
+//   let quote = null, quoteError = '';
+//   try { if (store.bag.length) quote = quoteOrder(store.bag, store.data.products, store.data.vehicles); } catch (e) { quoteError = e.message; }
+//   function change(index, quantity) { if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10) return; store.setBag(items => items.map((i, n) => n === index ? { ...i, quantity } : i)); }
+//   async function checkout() {
+//     if (busy) return;
+//     setBusy(true); setError('');
+//     try {
+//       const order = await createOrder(store.bag, key.current.id, ack, store.data);
+//       store.setLastOrder(order); store.setBag([]); navigate('/order-complete');
+//     } catch (e) { setError(e.message); } finally { setBusy(false); }
+//   }
+//   return <section className="dth-container dth-section"><div className="dth-page-heading"><p className="dth-eyebrow">YOUR NEXT BUILD</p><h1>The bag.</h1></div>{!store.bag.length ? <div className="dth-empty"><Icon name="bag" /><h2>Ready for a new perspective?</h2><p>Your bag is empty.</p><Link className="dth-button dth-primary" to="/shop">Explore the collection</Link></div> : <div className="dth-checkout-grid"><div className="dth-bag-items">{store.bag.map((item, index) => {
+//     const product = store.data.products.find(p => p.id === item.productId);
+//     const vehicle = store.data.vehicles.find(v => v.id === item.vehicleId);
+//     return <article className="dth-bag-item" key={`${item.productId}:${item.vehicleId}`}>
+//       {product && <Link to={`/products/${product.slug}`}><img src={product.imageUrl} alt={product.name} /></Link>}<div><h2>{product?.name || 'Unavailable product'}</h2><p>{product?.finish}</p><p className="dth-fit">{vehicle ? `${vehicle.model} · ${vehicle.year} · demo mapping` : 'Unknown demo vehicle'}</p><button disabled={busy} className="dth-text-button" onClick={() => store.setBag(items => items.filter((_, n) => n !== index))} aria-label={`Remove ${product?.name || item.productId}`}>Remove</button></div><div className="dth-bag-item-end"><strong>{formatMoney((product?.price || 0) * item.quantity)}</strong><label>Qty<select disabled={busy} aria-label={`Quantity for ${product?.name || item.productId}`} value={item.quantity} onChange={e => change(index, Number(e.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1}>{i + 1}</option>)}</select></label></div></article>;
+//   })}<Link className="dth-text-button" to="/shop">← Continue exploring</Link></div><aside className="dth-order-summary"><p className="dth-eyebrow">MOCK CHECKOUT</p><h2>Build summary</h2><div><span>Subtotal</span><strong>{quote ? formatMoney(quote.total) : '—'}</strong></div><div><span>Delivery</span><span>Not applicable — demo</span></div><div className="dth-total"><span>Total</span><strong>{quote ? formatMoney(quote.total) : '—'}</strong></div><p className="dth-muted">{PREVIEW ? 'Preview: the simulated result exists only in this page session. It is not sent to a server.' : 'The API rechecks product prices and demo compatibility before saving the simulated order to MongoDB.'}</p><label className="dth-checkbox"><input type="checkbox" checked={ack} disabled={busy} onChange={e => setAck(e.target.checked)} />I understand this is a demonstration, with no payment, shipment or real fitment guarantee.</label>{!PREVIEW && !store.user ? <Link className="dth-button dth-primary" to="/account?return=/bag">Sign in to continue</Link> : <button className="dth-button dth-primary" disabled={!ack || !quote || busy || store.authLoading} onClick={checkout}>{busy ? 'Creating simulated order…' : 'Place simulated order'}<Icon name="arrow" /></button>}{(quoteError || error) && <p className="dth-error" role="alert">{quoteError || error}</p>}</aside></div>}</section>;
+// }
+// function Completed() {
+//   const { lastOrder } = useStore();
+//   return <section className="dth-container dth-section dth-completed"><div className="dth-complete-mark"><Icon name="check" /></div><p className="dth-eyebrow">{lastOrder ? 'SIMULATION COMPLETE' : 'ORDER SUMMARY'}</p><h1>{lastOrder ? 'Your next build, imagined.' : 'No order in this page session.'}</h1>{lastOrder && <><p>No money was charged. No physical products will be shipped.</p><div className="dth-confirmation"><span>{lastOrder.id}</span><strong>{formatMoney(lastOrder.total)}</strong><span>{PREVIEW ? 'Local preview only — not saved to MongoDB.' : 'Simulated order saved to your account.'}</span></div></>}<Link className="dth-button dth-primary" to="/shop">Back to the collection <Icon name="arrow" /></Link></section>;
+// }
+  const CHECKOUT_INTENT_KEY = 'dth.commerce.checkout-intent.v2';
+  let memoryCheckoutIntent = null;
+
+  function bagSignature(items) {
+    try {
+      return JSON.stringify(normalizeItems(items));
+    } catch {
+      return '';
+    }
+  }
+
+  function getCheckoutIntent(fingerprint) {
+    let saved = memoryCheckoutIntent;
+
+    try {
+      saved =
+        JSON.parse(sessionStorage.getItem(CHECKOUT_INTENT_KEY)) ||
+        saved;
+    } catch {
+      // Vẫn hoạt động trong bộ nhớ nếu storage bị khóa.
+    }
+
+    if (
+      saved?.fingerprint === fingerprint &&
+      typeof saved.id === 'string' &&
+      /^[a-zA-Z0-9-]{8,80}$/.test(saved.id)
+    ) {
+      return saved;
+    }
+
+    if (!globalThis.crypto?.randomUUID) {
+      throw new Error(
+        'Open this demo on localhost or HTTPS to create an order.'
+      );
+    }
+
+    saved = {
+      fingerprint,
+      id: crypto.randomUUID(),
+    };
+
+    memoryCheckoutIntent = saved;
+
+    try {
+      sessionStorage.setItem(
+        CHECKOUT_INTENT_KEY,
+        JSON.stringify(saved)
+      );
+    } catch {
+      // Sau reload, khả năng retry phụ thuộc storage được cho phép.
+    }
+
+    return saved;
+  }
+
+  function finishCheckoutIntent(id) {
+    if (memoryCheckoutIntent?.id === id) {
+      memoryCheckoutIntent = null;
+    }
+
+    try {
+      const saved = JSON.parse(
+        sessionStorage.getItem(CHECKOUT_INTENT_KEY)
+      );
+
+      if (saved?.id === id) {
+        sessionStorage.removeItem(CHECKOUT_INTENT_KEY);
+      }
+    } catch {
+      // Không biến đơn thành công thành lỗi vì storage.
+    }
+  }
+
+  function Bag() {
+    const store = useStore();
+    const navigate = useNavigate();
+
+    const [reviewFor, setReviewFor] = useState('');
+    const [ackFor, setAckFor] = useState('');
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState('');
+
+    const lock = useRef(false);
+    const mounted = useRef(false);
+    const summaryHeading = useRef(null);
+
+    const actor = PREVIEW ? 'preview' : store.user?.id || '';
+    const latestActor = useRef(actor);
+
+    useEffect(() => {
+      latestActor.current = actor;
+    }, [actor]);
+
+    useEffect(() => {
+      mounted.current = true;
+
+      return () => {
+        mounted.current = false;
+      };
+    }, []);
+
+    let quote = null;
+    let quoteError = '';
+
+    try {
+      if (store.bag.length) {
+        quote = quoteOrder(
+          store.bag,
+          store.data.products,
+          store.data.vehicles
+        );
+      }
+    } catch (e) {
+      quoteError = e.message;
+    }
+
+    const signature = quote
+      ? JSON.stringify([actor, quote])
+      : '';
+
+    const reviewing =
+      !!signature && reviewFor === signature;
+
+    const acknowledged =
+      !!signature && ackFor === signature;
+
+    const units = store.bag.reduce(
+      (sum, item) => sum + item.quantity,
+      0
+    );
+
+    function editBag(index, changes) {
+      if (lock.current) return;
+
+      try {
+        const next = changes === null
+          ? store.bag.filter((_, i) => i !== index)
+          : store.bag.map((item, i) =>
+              i === index ? { ...item, ...changes } : item
+            );
+
+        // Gộp dòng trùng sản phẩm + xe và kiểm tra giới hạn số lượng.
+        store.setBag(next.length ? normalizeItems(next) : []);
+
+        setReviewFor('');
+        setAckFor('');
+        setError('');
+      } catch (e) {
+        setError(e.message);
+      }
+    }
+
+    function review() {
+      if (!quote || lock.current) return;
+
+      setReviewFor(signature);
+      setAckFor('');
+      setError('');
+
+      summaryHeading.current?.focus();
+    }
+
+    async function checkout() {
+      if (
+        lock.current ||
+        !reviewing ||
+        !acknowledged ||
+        !quote ||
+        (!PREVIEW && (store.authLoading || !store.user))
+      ) {
+        return;
+      }
+
+      lock.current = true;
+      setBusy(true);
+      setError('');
+
+      try {
+        const snapshot = normalizeItems(store.bag);
+        const payload = bagSignature(snapshot);
+
+        const intent = getCheckoutIntent(
+          JSON.stringify([actor, payload])
+        );
+
+        const order = await createOrder(
+          snapshot,
+          intent.id,
+          true,
+          store.data,
+          quote.total
+        );
+
+        // Khách đã rời trang hoặc đổi tài khoản:
+        // không xóa giỏ và không tự điều hướng.
+        if (
+          !mounted.current ||
+          latestActor.current !== actor
+        ) {
+          return;
+        }
+
+        store.setLastOrder(order);
+
+        // Không xóa một giỏ đã thay đổi trong lúc chờ phản hồi.
+        store.setBag(current =>
+          bagSignature(current) === payload ? [] : current
+        );
+
+        finishCheckoutIntent(intent.id);
+
+        navigate(
+          `/order-complete?order=${encodeURIComponent(order.id)}`,
+          { replace: true }
+        );
+      } catch (e) {
+        if (
+          !mounted.current ||
+          latestActor.current !== actor
+        ) {
+          return;
+        }
+
+        setError(e.message || 'Could not confirm the order.');
+
+        if (e.status === 401) {
+          store.setUser(null);
+        }
+
+        if (e.status === 409) {
+          setReviewFor('');
+          setAckFor('');
+        }
+      } finally {
+        lock.current = false;
+
+        if (mounted.current) {
+          setBusy(false);
+        }
+      }
+    }
+
+    return (
+      <section className="dth-container dth-section dth-cart">
+        <p className="dth-eyebrow">YOUR DTH BUILD</p>
+        <h1>Your bag.</h1>
+
+        <p className="dth-cart-caption">
+          Review your parts and vehicle matches before placing
+          a simulated order.
+        </p>
+
+        <ol
+          className="dth-cart-steps"
+          aria-label="Checkout progress"
+        >
+          <li aria-current={!reviewing ? 'step' : undefined}>
+            01 / Bag
+          </li>
+          <li aria-current={reviewing ? 'step' : undefined}>
+            02 / Review
+          </li>
+          <li>03 / Confirmation</li>
+        </ol>
+
+        {!store.bag.length ? (
+          <div className="dth-cart-empty">
+            <Icon name="bag" />
+            <h2>Your bag is empty.</h2>
+            <p>Find a part, check its demo fit, then add it here.</p>
+
+            <Link
+              className="dth-button dth-primary"
+              to="/shop"
+            >
+              Explore parts
+            </Link>
+          </div>
+        ) : (
+          <div className="dth-cart-layout">
+            <div>
+              <p className="dth-cart-caption">
+                {units} units · {store.bag.length} product / vehicle lines
+              </p>
+
+              <p className="dth-cart-hint">
+                Each line keeps its own vehicle. Changing the header
+                vehicle does not change your bag.
+              </p>
+
+              {store.bag.map((item, index) => {
+                const product = store.data.products.find(
+                  p => p.id === item.productId
+                );
+
+                const vehicle = store.data.vehicles.find(
+                  v => v.id === item.vehicleId
+                );
+
+                const available =
+                  product && product.active !== false;
+
+                const priceValid =
+                  available &&
+                  Number.isSafeInteger(product.price) &&
+                  product.price >= 0 &&
+                  product.price <= 1000000000;
+
+                const compatible =
+                  available &&
+                  fitment(
+                    product,
+                    item.vehicleId,
+                    store.data.vehicles
+                  ).status === 'compatible';
+
+                return (
+                  <article
+                    className="dth-cart-item"
+                    key={`${item.productId}:${item.vehicleId}`}
+                  >
+                    <div className="dth-cart-image">
+                      {available ? (
+                        <Link to={`/products/${product.slug}`}>
+                          <ProductImage
+                            product={product}
+                            className="dth-cart-photo"
+                          />
+                        </Link>
+                      ) : (
+                        <span>Unavailable</span>
+                      )}
+                    </div>
+
+                    <div className="dth-cart-item-info">
+                      <h2>
+                        {available ? (
+                          <Link to={`/products/${product.slug}`}>
+                            {product.name}
+                          </Link>
+                        ) : (
+                          'Unavailable product'
+                        )}
+                      </h2>
+
+                      <p>{product?.finish}</p>
+
+                      <p
+                        className="dth-cart-fit"
+                        data-valid={!!compatible}
+                      >
+                        {compatible
+                          ? '✓ Matches demo mapping'
+                          : 'Attention: fit or product unavailable'}
+                      </p>
+
+                      {reviewing ? (
+                        <p>
+                          {vehicle
+                            ? `${vehicle.make} ${vehicle.model} · ${vehicle.year}`
+                            : item.vehicleId}
+                        </p>
+                      ) : (
+                        <label className="dth-cart-field">
+                          Vehicle for this part
+
+                          <select
+                            value={item.vehicleId}
+                            disabled={busy || !available}
+                            onChange={e =>
+                              editBag(index, {
+                                vehicleId: e.target.value,
+                              })
+                            }
+                          >
+                            {!vehicle && (
+                              <option value={item.vehicleId}>
+                                Unknown vehicle — choose another
+                              </option>
+                            )}
+
+                            {store.data.vehicles.map(v => (
+                              <option
+                                key={v.id}
+                                value={v.id}
+                                disabled={
+                                  !available ||
+                                  fitment(
+                                    product,
+                                    v.id,
+                                    store.data.vehicles
+                                  ).status !== 'compatible'
+                                }
+                              >
+                                {v.make} {v.model} · {v.year}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+
+                      {!reviewing && (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          className="dth-text-button"
+                          onClick={() => editBag(index, null)}
+                          aria-label={`Remove ${product?.name || item.productId}`}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="dth-cart-item-end">
+                      <small>UNIT PRICE</small>
+
+                      <span>
+                        {priceValid
+                          ? formatMoney(product.price)
+                          : '—'}
+                      </span>
+
+                      {reviewing ? (
+                        <p>Quantity: {item.quantity}</p>
+                      ) : (
+                        <label className="dth-cart-field">
+                          Quantity
+
+                          <select
+                            value={item.quantity}
+                            disabled={busy}
+                            aria-label={`Quantity for ${product?.name || item.productId}`}
+                            onChange={e =>
+                              editBag(index, {
+                                quantity: Number(e.target.value),
+                              })
+                            }
+                          >
+                            {Array.from(
+                              { length: 10 },
+                              (_, i) => (
+                                <option
+                                  key={i + 1}
+                                  value={i + 1}
+                                >
+                                  {i + 1}
+                                </option>
+                              )
+                            )}
+                          </select>
+                        </label>
+                      )}
+
+                      <strong>
+                        {priceValid
+                          ? formatMoney(product.price * item.quantity)
+                          : '—'}
+                      </strong>
+                    </div>
+                  </article>
+                );
+              })}
+
+              <Link
+                className="dth-cart-continue"
+                to="/shop"
+              >
+                ← Continue shopping
+              </Link>
+            </div>
+
+            <aside
+              className="dth-cart-summary"
+              aria-busy={busy}
+            >
+              <p className="dth-eyebrow">
+                {PREVIEW
+                  ? 'LOCAL PREVIEW'
+                  : 'API / SIMULATED ORDER'}
+              </p>
+
+              <h2 ref={summaryHeading} tabIndex={-1}>
+                {reviewing
+                  ? 'Review your order.'
+                  : 'Order summary.'}
+              </h2>
+
+              <dl>
+                <div>
+                  <dt>Subtotal</dt>
+                  <dd>
+                    {quote ? formatMoney(quote.subtotal) : '—'}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt>Delivery</dt>
+                  <dd>Not applicable</dd>
+                </div>
+
+                <div className="dth-cart-total">
+                  <dt>Demo total</dt>
+                  <dd>
+                    {quote ? formatMoney(quote.total) : '—'}
+                  </dd>
+                </div>
+              </dl>
+
+              <p className="dth-cart-hint">
+                {PREVIEW
+                  ? 'This simulation stays in the current page session. No order is saved to a server.'
+                  : 'The server checks current prices and vehicle matches before saving a simulated order.'}
+              </p>
+
+              {reviewing && (
+                <div className="dth-cart-review-note">
+                  <strong>
+                    {PREVIEW
+                      ? 'Preview checkout'
+                      : store.user?.email}
+                  </strong>
+
+                  <p>
+                    No card details, delivery address or real payment
+                    are needed.
+                  </p>
+
+                  <label className="dth-cart-consent">
+                    <input
+                      type="checkbox"
+                      checked={acknowledged}
+                      disabled={busy}
+                      onChange={e =>
+                        setAckFor(
+                          e.target.checked ? signature : ''
+                        )
+                      }
+                    />
+
+                    <span>
+                      I understand this is a demo: no payment,
+                      shipment or real fitment guarantee.
+                    </span>
+                  </label>
+                </div>
+              )}
+
+              {(quoteError || error) && (
+                <div className="dth-cart-error" role="alert">
+                  <p>{quoteError || error}</p>
+                  <p>
+                    If a request timed out, keep the same bag and retry,
+                    or check your account before placing another order.
+                  </p>
+                </div>
+              )}
+
+              {!PREVIEW && store.authLoading ? (
+                <p role="status">Checking account…</p>
+              ) : !PREVIEW && !store.user ? (
+                <Link
+                  className="dth-button dth-primary"
+                  to="/account?return=/bag"
+                >
+                  Sign in to continue
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className="dth-button dth-primary"
+                  disabled={
+                    busy ||
+                    !quote ||
+                    (reviewing && !acknowledged)
+                  }
+                  onClick={reviewing ? checkout : review}
+                >
+                  {busy
+                    ? 'Confirming…'
+                    : reviewing
+                      ? 'Place simulated order'
+                      : 'Review order'}
+
+                  <Icon name="arrow" />
+                </button>
+              )}
+
+              {reviewing && (
+                <button
+                  type="button"
+                  className="dth-button dth-ghost"
+                  disabled={busy}
+                  onClick={() => {
+                    setReviewFor('');
+                    setAckFor('');
+                  }}
+                >
+                  Edit bag
+                </button>
+              )}
+
+              {!PREVIEW && (quoteError || error) && (
+                <button
+                  type="button"
+                  className="dth-text-button"
+                  disabled={busy}
+                  onClick={store.refresh}
+                >
+                  Refresh catalog, then review again
+                </button>
+              )}
+
+              {busy && (
+                <p role="status" className="dth-cart-hint">
+                  Please wait. Do not close this page.
+                </p>
+              )}
+
+              <p className="dth-cart-hint">
+                Demo limits: 10 per part / vehicle, 20 bag lines.
+                These are not stock levels.
+              </p>
+            </aside>
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  function Completed() {
+    const store = useStore();
+    const [params] = useSearchParams();
+
+    const id =
+      params.get('order') ||
+      store.lastOrder?.id ||
+      '';
+
+    const [result, setResult] = useState(null);
+    const [attempt, setAttempt] = useState(0);
+
+    const requestKey = `${store.user?.id || ''}:${id}`;
+
+    useEffect(() => {
+      if (
+        PREVIEW ||
+        store.authLoading ||
+        !store.user ||
+        !id
+      ) {
+        return;
+      }
+
+      let live = true;
+      setResult(null);
+
+      loadOrder(id)
+        .then(order => {
+          if (live) {
+            setResult({ key: requestKey, order });
+          }
+        })
+        .catch(e => {
+          if (live) {
+            setResult({
+              key: requestKey,
+              error: e.message,
+            });
+          }
+        });
+
+      return () => {
+        live = false;
+      };
+    }, [
+      id,
+      requestKey,
+      store.authLoading,
+      attempt,
+    ]);
+
+    const current =
+      result?.key === requestKey ? result : null;
+
+    const order = PREVIEW
+      ? (
+          store.lastOrder?.id === id
+            ? store.lastOrder
+            : null
+        )
+      : current?.order;
+
+    if (!PREVIEW && store.authLoading) {
+      return <div className="dth-empty">Checking account…</div>;
+    }
+
+    if (!PREVIEW && !store.user) {
+      return (
+        <div className="dth-empty">
+          <h1>Sign in to view your order.</h1>
+          <Link to="/account">Go to account</Link>
+        </div>
+      );
+    }
+
+    if (!id || (PREVIEW && !order)) {
+      return (
+        <div className="dth-empty">
+          <h1>No order in this page session.</h1>
+          <p>
+            {PREVIEW
+              ? 'Local preview results do not survive a full page reload.'
+              : 'Choose a saved order from your account.'}
+          </p>
+          <Link to="/shop">Back to parts</Link>
+        </div>
+      );
+    }
+
+    if (current?.error) {
+      return (
+        <div className="dth-empty">
+          <h1>Could not load this order.</h1>
+          <p role="alert">{current.error}</p>
+
+          <button
+            className="dth-button dth-primary"
+            onClick={() => setAttempt(n => n + 1)}
+          >
+            Try again
+          </button>
+
+          <Link to="/account">View account</Link>
+        </div>
+      );
+    }
+
+    if (!order) {
+      return (
+        <div className="dth-empty" role="status">
+          Loading saved order…
+        </div>
+      );
+    }
+
+    return (
+      <section className="dth-container dth-section dth-cart dth-receipt">
+        <p className="dth-eyebrow">
+          {PREVIEW
+            ? 'LOCAL SIMULATION'
+            : 'SAVED SIMULATED ORDER'}
+        </p>
+
+        <h1>Your demo order is confirmed.</h1>
+        <p>
+          No money was charged.
+          No physical products will be shipped.
+        </p>
+
+        <div className="dth-receipt-meta">
+          <strong>{order.id}</strong>
+
+          <span>
+            {new Date(order.createdAt).toLocaleString('vi-VN')}
+          </span>
+
+          <span>
+            {PREVIEW
+              ? 'Not saved to a server'
+              : 'Loaded from your account'}
+          </span>
+        </div>
+
+        <ul className="dth-receipt-lines">
+          {order.lines.map(line => {
+            const vehicle = store.data.vehicles.find(
+              v => v.id === line.vehicleId
+            );
+
+            return (
+              <li key={`${line.productId}:${line.vehicleId}`}>
+                <div>
+                  <h2>{line.name}</h2>
+                  <p>
+                    {vehicle
+                      ? `${vehicle.make} ${vehicle.model} · ${vehicle.year}`
+                      : line.vehicleId}
+                  </p>
+                  <small>
+                    {line.quantity} × {formatMoney(line.unitPrice)}
+                  </small>
+                </div>
+
+                <strong>{formatMoney(line.lineTotal)}</strong>
+              </li>
+            );
+          })}
+        </ul>
+
+        <p className="dth-receipt-total">
+          <span>Demo total</span>
+          <strong>{formatMoney(order.total)}</strong>
+        </p>
+
+        <div className="dth-receipt-actions">
+          <Link className="dth-button dth-primary" to="/shop">
+            Continue exploring
+          </Link>
+
+          {!PREVIEW && (
+            <Link className="dth-button dth-ghost" to="/account">
+              View my orders
+            </Link>
+          )}
+        </div>
+      </section>
+    );
+  }
 function Account() {
   const { user, setUser, logout, authLoading } = useStore(); const navigate = useNavigate(); const [params] = useSearchParams();
   const [mode, setMode] = useState('login'), [email, setEmail] = useState(''), [password, setPassword] = useState('');
@@ -134,7 +1328,37 @@ function Account() {
     try { await deleteAccount(password); setUser(null); setPassword(''); } catch (e) { setError(e.message); } finally { setBusy(false); }
   }
   if (authLoading) return <div className="dth-empty">Checking account…</div>;
-  return <section className="dth-container dth-section dth-account"><p className="dth-eyebrow">YOUR DTH STUDIO</p><h1>{user ? 'Welcome back.' : 'Your build starts here.'}</h1>{PREVIEW ? <div className="dth-notice-panel"><h2>Local preview mode</h2><p>Explore the 3D catalog, demo vehicle filtering and simulated checkout without a database. No registration or login is faked in this mode.</p><p>For real account registration and persisted demo orders, run MongoDB, start the new API and set <code>VITE_STORE_MODE=api</code>.</p><Link className="dth-button dth-primary" to="/shop">Explore the store</Link></div> : user ? <><div className="dth-account-top"><p>{user.email}</p><button className="dth-button dth-ghost" disabled={busy} onClick={async () => { setBusy(true); try { await logout(); } catch (e) { setError(e.message); } finally { setBusy(false); } }}>Sign out</button>{user.role === 'admin' && <Link to="/admin" className="dth-button dth-primary">Manage catalog</Link>}</div><h2>Simulated orders</h2>{orders.length ? <div className="dth-orders">{orders.map(order => <div key={order.id}><span>{order.id}</span><span>{new Date(order.createdAt).toLocaleDateString()}</span><strong>{formatMoney(order.total)}</strong><span>SIMULATED</span></div>)}</div> : <p className="dth-muted">No simulated orders yet.</p>}<details className="dth-detail-accordion"><summary>Delete account and demo order data</summary><form className="dth-form" onSubmit={remove}><label>Confirm password<input type="password" autoComplete="current-password" required minLength={12} maxLength={128} value={password} onChange={e => setPassword(e.target.value)} /></label><button className="dth-button dth-danger" disabled={busy}>Permanently delete demo account</button></form></details></> : <form className="dth-form dth-auth-form" onSubmit={submit}><div className="dth-auth-tabs"><button type="button" aria-pressed={mode === 'login'} onClick={() => setMode('login')}>Sign in</button><button type="button" aria-pressed={mode === 'register'} onClick={() => setMode('register')}>Create account</button></div><label>Email<input type="email" required maxLength={254} autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></label><label>Password<input type="password" required minLength={12} maxLength={128} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} /></label><p className="dth-muted">12–128 characters. Use a password unique to this demo.</p><button className="dth-button dth-primary" disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}<Icon name="arrow" /></button></form>}{error && <p role="alert" className="dth-error">{error}</p>}</section>;
+  return <section className="dth-container dth-section dth-account">
+    <p className="dth-eyebrow">YOUR DTH STUDIO</p>
+    <h1>{user ? 'Welcome back.' : 'Your build starts here.'}</h1>
+    {PREVIEW ? <div className="dth-notice-panel">
+      <h2>Local preview mode</h2>
+      <p>Explore the 3D catalog, demo vehicle filtering and simulated checkout without a database. No registration or login is faked in this mode.</p>
+      <p>For real account registration and persisted demo orders, run MongoDB, start the new API and set <code>VITE_STORE_MODE=api</code>.</p>
+      <Link className="dth-button dth-primary" to="/shop">Explore the store</Link>
+      </div> : user ? <>
+      <div className="dth-account-top">
+        <p>{user.email}</p>
+        <button className="dth-button dth-ghost" disabled={busy} onClick={async () => { setBusy(true); try { await logout(); } catch (e) { setError(e.message); } finally { setBusy(false); } }}>Sign out</button>
+        {user.role === 'admin' && 
+          <Link to="/admin" className="dth-button dth-primary">Manage catalog</Link>
+        }
+        </div>
+        <h2>Simulated orders</h2>{orders.length ? 
+        <div className="dth-orders">{orders.map(order => <div key={order.id}>
+          {/* <span>{order.id}</span> */}
+          <Link
+            to={`/order-complete?order=${encodeURIComponent(order.id)}`}
+          >
+            {order.id}
+          </Link>
+          <span>{new Date(order.createdAt).toLocaleDateString()}</span>
+          <strong>{formatMoney(order.total)}</strong>
+          <span>SIMULATED</span>
+          </div>)}
+        </div> : <p className="dth-muted">No simulated orders yet.</p>}
+        <details className="dth-detail-accordion">
+          <summary>Delete account and demo order data</summary><form className="dth-form" onSubmit={remove}><label>Confirm password<input type="password" autoComplete="current-password" required minLength={12} maxLength={128} value={password} onChange={e => setPassword(e.target.value)} /></label><button className="dth-button dth-danger" disabled={busy}>Permanently delete demo account</button></form></details></> : <form className="dth-form dth-auth-form" onSubmit={submit}><div className="dth-auth-tabs"><button type="button" aria-pressed={mode === 'login'} onClick={() => setMode('login')}>Sign in</button><button type="button" aria-pressed={mode === 'register'} onClick={() => setMode('register')}>Create account</button></div><label>Email<input type="email" required maxLength={254} autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></label><label>Password<input type="password" required minLength={12} maxLength={128} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} /></label><p className="dth-muted">12–128 characters. Use a password unique to this demo.</p><button className="dth-button dth-primary" disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}<Icon name="arrow" /></button></form>}{error && <p role="alert" className="dth-error">{error}</p>}</section>;
 }
 function Admin() {
   const { user, data, refresh, setNotice } = useStore();

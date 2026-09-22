@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { currentUser, loadCatalog, logout as apiLogout } from './api';
+import { FLOW, currentUser, loadCatalog, logout as apiLogout } from './api';
 const StoreContext = createContext(null);
-const CART_KEY = 'dth.commerce.bag.v1';
-const VEHICLE_KEY = 'dth.commerce.vehicle.v1';
+const CART_KEY = FLOW ? 'dth.flow.bag.v1' : 'dth.commerce.bag.v1';
+const VEHICLE_KEY = FLOW ? 'dth.flow.vehicle.v1' : 'dth.commerce.vehicle.v1';
 function safeRead(key, fallback) {
   try { return JSON.parse(localStorage.getItem(key) || 'null') ?? fallback; } catch { return fallback; }
 }

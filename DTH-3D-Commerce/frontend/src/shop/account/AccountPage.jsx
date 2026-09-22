@@ -2,11 +2,13 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { accountReturnPath, orderUnits } from '../../../../shared/account.mjs';
 import { formatMoney, validateRegistration } from '../../../../shared/domain.mjs';
-import { authenticate, deleteAccount, loadAccountOrder, loadAccountOrders, PREVIEW, saveAccountVehicle } from '../api';
+import { authenticate, deleteAccount, loadAccountOrder, loadAccountOrders, PREVIEW, FLOW, saveAccountVehicle } from '../api';
 import { useStore } from '../useStore';
 import Icon from '../components/StoreIcon.jsx';
 import s from './AccountPage.module.css';
 import AccountVisual from './AccountVisual';
+import AccountExperience from './AccountMotion';
+import './account-flow.css';
 import ProductImage from '../catalog/components/ProductImage';
 
 const date = value => Number.isFinite(new Date(value).getTime())
@@ -67,7 +69,7 @@ function AuthForm() {
   return <div className={s.authLayout}>
     <aside className={s.brandPanel} aria-label="DTH Parts Studio">
       <span className={s.brand}>DTH<span>PARTS STUDIO</span></span>
-      <AccountVisual />
+      <AccountVisual phase={busy ? 'working' : registering ? 'register' : undefined} />
       <div className={s.brandFoot}><span>Built around you.</span><Icon name="arrow" /></div>
     </aside>
     <div className={s.authPanel}>
@@ -108,7 +110,7 @@ function VehicleForm() {
       store.setUser(user);
       if (id || store.vehicleId === previousSaved) store.setVehicle(id);
       if (!id) { setMake(''); setModel(''); setYear(''); }
-      setMessage(id ? 'Vehicle saved to your account.' : 'Saved vehicle removed.');
+      setMessage(id ? (FLOW ? 'Demo vehicle saved in this tab.' : 'Vehicle saved to your account.') : 'Saved vehicle removed.');
     } catch (e) {
       if (!live.current) return;
       if (e.status === 401) { store.setUser(null); store.setNotice('Your session expired. Please sign in again.'); }
@@ -128,7 +130,7 @@ function VehicleForm() {
       </form>
     </section>
     <aside className={`${s.panel} ${s.vehicleSummary}`}>
-      <span className={s.pill}>{saved ? 'SAVED IN ACCOUNT' : 'NOT SAVED YET'}</span>
+      <span className={s.pill}>{saved ? (FLOW ? 'SAVED IN THIS TAB' : 'SAVED IN ACCOUNT') : 'NOT SAVED YET'}</span>
       <div className={s.vehicleSymbol} aria-hidden="true"><Icon name="vehicle" /></div>
       <h2>{vehicleName(saved)}</h2>
       <p>Restored when you sign in. Each bag item keeps its own vehicle.</p>
@@ -230,6 +232,7 @@ function MemberArea() {
   const openOrder = id => go('orders', { ...(view === 'orders' ? Object.fromEntries(params) : {}), view: 'orders', order: id });
   return <div className={s.memberLayout}>
     <aside className={s.sidebar}>
+      <AccountVisual compact />
       <div className={s.identity}><span className={s.avatar} aria-hidden="true">{store.user.email.slice(0, 1).toUpperCase()}</span><strong>{store.user.email}</strong><span>Member since {date(store.user.createdAt)}</span></div>
       <nav aria-label="Account navigation">
         {Object.entries({ overview: ['user', 'Overview'], vehicle: ['vehicle', 'Saved vehicle'], orders: ['bag', 'Orders'], security: ['check', 'Settings'] }).map(([key, [icon, label]]) => <Link key={key} to={key === 'overview' ? '/account' : `/account?view=${key}`} aria-current={view === key ? 'page' : undefined}><Icon name={icon} />{label}<span aria-hidden="true">↗</span></Link>)}
@@ -259,10 +262,14 @@ function MemberArea() {
   </div>;
 }
 
-export default function AccountPage() {
+function AccountContent() {
   const store = useStore();
   useEffect(() => { const previous = document.title; document.title = 'Account — DTH Parts Studio'; return () => { document.title = previous; }; }, []);
   return <section className={`dth-container ${s.root}`}>
+    {FLOW && !store.user && <div className="dth-flow-note" role="note"><strong>UI rehearsal — not real authentication.</strong><br />Sign in: <code>demo@dth.test</code> · <code>DthFlow2026!</code><br />To try registration, use another fictitious <code>@dth.test</code> email and the same published password. Do not enter real credentials.</div>}
     {store.authLoading ? <Busy label="Checking your session…" /> : store.authError ? <div className={s.preview}><h1>Session unavailable.</h1><Notice error>{store.authError}</Notice><button className={s.primary} onClick={store.retrySession}>Try again</button></div> : PREVIEW ? <div className={s.preview}><h1>Your account.</h1><p>Accounts and saved orders are available in API mode.</p><Link className={s.primary} to="/shop">Explore parts<Icon name="arrow" /></Link></div> : store.user ? <MemberArea key={store.user.id} /> : <AuthForm />}
   </section>;
 }
+
+
+export default function AccountPage() { return <AccountExperience><AccountContent /></AccountExperience>; }

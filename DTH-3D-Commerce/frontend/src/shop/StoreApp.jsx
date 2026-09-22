@@ -1,8 +1,9 @@
 import AccountPage from './account/AccountPage';
+import { ConfirmationSeal } from './account/AccountMotion';
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, Route, Routes, useLocation, useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import { CATEGORIES, filterProducts, fitment, formatMoney,normalizeItems, quoteOrder } from '../../../shared/domain.mjs';
-import { PREVIEW, createOrder, saveProduct, loadAdminProducts, loadOrder } from './api';
+import { PREVIEW, FLOW, createOrder, saveProduct, loadAdminProducts, loadOrder } from './api';
 import { StoreProvider, useStore } from './useStore';
 import './store.css';
 import Icon from './components/StoreIcon.jsx';
@@ -49,7 +50,7 @@ function Shell() {
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); document.title = 'DTH — The 3D Parts Studio'; }, [location.pathname]);
   return <div className="dth-store">
     <a className="dth-skip" href="#dth-content">Skip to content</a>
-    <div className="dth-demo-banner">FYP DEMONSTRATOR <span>Illustrative 3D assets · Synthetic fitment · No real payments</span><b>{PREVIEW ? 'LOCAL PREVIEW' : 'MONGODB / API MODE'}</b></div>
+    <div className="dth-demo-banner">FYP DEMONSTRATOR <span>Illustrative 3D assets · Synthetic fitment · No real payments</span><b data-flow={FLOW}>{FLOW ? 'FLOW DEMO / NO DATABASE' : PREVIEW ? 'LOCAL PREVIEW' : 'MONGODB / API MODE'}</b></div>
     <header className="dth-header">
       <Link to="/" className="dth-brand" aria-label="DTH store home"><span className="dth-brand-symbol">///</span><span>DTH<span className="dth-brand-sub">PARTS STUDIO</span></span></Link>
       <nav className="dth-navigation" aria-label="Main navigation"><NavLink to="/" end>Studio</NavLink><NavLink to="/shop">Shop parts</NavLink><NavLink to="/account">My account</NavLink></nav>
@@ -493,7 +494,7 @@ function ProductDetails({ product }) {
 //   const { lastOrder } = useStore();
 //   return <section className="dth-container dth-section dth-completed"><div className="dth-complete-mark"><Icon name="check" /></div><p className="dth-eyebrow">{lastOrder ? 'SIMULATION COMPLETE' : 'ORDER SUMMARY'}</p><h1>{lastOrder ? 'Your next build, imagined.' : 'No order in this page session.'}</h1>{lastOrder && <><p>No money was charged. No physical products will be shipped.</p><div className="dth-confirmation"><span>{lastOrder.id}</span><strong>{formatMoney(lastOrder.total)}</strong><span>{PREVIEW ? 'Local preview only — not saved to MongoDB.' : 'Simulated order saved to your account.'}</span></div></>}<Link className="dth-button dth-primary" to="/shop">Back to the collection <Icon name="arrow" /></Link></section>;
 // }
-  const CHECKOUT_INTENT_KEY = 'dth.commerce.checkout-intent.v2';
+  const CHECKOUT_INTENT_KEY = (FLOW ? 'dth.flow.checkout-intent.v2' : 'dth.commerce.checkout-intent.v2');
   let memoryCheckoutIntent = null;
 
   function bagSignature(items) {
@@ -972,7 +973,7 @@ function ProductDetails({ product }) {
               <p className="dth-eyebrow">
                 {PREVIEW
                   ? 'LOCAL PREVIEW'
-                  : 'API / SIMULATED ORDER'}
+                  : (FLOW ? 'FLOW DEMO / NO DATABASE' : 'API / SIMULATED ORDER')}
               </p>
 
               <h2 ref={summaryHeading} tabIndex={-1}>
@@ -1005,7 +1006,7 @@ function ProductDetails({ product }) {
               <p className="dth-cart-hint">
                 {PREVIEW
                   ? 'This simulation stays in the current page session. No order is saved to a server.'
-                  : 'The server checks current prices and vehicle matches before saving a simulated order.'}
+                  : (FLOW ? 'This rehearsal stays in this tab when storage is available. Nothing is sent to a server.' : 'The server checks current prices and vehicle matches before saving a simulated order.')}
               </p>
 
               {reviewing && (
@@ -1244,10 +1245,11 @@ function ProductDetails({ product }) {
         <p className="dth-eyebrow">
           {PREVIEW
             ? 'LOCAL SIMULATION'
-            : 'SAVED SIMULATED ORDER'}
+            : (FLOW ? 'FLOW DEMO RECEIPT' : 'SAVED SIMULATED ORDER')}
         </p>
 
-        <h1>Your demo order is confirmed.</h1>
+        <ConfirmationSeal />
+      <h1>Your demo order is confirmed.</h1>
         <p>
           No money was charged.
           No physical products will be shipped.
@@ -1263,7 +1265,7 @@ function ProductDetails({ product }) {
           <span>
             {PREVIEW
               ? 'Not saved to a server'
-              : 'Loaded from your account'}
+              : (FLOW ? 'Demo data in this tab only — not MongoDB' : 'Loaded from your account')}
           </span>
         </div>
 

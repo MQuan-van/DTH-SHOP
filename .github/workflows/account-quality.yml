@@ -28,10 +28,11 @@ jobs:
         run: |
           node .github/account-flow-apply.mjs
           rm .github/account-flow-apply.mjs
+          git restore -- .github/workflows/account-quality.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A -- .github DTH-3D-Commerce
-          git commit -m 'feat: integrate flow-first account studio with isolated rehearsal and read-only tests'
+          git commit -m 'feat: integrate flow-first account studio with isolated rehearsal'
           git push origin HEAD:feat/account-flow-first
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
   flow:

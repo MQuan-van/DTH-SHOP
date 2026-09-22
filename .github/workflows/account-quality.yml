@@ -1,0 +1,117 @@
+name: Account Flow First quality
+on:
+  push:
+    branches: [feat/account-flow-first, feature/3d-store]
+    paths: ['DTH-3D-Commerce/**', '.github/workflows/account-quality.yml']
+  pull_request:
+    paths: ['DTH-3D-Commerce/**', '.github/workflows/account-quality.yml']
+permissions:
+  contents: read
+jobs:
+  flow:
+    name: Flow first - no database
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: DTH-3D-Commerce
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: DTH-3D-Commerce/package-lock.json
+      - name: Locked install and all non-database tests
+        run: |
+          npm ci
+          npm run check
+          npm test
+          node --test tests/account.test.mjs tests/home-stage.test.mjs tests/shop-motion.test.mjs tests/flow.test.mjs
+      - name: Build flow mode - API and DB intentionally absent
+        run: npm run build:flow
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare Chromium
+        run: |
+          python -m pip install -q playwright==1.55.0
+          python -m playwright install --with-deps chromium > /tmp/dth-playwright-install.log 2>&1 || { tail -80 /tmp/dth-playwright-install.log; exit 1; }
+      - name: Start compiled frontend only
+        run: |
+          npm run preview --workspace frontend -- --host 127.0.0.1 --port 4173 --strictPort > /tmp/dth-flow.log 2>&1 &
+          for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:4173/account > /dev/null; then exit 0; fi; sleep 1; done
+          cat /tmp/dth-flow.log; exit 1
+      - name: Real browser - account, 3D and checkout without MongoDB
+        run: |
+          python tests/browser/account_flow.py
+          python tests/browser/account_fallback.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flow-first-browser-evidence
+          path: DTH-3D-Commerce/test-results/account-flow/**
+          if-no-files-found: ignore
+          retention-days: 7
+  database:
+    name: Final check - real API and MongoDB
+    needs: flow
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: DTH-3D-Commerce
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: DTH-3D-Commerce/package-lock.json
+      - run: npm ci
+      - name: Start disposable database - never the user's database
+        run: |
+          docker run -d --name dth-flow-ci-mongo -p 127.0.0.1:27017:27017 mongo:8.0 --quiet
+          for i in $(seq 1 30); do if docker exec dth-flow-ci-mongo mongosh --quiet --eval 'quit(db.runCommand({ping:1}).ok ? 0 : 1)' > /dev/null 2>&1; then exit 0; fi; sleep 1; done
+          exit 1
+      - name: Owner isolation, security and persistent orders
+        env:
+          TEST_MONGO_URI: mongodb://127.0.0.1:27017/dth_account_test
+        run: node --test tests/account.integration.test.mjs
+      - name: API production build
+        env:
+          VITE_STORE_MODE: api
+        run: npm run build
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare Chromium
+        run: |
+          python -m pip install -q playwright==1.55.0
+          python -m playwright install --with-deps chromium > /tmp/dth-playwright-install.log 2>&1 || { tail -80 /tmp/dth-playwright-install.log; exit 1; }
+      - name: Start isolated API application
+        env:
+          MONGO_URI: mongodb://127.0.0.1:27017/dth_account_browser_test
+        run: |
+          npm run seed
+          npm start > /tmp/dth-account-server.log 2>&1 &
+          for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:5000/api/shop/health; then exit 0; fi; sleep 1; done
+          cat /tmp/dth-account-server.log; exit 1
+      - name: Browser - actual auth, shopping, checkout and reload
+        run: |
+          python tests/browser/account.py
+          python tests/browser/api_failure.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: final-mongodb-browser-evidence
+          path: DTH-3D-Commerce/test-results/account/**
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Dispose only CI database
+        if: always()
+        run: docker rm -f dth-flow-ci-mongo || true

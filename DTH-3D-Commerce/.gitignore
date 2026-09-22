@@ -21,3 +21,9 @@ research-private/
 
 # Local source backups made by the Home Stage updater
 .home-stage-backups/
+
+# Local verification evidence
+test-results/
+
+# Public explicit UI rehearsal mode (no secrets).
+!.env.flow

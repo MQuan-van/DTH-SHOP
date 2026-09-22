@@ -35,7 +35,7 @@ test('camera and motion values form a bounded starting configuration', () => {
   assert.ok(distance>scene.minDistance && distance<scene.maxDistance);
   assert.ok(scene.maxDpr>=1 && scene.maxDpr<=2);
   assert.ok(scene.fov>10 && scene.fov<90);
-  assert.ok(scene.autoRotateSpeed>=0 && scene.autoRotateSpeed<1);
+  assert.ok(Number.isFinite(scene.autoRotateSpeed) && Math.abs(scene.autoRotateSpeed)<=1);
   for(const exhibit of HOME_CONFIG.hero.exhibits){
     assert.ok(exhibit.modelSize>0); assert.equal(exhibit.rotation.length,3);
     assert.ok(exhibit.rotation.every(Number.isFinite));

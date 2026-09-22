@@ -1,0 +1,40 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createFlowSession, FLOW_EMAIL, FLOW_PASSWORD, FLOW_STORAGE_KEY } from '../frontend/src/shop/flowSession.mjs';
+const catalog = JSON.parse(readFileSync(new URL('../shared/catalog.json', import.meta.url)));
+function setup() {
+  const map = new Map(), storage = {getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v)};
+  let seq=0;
+  const make = () => createFlowSession({catalog,storage,uuid:()=>`00000000-0000-4000-8000-${String(++seq).padStart(12,'0')}`,now:()=>new Date(2026,8,22,12,0,seq).toISOString()});
+  return {map,storage,make,session:make()};
+}
+const opts=(method,body)=>({method,body:JSON.stringify(body)});
+const sign=async s=>s.request('/auth/login',opts('POST',{email:FLOW_EMAIL,password:FLOW_PASSWORD}));
+const product=catalog.products.find(p=>p.id==='apex-suspension');
+const items=[{productId:product.id,vehicleId:product.vehicleIds[0],quantity:1}];
+const payload={items,idempotencyKey:'test-request-key',expectedTotal:product.price,demoAcknowledged:true};
+test('Flow rehearsal (not security/authentication certification)',async t=>{
+  await t.test('Guest session is empty',async()=>{const {session:s}=setup();assert.equal((await s.request('/auth/me')).user,null);});
+  await t.test('Published fixture enters demo account',async()=>{const {session:s}=setup();assert.equal((await sign(s)).user.email,FLOW_EMAIL);});
+  await t.test('Incorrect fixture password rejected',async()=>{const {session:s}=setup();await assert.rejects(s.request('/auth/login',opts('POST',{email:FLOW_EMAIL,password:'wrong password 123'})),e=>e.status===401);});
+  await t.test('Real email address not accepted by rehearsal',async()=>{const {session:s}=setup();await assert.rejects(s.request('/auth/register',opts('POST',{email:'person@gmail.com',password:FLOW_PASSWORD})),/@dth.test/);});
+  await t.test('Fixture registration strips roles; stores no password',async()=>{const {session:s,map}=setup();const r=await s.request('/auth/register',opts('POST',{email:'tester@dth.test',password:FLOW_PASSWORD,role:'admin'}));assert.equal(r.user.role,'user');assert.ok(!map.get(FLOW_STORAGE_KEY).includes(FLOW_PASSWORD));assert.ok(!map.get(FLOW_STORAGE_KEY).includes('password'));});
+  await t.test('Duplicate fixture email rejected',async()=>{const {session:s}=setup();await assert.rejects(s.request('/auth/register',opts('POST',{email:FLOW_EMAIL,password:FLOW_PASSWORD})),e=>e.status===409);});
+  await t.test('Saved vehicle survives F5-style adapter recreation',async()=>{const {session:s,make}=setup();await sign(s);await s.request('/account/vehicle',opts('PUT',{vehicleId:items[0].vehicleId}));assert.equal((await make().request('/auth/me')).user.savedVehicleId,items[0].vehicleId);});
+  await t.test('Unknown vehicle and object input rejected',async()=>{const {session:s}=setup();await sign(s);for(const id of ['missing',{$ne:''}])await assert.rejects(s.request('/account/vehicle',opts('PUT',{vehicleId:id})));});
+  await t.test('Unauthenticated checkout blocked',async()=>{const {session:s}=setup();await assert.rejects(s.request('/orders',opts('POST',payload)),e=>e.status===401);});
+  await t.test('Acknowledgement required',async()=>{const {session:s}=setup();await sign(s);await assert.rejects(s.request('/orders',opts('POST',{...payload,demoAcknowledged:false})));});
+  await t.test('Displayed total mismatch blocked',async()=>{const {session:s}=setup();await sign(s);await assert.rejects(s.request('/orders',opts('POST',{...payload,expectedTotal:1})),e=>e.status===409);});
+  await t.test('Incompatible vehicle blocks order',async()=>{const {session:s}=setup();await sign(s);const vehicle=catalog.vehicles.find(v=>!product.vehicleIds.includes(v.id));await assert.rejects(s.request('/orders',opts('POST',{...payload,items:[{...items[0],vehicleId:vehicle.id}]})));});
+  await t.test('Receipt loads from tab after recreation, not MongoDB',async()=>{const {session:s,make}=setup();await sign(s);const r=await s.request('/orders',opts('POST',payload));assert.match(r.data.id,/^FLOW-/);const r2=await make().request('/account/orders/'+r.data.id);assert.equal(r2.data.total,product.price);assert.equal(r2.data.userId,undefined);});
+  await t.test('Concurrent duplicate request makes one rehearsal order',async()=>{const {session:s}=setup();await sign(s);const [a,b]=await Promise.all([s.request('/orders',opts('POST',payload)),s.request('/orders',opts('POST',payload))]);assert.equal(a.data.id,b.data.id);assert.equal((await s.request('/account/orders')).total,1);});
+  await t.test('Key cannot be reused for a different bag',async()=>{const {session:s}=setup();await sign(s);await s.request('/orders',opts('POST',payload));await assert.rejects(s.request('/orders',opts('POST',{...payload,items:[{...items[0],quantity:2}],expectedTotal:product.price*2})),e=>e.status===409);});
+  await t.test('Demo identities have separate receipts',async()=>{const {session:s}=setup();await sign(s);const r=await s.request('/orders',opts('POST',payload));await s.request('/auth/register',opts('POST',{email:'other@dth.test',password:FLOW_PASSWORD}));assert.equal((await s.request('/account/orders')).total,0);await assert.rejects(s.request('/orders/'+r.data.id),e=>e.status===404);});
+  await t.test('Search is literal and pagination stable',async()=>{const {session:s}=setup();await sign(s);for(let i=0;i<9;i++)await s.request('/orders',opts('POST',{...payload,idempotencyKey:'request-'+i}));assert.equal((await s.request('/account/orders?page=2')).data.length,1);assert.equal((await s.request('/account/orders?q=%5B.*')).data.length,0);await assert.rejects(s.request('/account/orders?page=0'));});
+  await t.test('Logout keeps history, login restores fixture preference',async()=>{const {session:s}=setup();await sign(s);await s.request('/orders',opts('POST',payload));await s.request('/auth/logout',opts('POST',{}));assert.equal((await s.request('/auth/me')).user,null);await sign(s);assert.equal((await s.request('/orders')).data.length,1);});
+  await t.test('Reset only clears this rehearsal key',async()=>{const {session:s,map}=setup();map.set('dth.commerce.bag.v1','keep');await sign(s);s.reset();assert.equal(map.get('dth.commerce.bag.v1'),'keep');assert.equal((await s.request('/auth/me')).user,null);});
+  await t.test('Corrupt storage degrades to a fresh demo',async()=>{const {make,map}=setup();map.set(FLOW_STORAGE_KEY,'{broken');assert.equal((await make().request('/auth/me')).user,null);});
+  await t.test('Unavailable storage still supports memory-only rehearsal',async()=>{const s=createFlowSession({catalog,storage:{getItem(){throw Error('blocked')},setItem(){throw Error('blocked')}}});await sign(s);assert.equal((await s.request('/auth/me')).user.email,FLOW_EMAIL);});
+  await t.test('Unknown/admin/external requests are not simulated as success',async()=>{const {session:s}=setup();await sign(s);for(const path of ['/admin/products','https://other.test/auth/me'])await assert.rejects(s.request(path));});
+});

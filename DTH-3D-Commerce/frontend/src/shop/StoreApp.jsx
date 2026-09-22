@@ -1,7 +1,9 @@
+import AccountPage from './account/AccountPage';
+import { ConfirmationSeal } from './account/AccountMotion';
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, Route, Routes, useLocation, useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import { CATEGORIES, filterProducts, fitment, formatMoney,normalizeItems, quoteOrder } from '../../../shared/domain.mjs';
-import { PREVIEW, authenticate, createOrder, deleteAccount, loadOrders, saveProduct, loadAdminProducts, loadOrder } from './api';
+import { PREVIEW, FLOW, createOrder, saveProduct, loadAdminProducts, loadOrder } from './api';
 import { StoreProvider, useStore } from './useStore';
 import './store.css';
 import Icon from './components/StoreIcon.jsx';
@@ -48,7 +50,7 @@ function Shell() {
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); document.title = 'DTH — The 3D Parts Studio'; }, [location.pathname]);
   return <div className="dth-store">
     <a className="dth-skip" href="#dth-content">Skip to content</a>
-    <div className="dth-demo-banner">FYP DEMONSTRATOR <span>Illustrative 3D assets · Synthetic fitment · No real payments</span><b>{PREVIEW ? 'LOCAL PREVIEW' : 'MONGODB / API MODE'}</b></div>
+    <div className="dth-demo-banner">FYP DEMONSTRATOR <span>Illustrative 3D assets · Synthetic fitment · No real payments</span><b data-flow={FLOW}>{FLOW ? 'FLOW DEMO / NO DATABASE' : PREVIEW ? 'LOCAL PREVIEW' : 'MONGODB / API MODE'}</b></div>
     <header className="dth-header">
       <Link to="/" className="dth-brand" aria-label="DTH store home"><span className="dth-brand-symbol">///</span><span>DTH<span className="dth-brand-sub">PARTS STUDIO</span></span></Link>
       <nav className="dth-navigation" aria-label="Main navigation"><NavLink to="/" end>Studio</NavLink><NavLink to="/shop">Shop parts</NavLink><NavLink to="/account">My account</NavLink></nav>
@@ -492,7 +494,7 @@ function ProductDetails({ product }) {
 //   const { lastOrder } = useStore();
 //   return <section className="dth-container dth-section dth-completed"><div className="dth-complete-mark"><Icon name="check" /></div><p className="dth-eyebrow">{lastOrder ? 'SIMULATION COMPLETE' : 'ORDER SUMMARY'}</p><h1>{lastOrder ? 'Your next build, imagined.' : 'No order in this page session.'}</h1>{lastOrder && <><p>No money was charged. No physical products will be shipped.</p><div className="dth-confirmation"><span>{lastOrder.id}</span><strong>{formatMoney(lastOrder.total)}</strong><span>{PREVIEW ? 'Local preview only — not saved to MongoDB.' : 'Simulated order saved to your account.'}</span></div></>}<Link className="dth-button dth-primary" to="/shop">Back to the collection <Icon name="arrow" /></Link></section>;
 // }
-  const CHECKOUT_INTENT_KEY = 'dth.commerce.checkout-intent.v2';
+  const CHECKOUT_INTENT_KEY = (FLOW ? 'dth.flow.checkout-intent.v2' : 'dth.commerce.checkout-intent.v2');
   let memoryCheckoutIntent = null;
 
   function bagSignature(items) {
@@ -971,7 +973,7 @@ function ProductDetails({ product }) {
               <p className="dth-eyebrow">
                 {PREVIEW
                   ? 'LOCAL PREVIEW'
-                  : 'API / SIMULATED ORDER'}
+                  : (FLOW ? 'FLOW DEMO / NO DATABASE' : 'API / SIMULATED ORDER')}
               </p>
 
               <h2 ref={summaryHeading} tabIndex={-1}>
@@ -1004,7 +1006,7 @@ function ProductDetails({ product }) {
               <p className="dth-cart-hint">
                 {PREVIEW
                   ? 'This simulation stays in the current page session. No order is saved to a server.'
-                  : 'The server checks current prices and vehicle matches before saving a simulated order.'}
+                  : (FLOW ? 'This rehearsal stays in this tab when storage is available. Nothing is sent to a server.' : 'The server checks current prices and vehicle matches before saving a simulated order.')}
               </p>
 
               {reviewing && (
@@ -1243,10 +1245,11 @@ function ProductDetails({ product }) {
         <p className="dth-eyebrow">
           {PREVIEW
             ? 'LOCAL SIMULATION'
-            : 'SAVED SIMULATED ORDER'}
+            : (FLOW ? 'FLOW DEMO RECEIPT' : 'SAVED SIMULATED ORDER')}
         </p>
 
-        <h1>Your demo order is confirmed.</h1>
+        <ConfirmationSeal />
+      <h1>Your demo order is confirmed.</h1>
         <p>
           No money was charged.
           No physical products will be shipped.
@@ -1262,7 +1265,7 @@ function ProductDetails({ product }) {
           <span>
             {PREVIEW
               ? 'Not saved to a server'
-              : 'Loaded from your account'}
+              : (FLOW ? 'Demo data in this tab only — not MongoDB' : 'Loaded from your account')}
           </span>
         </div>
 
@@ -1311,55 +1314,6 @@ function ProductDetails({ product }) {
       </section>
     );
   }
-function Account() {
-  const { user, setUser, logout, authLoading } = useStore(); const navigate = useNavigate(); const [params] = useSearchParams();
-  const [mode, setMode] = useState('login'), [email, setEmail] = useState(''), [password, setPassword] = useState('');
-  const [busy, setBusy] = useState(false), [error, setError] = useState(''), [orders, setOrders] = useState([]);
-  useEffect(() => { if (!user) { setOrders([]); return; } let live = true; loadOrders().then(result => live && setOrders(result)).catch(e => live && setError(e.message)); return () => { live = false; }; }, [user]);
-  async function submit(e) {
-    e.preventDefault(); setBusy(true); setError('');
-    try { const result = await authenticate(mode, { email, password }); setUser(result); setPassword(''); if (params.get('return') === '/bag') navigate('/bag'); }
-    catch (e) { setError(e.message); } finally { setBusy(false); }
-  }
-  async function remove(e) {
-    e.preventDefault();
-    if (!window.confirm('Delete your account and its simulated orders? This cannot be undone.')) return;
-    setBusy(true); setError('');
-    try { await deleteAccount(password); setUser(null); setPassword(''); } catch (e) { setError(e.message); } finally { setBusy(false); }
-  }
-  if (authLoading) return <div className="dth-empty">Checking account…</div>;
-  return <section className="dth-container dth-section dth-account">
-    <p className="dth-eyebrow">YOUR DTH STUDIO</p>
-    <h1>{user ? 'Welcome back.' : 'Your build starts here.'}</h1>
-    {PREVIEW ? <div className="dth-notice-panel">
-      <h2>Local preview mode</h2>
-      <p>Explore the 3D catalog, demo vehicle filtering and simulated checkout without a database. No registration or login is faked in this mode.</p>
-      <p>For real account registration and persisted demo orders, run MongoDB, start the new API and set <code>VITE_STORE_MODE=api</code>.</p>
-      <Link className="dth-button dth-primary" to="/shop">Explore the store</Link>
-      </div> : user ? <>
-      <div className="dth-account-top">
-        <p>{user.email}</p>
-        <button className="dth-button dth-ghost" disabled={busy} onClick={async () => { setBusy(true); try { await logout(); } catch (e) { setError(e.message); } finally { setBusy(false); } }}>Sign out</button>
-        {user.role === 'admin' && 
-          <Link to="/admin" className="dth-button dth-primary">Manage catalog</Link>
-        }
-        </div>
-        <h2>Simulated orders</h2>{orders.length ? 
-        <div className="dth-orders">{orders.map(order => <div key={order.id}>
-          {/* <span>{order.id}</span> */}
-          <Link
-            to={`/order-complete?order=${encodeURIComponent(order.id)}`}
-          >
-            {order.id}
-          </Link>
-          <span>{new Date(order.createdAt).toLocaleDateString()}</span>
-          <strong>{formatMoney(order.total)}</strong>
-          <span>SIMULATED</span>
-          </div>)}
-        </div> : <p className="dth-muted">No simulated orders yet.</p>}
-        <details className="dth-detail-accordion">
-          <summary>Delete account and demo order data</summary><form className="dth-form" onSubmit={remove}><label>Confirm password<input type="password" autoComplete="current-password" required minLength={12} maxLength={128} value={password} onChange={e => setPassword(e.target.value)} /></label><button className="dth-button dth-danger" disabled={busy}>Permanently delete demo account</button></form></details></> : <form className="dth-form dth-auth-form" onSubmit={submit}><div className="dth-auth-tabs"><button type="button" aria-pressed={mode === 'login'} onClick={() => setMode('login')}>Sign in</button><button type="button" aria-pressed={mode === 'register'} onClick={() => setMode('register')}>Create account</button></div><label>Email<input type="email" required maxLength={254} autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} /></label><label>Password<input type="password" required minLength={12} maxLength={128} autoComplete={mode === 'register' ? 'new-password' : 'current-password'} value={password} onChange={e => setPassword(e.target.value)} /></label><p className="dth-muted">12–128 characters. Use a password unique to this demo.</p><button className="dth-button dth-primary" disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Create account'}<Icon name="arrow" /></button></form>}{error && <p role="alert" className="dth-error">{error}</p>}</section>;
-}
 function Admin() {
   const { user, data, refresh, setNotice } = useStore();
   const [text, setText] = useState(''), [error, setError] = useState(''), [busy, setBusy] = useState(false), [adminProducts, setAdminProducts] = useState([]);
@@ -1370,6 +1324,6 @@ function Admin() {
 }
 function NotFound() { return <div className="dth-empty"><p className="dth-eyebrow">404 / OFF THE GRID</p><h1>This part of the studio is empty.</h1><Link className="dth-button dth-primary" to="/shop">Back to the collection</Link></div>; }
 export default function StoreApp() {
-  return <StoreProvider><Routes><Route element={<Shell />}><Route index element={<HomePage />} /><Route path="shop" element={<ShopPage  />} /><Route path="products/:slug" element={<Product />} /><Route path="bag" element={<Bag />} /><Route path="order-complete" element={<Completed />} /><Route path="account" element={<Account />} /><Route path="admin" element={<Admin />} /><Route path="*" element={<NotFound />} /></Route></Routes></StoreProvider>;
+  return <StoreProvider><Routes><Route element={<Shell />}><Route index element={<HomePage />} /><Route path="shop" element={<ShopPage  />} /><Route path="products/:slug" element={<Product />} /><Route path="bag" element={<Bag />} /><Route path="order-complete" element={<Completed />} /><Route path="account" element={<AccountPage />} /><Route path="admin" element={<Admin />} /><Route path="*" element={<NotFound />} /></Route></Routes></StoreProvider>;
 }
  

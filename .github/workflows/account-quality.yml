@@ -45,7 +45,9 @@ jobs:
           for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:4173/account > /dev/null; then exit 0; fi; sleep 1; done
           cat /tmp/dth-flow.log; exit 1
       - name: Real browser - account, 3D and checkout without MongoDB
-        run: python tests/browser/account_flow.py
+        run: |
+          python tests/browser/account_flow.py
+          python tests/browser/account_fallback.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -1,0 +1,33 @@
+name: Admin Support quality
+on:
+  push:
+    branches: [feat/admin-support-studio]
+  pull_request:
+    paths: ['DTH-3D-Commerce/**', '.github/workflows/admin-support-quality.yml']
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare source snapshot for isolated review
+        run: |
+          mkdir -p /tmp/dth-review
+          git archive HEAD DTH-3D-Commerce .github/workflows | tar -x -C /tmp/dth-review
+      - name: Install locked application dependencies
+        working-directory: /tmp/dth-review/DTH-3D-Commerce
+        run: npm ci
+      - name: Package review workspace
+        run: tar -czf /tmp/dth-review-workspace.tar.gz -C /tmp/dth-review .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: admin-support-review-workspace
+          path: /tmp/dth-review-workspace.tar.gz
+          retention-days: 1

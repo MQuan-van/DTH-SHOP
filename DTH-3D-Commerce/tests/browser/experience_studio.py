@@ -41,7 +41,7 @@ with sync_playwright() as p:
   scroll(customer,.29);before=camera(canvas)
   customer.get_by_role('button',name='Inspect in 3D',exact=False).click();customer.wait_for_timeout(250);after=camera(canvas)
   assert distance(before,after)<.08,(before,after);assert canvas.get_attribute('data-owner')=='inspect';ok('Entering Inspect preserves camera position without teleporting')
-  slider=customer.get_by_role('slider',name='Assembly separation');slider.fill('.7');customer.wait_for_timeout(800);assert distance(after,camera(canvas))<.08
+  slider=customer.get_by_role('slider',name='Assembly separation');slider.fill('0.7');customer.wait_for_timeout(800);assert distance(after,camera(canvas))<.08
   customer.get_by_role('button',name='Spring',exact=True).click();expect(customer.locator('.dth-part-hotspot')).to_contain_text('Spring');shot(customer,'05-inspection-focus')
   customer.get_by_role('slider',name='Light direction').fill('60');customer.wait_for_timeout(400);shot(customer,'06-surface-light');ok('Manual separation, anchored part focus and relighting do not steal camera control')
   customer.get_by_role('button',name='Side',exact=True).click();customer.wait_for_timeout(1100);assert distance(after,camera(canvas))>.2
@@ -51,9 +51,9 @@ with sync_playwright() as p:
   customer.get_by_role('button',name='Return to story',exact=False).click();customer.wait_for_timeout(1500);expect(canvas).to_have_attribute('data-owner','story');assert all(math.isfinite(n) for n in camera(canvas));ok('Rapid interruption returns camera ownership to the story safely')
   customer.get_by_role('button',name='Open support',exact=True).click();expect(canvas).to_have_attribute('data-blocked','true');customer.get_by_role('button',name='Close support',exact=True).click();expect(canvas).to_have_attribute('data-blocked','false');ok('Support overlay blocks background 3D input and restores it after closing')
   for _ in range(3):
-   customer.goto(base+'/shop');assert customer.locator('[data-stage] canvas').count()==0
-   customer.goto(base+'/');expect(customer.locator('[data-scene]')).to_have_attribute('data-scene','ready');assert customer.locator('[data-stage] canvas').count()==1
-  ok('Route re-entry does not duplicate the WebGL stage')
+   customer.locator('.dth-header .dth-navigation a[href="/shop"]').click();expect(customer.locator('[data-stage] canvas')).to_have_count(0)
+   customer.locator('.dth-header .dth-navigation a[href="/"]').click();expect(customer.locator('[data-scene]')).to_have_attribute('data-scene','ready');assert customer.locator('[data-stage] canvas').count()==1;assert int(customer.locator('[data-stage] canvas').get_attribute('data-listeners'))<=4
+  ok('SPA route re-entry does not duplicate the WebGL stage or director listeners')
   login(customer,customer_email);customer.goto(base+'/admin/experience');expect(customer.get_by_role('heading',name='Administrator access required.')).to_be_visible();assert customer.request.get(base+'/api/shop/admin/experience/home').status==403;ok('Customer cannot open or fetch the experience editor')
   login(admin,admin_email);admin.goto(base+'/admin/experience');expect(admin.get_by_role('heading',name='Experience',exact=True)).to_be_visible();expect(admin.locator('[data-preview-scene]')).to_have_attribute('data-preview-scene','ready');shot(admin,'07-admin-experience')
   assert admin.evaluate('document.documentElement.scrollWidth<=innerWidth+1');ok('Admin Studio loads the shared real 3D renderer')

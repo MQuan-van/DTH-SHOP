@@ -27,8 +27,9 @@ function subset(source,indices) {
   const shaded=toCreasedNormals(geometry,Math.PI/3);geometry.dispose();shaded.computeBoundingBox();shaded.computeBoundingSphere();return shaded;
 }
 export function createProductRig(scene,url) {
-  const meshes=[];scene.traverse(object=>{if(object.isMesh)meshes.push(object);});
-  const supported=url.split('?')[0]==='/models/dth-demo/apex-suspension.glb'&&meshes.length===3&&meshes.every(mesh=>{const expected=SIGNATURE[mesh.name];return expected&&mesh.geometry.attributes.position.count===expected[0]&&mesh.geometry.index?.count===expected[1]&&fingerprint(mesh.geometry.attributes.position.array)===expected[2]&&mesh.position.lengthSq()===0&&mesh.rotation.x===0&&mesh.rotation.y===0&&mesh.rotation.z===0&&mesh.scale.equals(new THREE.Vector3(1,1,1));});
+  scene.updateMatrixWorld(true);
+  const identity=new THREE.Matrix4(),meshes=[];scene.traverse(object=>{if(object.isMesh)meshes.push(object);});
+  const supported=url.split('?')[0]==='/models/dth-demo/apex-suspension.glb'&&meshes.length===3&&meshes.every(mesh=>{const expected=SIGNATURE[mesh.name];return expected&&mesh.matrixWorld.equals(identity)&&mesh.geometry.attributes.position.count===expected[0]&&mesh.geometry.index?.count===expected[1]&&fingerprint(mesh.geometry.attributes.position.array)===expected[2]&&mesh.position.lengthSq()===0&&mesh.rotation.x===0&&mesh.rotation.y===0&&mesh.rotation.z===0&&mesh.scale.equals(new THREE.Vector3(1,1,1));});
   const root=new THREE.Group(),parts=new Map(),materials=[],geometries=[];
   const cloneMaterial=original=>{
     const material=original.clone();

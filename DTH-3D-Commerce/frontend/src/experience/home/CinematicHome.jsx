@@ -4,7 +4,7 @@ import gsap from 'gsap';
 import { useStore } from '../../shop/useStore';
 import ProductImage from '../../shop/catalog/components/ProductImage';
 import { formatMoney } from '../../../../shared/domain.mjs';
-import { CINEMATIC_CONFIG } from '../motion/motion.config.mjs';
+import { CINEMATIC_CONFIG, HOME_AUTOROTATE } from '../motion/motion.config.mjs';
 import { createDirector, sampleStory } from '../motion/story.mjs';
 import { useScrollDirector } from '../motion/useScrollDirector';
 import { useSceneInputGate } from '../interaction/useSceneInputGate';
@@ -105,7 +105,7 @@ function Story({ product, chooseVehicle, config }) {
       <div className={styles.artwork} aria-hidden="true"><span>DTH</span><i/><i/></div>
       <div className={styles.canvas} data-interactive={inspect} aria-hidden="true">
         {!fallback && <SceneBoundary key={attempt} onFailure={fail}><Suspense fallback={null}>
-          <CinematicScene product={product} director={director} api={api} onReady={ready} onFailure={fail} config={config} compact={policy.compact} wireframe={wireframe} eco={eco} onSlow={lowerQuality}/>
+          <CinematicScene turntable={HOME_AUTOROTATE} product={product} director={director} api={api} onReady={ready} onFailure={fail} config={config} compact={policy.compact} wireframe={wireframe} eco={eco} onSlow={lowerQuality}/>
         </Suspense></SceneBoundary>}
       </div>
       {sceneStatus !== 'ready' && <div className={styles.poster}><ProductImage product={product} eager className={styles.posterImage}/></div>}

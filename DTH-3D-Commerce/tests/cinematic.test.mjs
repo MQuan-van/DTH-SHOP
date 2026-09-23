@@ -36,3 +36,51 @@ test('Unexpected geometry fails closed to ordinary model display', () => {const 
 test('Cached geometry remains usable after rig disposal', () => {const original=meshList(scene)[0].geometry;const array=original.attributes.position.array;const rig=createProductRig(scene,url);rig.dispose();assert.equal(original.attributes.position.array,array);assert.ok(array.length>0);});
 test('Changed vertices with the same mesh counts do not get rigged', () => {const copy=scene.clone(true);const mesh=copy.getObjectByName('part-0');mesh.geometry=mesh.geometry.clone();mesh.geometry.attributes.position.setX(0,123);const rig=createProductRig(copy,url);assert.equal(rig.supported,false);rig.dispose();mesh.geometry.dispose();});
 test('Changing a parent transform disables the Apex-only profile', () => {const copy=scene.clone(true);copy.rotation.y=.2;const rig=createProductRig(copy,url);assert.equal(rig.supported,false);rig.dispose();});
+
+// Default Home autoplay is a separate product transform, not camera ownership.
+import { createHomeTurntable } from '../frontend/src/experience/world/homeTurntable.mjs';
+import { HOME_AUTOROTATE } from '../frontend/src/experience/motion/motion.config.mjs';
+const spinState = (patch = {}) => ({ progress: 0, motion: true, active: true, blocked: false, mode: 'story', inspecting: false, ...patch });
+test('Home turns automatically before Inspect and completes a full turn', () => {
+  const spin = createHomeTurntable(HOME_AUTOROTATE), state = spinState();
+  for (let i=0; i<60*HOME_AUTOROTATE.secondsPerTurn; i++) spin.step(1/60,state);
+  assert.ok(Math.abs(Math.sin(spin.state.angle/2))<1e-9);
+  assert.equal(spin.state.running,true);
+});
+test('Autoplay direction is clockwise and period is frame-rate independent', () => {
+  const a=createHomeTurntable(HOME_AUTOROTATE),b=createHomeTurntable(HOME_AUTOROTATE);
+  for(let i=0;i<60;i++)a.step(1/60,spinState());
+  for(let i=0;i<120;i++)b.step(1/120,spinState());
+  assert.ok(a.state.angle<0);assert.ok(Math.abs(a.state.angle-b.state.angle)<1e-10);
+  assert.ok(Math.abs(a.state.angle+Math.PI*2/HOME_AUTOROTATE.secondsPerTurn)<1e-10);
+});
+for (const [name,patch] of Object.entries({inspect:{inspecting:true,mode:'inspect'},returning:{mode:'returning'},paused:{motion:false},hidden:{active:false},overlay:{blocked:true}})) {
+  test(`Autoplay preserves its angle without requesting frames while ${name}`,()=>{
+    const spin=createHomeTurntable(HOME_AUTOROTATE);spin.step(.03,spinState());const angle=spin.state.angle;
+    for(let i=0;i<100;i++)spin.step(1/60,spinState(patch));
+    assert.equal(spin.state.angle,angle);assert.equal(spin.state.needsFrame,false);assert.equal(spin.state.running,false);
+    spin.step(1/60,spinState());assert.ok(spin.state.angle<angle);
+  });
+}
+test('Shared renderer has no autoplay unless Home explicitly enables it',()=>{
+  const spin=createHomeTurntable();for(let i=0;i<100;i++)spin.step(1/60,spinState());
+  assert.equal(spin.state.angle,0);assert.equal(spin.state.needsFrame,false);
+});
+test('Scroll temporarily yields autoplay then restarts without resetting its phase',()=>{
+  const spin=createHomeTurntable(HOME_AUTOROTATE);spin.step(1/60,spinState());const angle=spin.state.angle;
+  spin.step(1/60,spinState({progress:.3}));assert.equal(spin.state.angle,angle);assert.equal(spin.state.running,false);
+  assert.equal(spin.state.needsFrame,true);
+  for(let i=0;i<60;i++)spin.step(1/60,spinState({progress:.3}));assert.ok(spin.state.angle<angle);
+});
+test('Long background frame cannot create a catch-up revolution',()=>{
+  const spin=createHomeTurntable(HOME_AUTOROTATE);spin.step(120,spinState());
+  assert.ok(Math.abs(spin.state.angle)<=Math.PI*2*.05/HOME_AUTOROTATE.secondsPerTurn+1e-10);
+});
+test('Invalid and negative frame durations cannot corrupt the phase',()=>{
+  const spin=createHomeTurntable(HOME_AUTOROTATE);
+  for(const dt of [NaN,Infinity,-1,undefined])spin.step(dt,spinState());assert.equal(spin.state.angle,0);
+});
+test('Changing speed or direction uses bounded valid settings',()=>{
+  const a=createHomeTurntable({enabled:true,secondsPerTurn:8,direction:1});a.step(.02,spinState());assert.ok(a.state.angle>0);
+  const b=createHomeTurntable({enabled:true,secondsPerTurn:0});b.step(.02,spinState());assert.ok(Number.isFinite(b.state.angle));
+});

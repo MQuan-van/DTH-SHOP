@@ -44,14 +44,22 @@ jobs:
           mkdir -p test-results/motion-controls
           set -o pipefail
           python tests/browser/motion_controls.py 2>&1 | tee test-results/motion-controls/browser.log
+      - name: Home default autoplay and inspection handoff
+        run: |
+          mkdir -p test-results/home-autoplay
+          set -o pipefail
+          python tests/browser/home_autorotate.py 2>&1 | tee test-results/home-autoplay/browser.log
       - name: Record tested source
         if: always()
         run: |
-          mkdir -p test-results/motion-controls
+          mkdir -p test-results/motion-controls test-results/home-autoplay
           git rev-parse HEAD > test-results/motion-controls/source-commit.txt
+          git rev-parse HEAD > test-results/home-autoplay/source-commit.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: motion-controls-step1-evidence
-          path: DTH-3D-Commerce/test-results/motion-controls/**
+          path: |
+            DTH-3D-Commerce/test-results/motion-controls/**
+            DTH-3D-Commerce/test-results/home-autoplay/**
           retention-days: 7

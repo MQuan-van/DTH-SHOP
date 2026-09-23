@@ -10,6 +10,7 @@ import { createProductRig } from './apexRig.mjs';
 import { PART_LABELS } from '../../../../shared/experience.mjs';
 import { useOwnedModel } from './useOwnedModel';
 import { createInspectionCommands } from './inspectionCommands.mjs';
+import { createHomeTurntable } from './homeTurntable.mjs';
 export { clearOwnedModelCache as clearCinematicModel } from './useOwnedModel';
 
 class ModelBoundary extends Component {
@@ -113,7 +114,7 @@ function CameraRig({ director, api, compact, config, onFailure }) {
   return null;
 }
 
-function ProductStage({ product, director, onReady, onFailure, wireframe, compact, config }) {
+function ProductStage({ product, director, onReady, onFailure, wireframe, compact, config, turntable }) {
   const scene=useOwnedModel(product.modelUrl,onFailure);
   const { invalidate }=useThree();
   const group=useRef(null), explosion=useRef(0), first=useRef(true), frozen=useRef(null), reset=useRef(0);
@@ -122,6 +123,8 @@ function ProductStage({ product, director, onReady, onFailure, wireframe, compac
   const wasInspecting=useRef(false), resetting=useRef(false);
   const quaternion=useMemo(()=>new THREE.Quaternion(),[]), euler=useMemo(()=>new THREE.Euler(),[]);
   const anchor=useMemo(()=>new THREE.Vector3(),[]);
+  const spin=useMemo(()=>createHomeTurntable(turntable),[turntable]);
+  const spinRotation=useMemo(()=>new THREE.Quaternion(),[]), spinAxis=useMemo(()=>new THREE.Vector3(0,1,0),[]);
   useLayoutEffect(()=>{
     if(!scene)return;
     const next=createProductRig(scene,product.modelUrl);
@@ -131,8 +134,11 @@ function ProductStage({ product, director, onReady, onFailure, wireframe, compac
   useEffect(()=>{if(rig){onReady(rig.supported);invalidate();}},[rig,onReady,invalidate]);
   useEffect(()=>{if(rig){rig.wireframe(wireframe);invalidate();}},[rig,wireframe,invalidate]);
   useFrame((_,dt)=>{
-    if(!rig||!group.current||!director.state.active||director.state.blocked)return;
-    const state=director.state, sampled=sampleStory(state.progress,config.frames);
+    if(!rig||!group.current)return;
+    const state=director.state, turning=spin.step(dt,state);
+    state.turntableAngle=turning.angle; state.turntableRunning=turning.running;
+    if(!state.active||state.blocked)return;
+    const sampled=sampleStory(state.progress,config.frames);
     if(first.current) frozen.current=compact?{...INSPECT_FRAME,explode:sampled.explode}:sampled;
     if(state.inspecting) {
       if(!wasInspecting.current && state.pose) frozen.current={...state.pose};
@@ -147,6 +153,9 @@ function ProductStage({ product, director, onReady, onFailure, wireframe, compac
     const rotation=[...frame.rotation];
     if(state.motion&&!state.inspecting&&!compact) { rotation[0]+=state.pointerY*config.pointerRadians;rotation[1]+=state.pointerX*config.pointerRadians-(1-state.reveal)*.35; }
     quaternion.setFromEuler(euler.set(...rotation));
+    // Inspect freezes the already-rendered pose; applying the phase again there
+    // would double the rotation and make the product jump on entry.
+    if(!state.inspecting) quaternion.premultiply(spinRotation.setFromAxisAngle(spinAxis,turning.angle));
     group.current.quaternion.slerp(quaternion,factor);
     if(group.current.quaternion.angleTo(quaternion)>.0001)unsettled=true;
     group.current.scale.setScalar(val(group.current.scale.x,frame.scale));
@@ -164,7 +173,7 @@ function ProductStage({ product, director, onReady, onFailure, wireframe, compac
         anchor.set(bounds.max.x,bounds.max.y,bounds.max.z);group.current.worldToLocal(anchor);label.current.position.copy(anchor);
       }
     }
-    if(unsettled)invalidate();
+    if(unsettled||turning.needsFrame)invalidate();
   });
   const selectPart=e=>{
     if(!director.state.inspecting||!rig.supported||!pointerStart.current||Math.hypot(e.clientX-pointerStart.current[0],e.clientY-pointerStart.current[1])>5)return;
@@ -228,16 +237,18 @@ function SceneTelemetry({director,api}) {
     gl.domElement.dataset.renderedExplode=String(director.state.renderedExplode ?? 0);
     gl.domElement.dataset.capture=JSON.stringify(api.current?.capture?.() ?? null);
     gl.domElement.dataset.moving=String(api.current?.isMoving?.() ?? false);
+    gl.domElement.dataset.turntableAngle=String(director.state.turntableAngle ?? 0);
+    gl.domElement.dataset.turntableRunning=String(director.state.turntableRunning ?? false);
   });return null;
 }
-export default function CinematicScene({product,director,onReady,onFailure,wireframe=false,compact=false,api,eco=false,onSlow=()=>{},config=CINEMATIC_CONFIG}) {
+export default function CinematicScene({product,director,onReady,onFailure,wireframe=false,compact=false,api,eco=false,onSlow=()=>{},config=CINEMATIC_CONFIG,turntable=null}) {
   return <Canvas dpr={[1,eco?config.ecoDpr:config.maxDpr]} frameloop="demand"
     camera={{position:[0,.35,8.4],fov:32,near:.1,far:50}}
     gl={{antialias:true,alpha:true,powerPreference:'default'}}
     onCreated={({gl})=>{gl.toneMapping=THREE.NeutralToneMapping;gl.toneMappingExposure=config.lighting.exposure;gl.outputColorSpace=THREE.SRGBColorSpace;}}
     fallback={null}>
     <LightingRig config={config} director={director}/><StageArchitecture rings={config.rings}/>
-    <ModelBoundary onFailure={onFailure}><Suspense fallback={null}><ProductStage product={product} director={director} onReady={onReady} onFailure={onFailure} wireframe={wireframe} compact={compact} config={config}/></Suspense></ModelBoundary>
+    <ModelBoundary onFailure={onFailure}><Suspense fallback={null}><ProductStage turntable={turntable} product={product} director={director} onReady={onReady} onFailure={onFailure} wireframe={wireframe} compact={compact} config={config}/></Suspense></ModelBoundary>
     <CameraRig director={director} api={api} compact={compact} onFailure={onFailure} config={config}/>
     <SceneTelemetry director={director} api={api}/>
     <QualityManager director={director} enabled={!eco} onSlow={onSlow}/>

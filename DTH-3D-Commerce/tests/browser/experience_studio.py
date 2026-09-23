@@ -41,8 +41,12 @@ with sync_playwright() as p:
   assert public(customer)['data'] is None;shot(customer,'01-home-form');initial=camera(canvas)
   for amount,name in [(.29,'02-home-surface'),(.61,'03-home-assembly'),(1,'04-home-return')]:scroll(customer,amount);shot(customer,name)
   assert distance(initial,camera(canvas))>.01;ok('Native scroll drives actual rendered camera across four chapters')
-  scroll(customer,.29);before=camera(canvas)
-  customer.get_by_role('button',name='Inspect in 3D',exact=False).click();customer.wait_for_timeout(250);after=camera(canvas)
+  scroll(customer,.29)
+  enter=customer.get_by_role('button',name='Inspect in 3D',exact=False)
+  # Record the frame at the actual click; autoplay and the timeline may keep
+  # rendering while Playwright waits for the button to become actionable.
+  enter.evaluate('button=>button.addEventListener("click",()=>{const c=document.querySelector("[data-stage] canvas");c.dataset.entryCamera=c.dataset.camera;},{once:true,capture:true})')
+  enter.click();before=json.loads(canvas.get_attribute('data-entry-camera'));customer.wait_for_timeout(250);after=camera(canvas)
   assert distance(before,after)<.08,(before,after);assert canvas.get_attribute('data-owner')=='inspect';ok('Entering Inspect preserves camera position without teleporting')
   slider=customer.get_by_role('slider',name='Assembly separation');slider.fill('0.7');customer.wait_for_timeout(800);assert distance(after,camera(canvas))<.08
   customer.get_by_role('button',name='Spring',exact=True).click();expect(customer.locator('.dth-part-hotspot')).to_contain_text('Spring');shot(customer,'05-inspection-focus')

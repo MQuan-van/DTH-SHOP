@@ -53,7 +53,11 @@ with sync_playwright() as p:
   expect(page.locator('[data-chapter]')).to_have_attribute('data-chapter','assembly')
   expect(canvas).to_have_attribute('data-turntable-running','true');ok('Scroll-driven Assembly remains available and idle rotation resumes after scrolling')
   page.get_by_role('button',name='Pause cinematic motion',exact=True).click();expect(canvas).to_have_attribute('data-turntable-running','false')
-  page.wait_for_timeout(300);a=angle(canvas);before=pose(canvas);page.wait_for_timeout(700);assert angle(canvas)==a;assert angular_distance(before,pose(canvas))<.001
+  # Motion off also removes the long sticky story and returns to the Form chapter.
+  # Observe that resulting frame rather than sampling during the layout change.
+  expect(page.locator('[data-cinematic]')).to_have_attribute('data-motion','off')
+  page.wait_for_function('''()=>{const s=document.querySelector('[data-cinematic]'),c=s.querySelector('canvas');if(s.dataset.progress!=='0.0000'||!c?.dataset.pose)return false;const p=JSON.parse(c.dataset.pose);return Math.hypot(p.position[0]-.8,p.position[1]-.1,p.position[2])<.0001&&Number(c.dataset.renderedExplode)<.0001;}''')
+  a=angle(canvas);before=pose(canvas);page.wait_for_timeout(700);assert angle(canvas)==a;assert angular_distance(before,pose(canvas))<.001,(before,pose(canvas))
   page.get_by_role('button',name='Enable cinematic motion',exact=True).click();expect(canvas).to_have_attribute('data-turntable-running','true');ok('Motion off actually stops autoplay and Motion on restarts it')
   page.locator('.dth-header .dth-navigation a[href="/shop"]').click();expect(page.locator('[data-stage] canvas')).to_have_count(0)
   page.locator('.dth-header .dth-navigation a[href="/"]').click();expect(page.locator('[data-scene]')).to_have_attribute('data-scene','ready');expect(page.locator('[data-stage] canvas')).to_have_count(1);expect(page.locator('[data-stage] canvas')).to_have_attribute('data-turntable-running','true')

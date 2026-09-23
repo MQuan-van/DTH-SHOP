@@ -1,0 +1,30 @@
+name: Cinematic Home quality
+on:
+  push:
+    branches: [feat/cinematic-home]
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare tracked source and resolve the animation dependency
+        run: |
+          mkdir -p /tmp/dth-cinematic
+          git archive HEAD DTH-3D-Commerce | tar -x -C /tmp/dth-cinematic
+          cd /tmp/dth-cinematic/DTH-3D-Commerce
+          npm ci
+          npm install --workspace frontend --save-exact gsap
+          tar -czf /tmp/dth-cinematic-review.tar.gz -C /tmp/dth-cinematic .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cinematic-development-snapshot
+          path: /tmp/dth-cinematic-review.tar.gz
+          retention-days: 1

@@ -1,0 +1,8 @@
+/* A short arrival, not endless movement beside an operational dashboard. */
+.dth-admin .dth-admin-depth-card {
+  animation-duration: 4s;
+  animation-iteration-count: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dth-admin .dth-admin-depth-card { animation: none; }
+}

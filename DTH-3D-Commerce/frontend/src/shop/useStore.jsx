@@ -1,5 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { FLOW, currentUser, loadCatalog, logout as apiLogout } from './api';
+import { SupportProvider } from './support/SupportProvider';
+import SupportWidget from './support/SupportWidget';
 const StoreContext = createContext(null);
 const CART_KEY = FLOW ? 'dth.flow.bag.v1' : 'dth.commerce.bag.v1';
 const VEHICLE_KEY = FLOW ? 'dth.flow.vehicle.v1' : 'dth.commerce.vehicle.v1';
@@ -67,6 +69,6 @@ export function StoreProvider({ children }) {
     setNotice(`${product.name} added to your bag.`); return true;
   }
   const value = useMemo(() => ({ data, loading, error, refresh, bag, setBag, vehicleId, setVehicle, user, setUser, authLoading, authError, retrySession, add, notice, setNotice, lastOrder, setLastOrder, logout: async () => { await apiLogout(); setUser(null); setLastOrder(null); setBag([]); setVehicle(''); } }), [data, loading, error, bag, vehicleId, user, authLoading, authError, notice, lastOrder]);
-  return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
+  return <StoreContext.Provider value={value}><SupportProvider>{children}<SupportWidget/></SupportProvider></StoreContext.Provider>;
 }
 export function useStore() { const context = useContext(StoreContext); if (!context) throw new Error('Missing StoreProvider'); return context; }

@@ -7,10 +7,14 @@ import { existsSync } from 'node:fs';
 import { InputError, normalizeItems, quoteOrder, validateProduct, validateRegistration } from '../../shared/domain.mjs';
 import { Product, Vehicle, User, Session, Order } from './models.mjs';
 import { cookieToken, digest, hashPassword, randomToken, rateLimiter, verifyPassword } from './security.mjs';
+import { installSupport, isChatMessageRequest } from './support/routes.mjs';
+import { supportModels, purgeCustomerSupport } from './support/models.mjs';
+import { installAdmin } from './admin/routes.mjs';
 const asyncRoute = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 const userView = user => ({ id: String(user._id), email: user.email, role: user.role, savedVehicleId: user.savedVehicleId || '', createdAt: user.createdAt });
 const orderView = order => ({ id: order.id, lines: order.lines, total: order.total, subtotal: order.subtotal, delivery: order.delivery, currency: order.currency, paymentStatus: order.paymentStatus, status: order.status, demoOnly: true, createdAt: order.createdAt });
 export async function makeApp() {
+  await Promise.all(supportModels.map(model => model.init()));
   const app = express();
   const production = process.env.NODE_ENV === 'production';
   const configuredOrigins = process.env.SHOP_ORIGINS || '';
@@ -28,7 +32,9 @@ export async function makeApp() {
     }
     next();
   });
-  app.use(express.json({ limit: '32kb' }));
+  const smallJson = express.json({ limit: '32kb' });
+  // Larger image bodies are parsed only by the authenticated, rate-limited chat route.
+  app.use((req, res, next) => isChatMessageRequest(req) ? next() : smallJson(req, res, next));
   const router = express.Router();
   const cookieOptions = { httpOnly: true, secure: production, sameSite: 'lax', path: '/', maxAge: 7 * 24 * 60 * 60 * 1000 };
   const dummyHash = await hashPassword(randomToken());
@@ -58,6 +64,9 @@ export async function makeApp() {
   const admin = (req, res, next) => req.auth.user.role === 'admin' ? next() : res.status(403).json({ message: 'Administrator access required.' });
   const authLimit = rateLimiter({ max: 12, windowMs: 15 * 60 * 1000, prefix: 'auth' });
   const writeLimit = rateLimiter({ max: 40, windowMs: 60 * 1000, prefix: 'write' });
+  const supportHub = installSupport(router, { authenticated, admin, sessionFor, origins });
+  app.locals.supportHub = supportHub;
+  installAdmin(router, { authenticated, admin, writeLimit });
   router.get('/health', (req, res) => res.json({ success: true, demoOnly: true, paymentMode: 'simulation' }));
   router.get('/products', asyncRoute(async (req, res) => res.json({ data: await Product.find({ active: true }).select('-_id -__v').sort({ name: 1 }).lean() })));
   router.get('/vehicles', asyncRoute(async (req, res) => res.json({ data: await Vehicle.find().select('-_id -__v').sort({ make: 1, model: 1, year: 1 }).lean() })));
@@ -77,66 +86,39 @@ export async function makeApp() {
   }));
   router.post('/auth/logout', authenticated, asyncRoute(async (req, res) => {
     await Session.deleteOne({ _id: req.auth.session._id });
+    supportHub.disconnectUser(req.auth.user._id);
     const { maxAge, ...clearOptions } = cookieOptions;
     res.clearCookie('dth_commerce_session', clearOptions).json({ success: true });
   }));
   router.delete('/auth/account', authenticated, authLimit, asyncRoute(async (req, res) => {
     if (!(await verifyPassword(req.body?.password, req.auth.user.passwordHash))) throw new InputError('Password is incorrect.', 401);
-    // Disable first: a partial deletion cannot leave the account able to sign in.
     await User.updateOne({ _id: req.auth.user._id }, { $set: { disabled: true } });
+    supportHub.disconnectUser(req.auth.user._id);
+    await purgeCustomerSupport(req.auth.user._id);
     await Session.deleteMany({ userId: req.auth.user._id });
     await Order.deleteMany({ userId: req.auth.user._id });
     await User.deleteOne({ _id: req.auth.user._id });
     const { maxAge, ...clearOptions } = cookieOptions;
     res.clearCookie('dth_commerce_session', clearOptions).json({ success: true });
   }));
-  router.get(
-    '/orders/:id',
-    authenticated,
-    asyncRoute(async (req, res) => {
-      if (!/^[A-Z0-9-]{5,80}$/.test(req.params.id)) {
-        throw new InputError('Order not found.', 404);
-      }
-
-      const order = await Order.findOne({
-        id: req.params.id,
-        userId: req.auth.user._id,
-      }).lean();
-
-      if (!order) {
-        throw new InputError('Order not found.', 404);
-      }
-
-      res.json({
-        data: orderView(order),
-      });
-    })
-  );
-  // Account routes share the existing authenticated middleware (cookie + CSRF + Origin).
+  router.get('/orders/:id', authenticated, asyncRoute(async (req, res) => {
+    if (!/^[A-Z0-9-]{5,80}$/.test(req.params.id)) throw new InputError('Order not found.', 404);
+    const order = await Order.findOne({ id: req.params.id, userId: req.auth.user._id }).lean();
+    if (!order) throw new InputError('Order not found.', 404);
+    res.json({ data: orderView(order) });
+  }));
   router.put('/account/vehicle', authenticated, writeLimit, asyncRoute(async (req, res) => {
     const savedVehicleId = vehiclePreference(req.body);
-    if (savedVehicleId && !await Vehicle.exists({ id: savedVehicleId })) {
-      throw new InputError('This vehicle is no longer in the catalog.', 409);
-    }
-    const user = await User.findOneAndUpdate(
-      { _id: req.auth.user._id, disabled: false },
-      { $set: { savedVehicleId } },
-      { new: true, runValidators: true }
-    );
+    if (savedVehicleId && !await Vehicle.exists({ id: savedVehicleId })) throw new InputError('This vehicle is no longer in the catalog.', 409);
+    const user = await User.findOneAndUpdate({ _id: req.auth.user._id, disabled: false }, { $set: { savedVehicleId } }, { new: true, runValidators: true });
     if (!user) throw new InputError('Please sign in again.', 401);
     res.json({ user: userView(user) });
   }));
   router.get('/account/orders', authenticated, asyncRoute(async (req, res) => {
     const { page, pageSize, search } = orderQuery(req.query);
     const query = { userId: req.auth.user._id };
-    if (search) query.$or = [
-      { id: { $regex: literalSearch(search), $options: 'i' } },
-      { 'lines.name': { $regex: literalSearch(search), $options: 'i' } },
-    ];
-    const [total, orders] = await Promise.all([
-      Order.countDocuments(query),
-      Order.find(query).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * pageSize).limit(pageSize).lean(),
-    ]);
+    if (search) query.$or = [{ id: { $regex: literalSearch(search), $options: 'i' } }, { 'lines.name': { $regex: literalSearch(search), $options: 'i' } }];
+    const [total, orders] = await Promise.all([Order.countDocuments(query), Order.find(query).sort({ createdAt: -1, _id: -1 }).skip((page - 1) * pageSize).limit(pageSize).lean()]);
     res.json({ data: orders.map(orderView), total, page, pageSize });
   }));
   router.get('/account/orders/:id', authenticated, asyncRoute(async (req, res) => {
@@ -160,24 +142,8 @@ export async function makeApp() {
     const products = await Product.find({ id: { $in: items.map(i => i.productId) } }).lean();
     const vehicles = await Vehicle.find({ id: { $in: items.map(i => i.vehicleId) } }).lean();
     const quote = quoteOrder(items, products, vehicles);
-    // Chỉ dùng expectedTotal để phát hiện tổng tiền đã đổi.
-    // Giá lưu vào đơn vẫn được server tính từ database.
-    if (
-      !Number.isSafeInteger(req.body.expectedTotal) ||
-      req.body.expectedTotal < 0
-    ) {
-      throw new InputError(
-        'Review the current total before confirming this demo order.'
-      );
-    }
-
-    if (req.body.expectedTotal !== quote.total) {
-      throw new InputError(
-        'The catalog price changed. Refresh your bag and review the total again.',
-        409
-      );
-    }
-    // Demo orders do not reserve or decrement physical inventory.
+    if (!Number.isSafeInteger(req.body.expectedTotal) || req.body.expectedTotal < 0) throw new InputError('Review the current total before confirming this demo order.');
+    if (req.body.expectedTotal !== quote.total) throw new InputError('The catalog price changed. Refresh your bag and review the total again.', 409);
     try {
       const order = await Order.create({ ...quote, ...query, requestHash, id: `DTH-${randomUUID().slice(0, 13).toUpperCase()}`, demoOnly: true, status: 'demo-confirmed' });
       res.status(201).json({ data: orderView(order) });
@@ -188,6 +154,7 @@ export async function makeApp() {
       res.json({ data: orderView(concurrent) });
     }
   }));
+  // Retained for backwards compatibility with the legacy JSON editor.
   router.get('/admin/products', authenticated, admin, asyncRoute(async (req, res) => res.json({ data: await Product.find().select('-_id -__v').sort({ name: 1 }).lean() })));
   router.put('/admin/products/:id', authenticated, admin, writeLimit, asyncRoute(async (req, res) => {
     const vehicles = await Vehicle.find().lean();
@@ -207,7 +174,7 @@ export async function makeApp() {
     if (error.type === 'entity.parse.failed') return res.status(400).json({ message: 'Malformed JSON.' });
     if (error.type === 'entity.too.large') return res.status(413).json({ message: 'Request is too large.' });
     if (error.code === 11000) return res.status(409).json({ message: 'A record with these details already exists.' });
-    console.error('Store API error:', error.name); // Never log request bodies, passwords or tokens.
+    console.error('Store API error:', error.name);
     res.status(500).json({ message: 'Server error. Please try again later.' });
   });
   return app;

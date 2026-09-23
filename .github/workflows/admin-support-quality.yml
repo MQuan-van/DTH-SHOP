@@ -1,0 +1,83 @@
+name: Admin Support quality
+on:
+  push:
+    branches: [feat/admin-support-studio]
+  pull_request:
+    paths: ['DTH-3D-Commerce/**', '.github/workflows/admin-support-quality.yml']
+permissions:
+  contents: read
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    defaults:
+      run:
+        working-directory: DTH-3D-Commerce
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: DTH-3D-Commerce/package-lock.json
+      - name: Locked install and non-database regression tests
+        run: |
+          npm ci
+          npm run check
+          npm test
+          npm run test:account
+          npm run test:admin
+          node --test tests/home-stage.test.mjs tests/shop-motion.test.mjs
+      - name: Build API application
+        env:
+          VITE_STORE_MODE: api
+        run: npm run build
+      - name: Start isolated disposable database
+        run: |
+          docker run -d --name dth-support-ci -p 127.0.0.1:27017:27017 mongo:8.0 --quiet
+          for i in $(seq 1 30); do if docker exec dth-support-ci mongosh --quiet --eval 'quit(db.runCommand({ping:1}).ok ? 0 : 1)' > /dev/null 2>&1; then exit 0; fi; sleep 1; done
+          exit 1
+      - name: Real account and admin/support API regression
+        run: |
+          TEST_MONGO_URI=mongodb://127.0.0.1:27017/dth_account_test node --test tests/account.integration.test.mjs
+          TEST_MONGO_URI=mongodb://127.0.0.1:27017/dth_support_test node --test tests/support.integration.test.mjs
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare browser
+        run: |
+          python -m pip install -q playwright==1.55.0
+          python -m playwright install --with-deps chromium > /tmp/dth-browser-install.log 2>&1 || { tail -60 /tmp/dth-browser-install.log; exit 1; }
+      - name: Start test API and compiled frontend
+        env:
+          MONGO_URI: mongodb://127.0.0.1:27017/dth_admin_browser_test
+        run: |
+          npm run seed
+          npm start > /tmp/dth-support-api.log 2>&1 &
+          for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:5000/api/shop/health; then exit 0; fi; sleep 1; done
+          cat /tmp/dth-support-api.log; exit 1
+      - name: Two browser sessions - actual text/image support and admin UI
+        env:
+          MONGO_URI: mongodb://127.0.0.1:27017/dth_admin_browser_test
+        run: python tests/browser/admin_support.py
+      - name: Existing customer account and checkout browser regression
+        run: python tests/browser/account.py
+      - name: Review dependency audit
+        if: always()
+        run: |
+          mkdir -p test-results/admin-support
+          npm audit --json > test-results/admin-support/dependency-audit.json || true
+          if test -f /tmp/dth-support-api.log; then cp /tmp/dth-support-api.log test-results/admin-support/server.log; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: admin-support-browser-evidence
+          path: |
+            DTH-3D-Commerce/test-results/admin-support/**
+            DTH-3D-Commerce/test-results/account/**
+          retention-days: 7
+      - name: Dispose only CI database
+        if: always()
+        run: docker rm -f dth-support-ci || true

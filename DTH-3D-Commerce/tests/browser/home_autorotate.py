@@ -25,7 +25,10 @@ with sync_playwright() as p:
   page.goto(base+'/');stage=page.locator('[data-scene]');canvas=page.locator('[data-stage] canvas')
   expect(stage).to_have_attribute('data-scene','ready');expect(canvas).to_have_attribute('data-turntable-running','true')
   expect(canvas).to_have_attribute('data-owner','story');expect(page.get_by_role('button',name='Inspect in 3D',exact=False)).to_have_attribute('aria-pressed','false')
-  page.wait_for_timeout(1800);before=pose(canvas);camera=json.loads(canvas.get_attribute('data-camera'))
+  # The existing intro pushes the camera in. Wait for its actual rendered endpoint,
+  # not a wall-clock sleep, before asserting that autoplay moves only the model.
+  page.wait_for_function('''()=>{const c=document.querySelector('[data-stage] canvas');if(!c?.dataset.camera)return false;const p=JSON.parse(c.dataset.camera);return Math.hypot(p[0],p[1]-.35,p[2]-8.4)<.003;}''')
+  before=pose(canvas);camera=json.loads(canvas.get_attribute('data-camera'))
   page.screenshot(path=str(out/'01-home-autoplay.png'),full_page=False)
   page.wait_for_timeout(1500);assert angular_distance(before,pose(canvas))>.04
   assert math.dist(camera,json.loads(canvas.get_attribute('data-camera')))<.08

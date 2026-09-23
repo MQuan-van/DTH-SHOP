@@ -47,8 +47,8 @@ with sync_playwright() as p:
   slider=customer.get_by_role('slider',name='Assembly separation');slider.fill('0.7');customer.wait_for_timeout(800);assert distance(after,camera(canvas))<.08
   customer.get_by_role('button',name='Spring',exact=True).click();expect(customer.locator('.dth-part-hotspot')).to_contain_text('Spring');shot(customer,'05-inspection-focus')
   customer.get_by_role('slider',name='Light direction').fill('60');customer.wait_for_timeout(400);shot(customer,'06-surface-light');ok('Manual separation, anchored part focus and relighting do not steal camera control')
-  customer.get_by_role('button',name='Side',exact=True).click();customer.wait_for_timeout(1100);assert distance(after,camera(canvas))>.2
-  customer.get_by_role('button',name='Reset view',exact=True).click();expect(slider).to_have_value('0');customer.wait_for_timeout(1400);assert distance(camera(canvas),[0,.3,10.8])<.03;ok('Named view and complete Reset operate on the real scene')
+  customer.get_by_role('button',name='Side',exact=True).click();settle(canvas);assert distance(after,camera(canvas))>.2
+  customer.get_by_role('button',name='Reset view',exact=True).click();expect(slider).to_have_value('0');settle(canvas);assert distance(camera(canvas),[0,.3,10.8])<.03;ok('Named view and complete Reset operate on the real scene')
   for i in range(5):
    customer.get_by_role('button',name='Return to story',exact=False).click();customer.get_by_role('button',name='Inspect in 3D',exact=False).click()
   customer.get_by_role('button',name='Return to story',exact=False).click();customer.wait_for_timeout(1500);expect(canvas).to_have_attribute('data-owner','story');assert all(math.isfinite(n) for n in camera(canvas));ok('Rapid interruption returns camera ownership to the story safely')

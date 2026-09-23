@@ -49,12 +49,18 @@ jobs:
           mkdir -p test-results/home-autoplay
           set -o pipefail
           python tests/browser/home_autorotate.py 2>&1 | tee test-results/home-autoplay/browser.log
+      - name: Native page wheel, wider stage and independent chapter controls
+        run: |
+          mkdir -p test-results/home-freescroll
+          set -o pipefail
+          python tests/browser/home_freescroll.py 2>&1 | tee test-results/home-freescroll/browser.log
       - name: Record tested source
         if: always()
         run: |
-          mkdir -p test-results/motion-controls test-results/home-autoplay
+          mkdir -p test-results/motion-controls test-results/home-autoplay test-results/home-freescroll
           git rev-parse HEAD > test-results/motion-controls/source-commit.txt
           git rev-parse HEAD > test-results/home-autoplay/source-commit.txt
+          git rev-parse HEAD > test-results/home-freescroll/source-commit.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -62,4 +68,5 @@ jobs:
           path: |
             DTH-3D-Commerce/test-results/motion-controls/**
             DTH-3D-Commerce/test-results/home-autoplay/**
+            DTH-3D-Commerce/test-results/home-freescroll/**
           retention-days: 7

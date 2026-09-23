@@ -49,13 +49,17 @@ function LightingRig({ config, director }) {
 }
 
 /** Camera writes belong either to the director, OrbitControls, or a cancellable preset. */
-function CameraRig({ director, api, compact, config, onFailure }) {
+function CameraRig({ director, api, compact, config, onFailure, wheelZoom }) {
   const { camera, gl, invalidate } = useThree();
   const controls = useRef(null), target = useRef(new THREE.Vector3());
   const initialized = useRef(false);
   const goal = useMemo(() => new THREE.Vector3(), []), cameraGoal = useMemo(() => new THREE.Vector3(), []);
   useEffect(() => {
+    const previousTouchAction = gl.domElement.style.touchAction;
     const control = new OrbitControls(camera, gl.domElement);
+    // Home's wheel belongs to the page, even in Inspect. Button zoom is separate.
+    control.enableZoom = wheelZoom;
+    if (!wheelZoom) gl.domElement.style.touchAction = 'pan-y pinch-zoom';
     controls.current = control;
     control.enablePan = false; control.enableDamping = false;
     control.minDistance = 4.5; control.maxDistance = 20;
@@ -84,8 +88,9 @@ function CameraRig({ director, api, compact, config, onFailure }) {
     return () => {
       unsubscribe(); control.removeEventListener('change',change); control.removeEventListener('start',start); control.dispose();
       gl.domElement.removeEventListener('webglcontextlost',lost); command.cancel(); controls.current=null; api.current=null;
+      gl.domElement.style.touchAction = previousTouchAction;
     };
-  }, [camera, gl, invalidate, director, api, compact, onFailure]);
+  }, [camera, gl, invalidate, director, api, compact, onFailure, wheelZoom]);
   useEffect(() => {
     if(controls.current) { controls.current.rotateSpeed=config.controls.rotateSpeed; controls.current.zoomSpeed=config.controls.zoomSpeed; }
     invalidate();
@@ -202,18 +207,21 @@ function PartCaption({director}) {
   },[director]);
   return <span ref={ref}/>;
 }
-function StageArchitecture({rings}) {
+function StageArchitecture({rings,pedestalScale}) {
   return <group>
+    <group scale={pedestalScale} name="dth-ground-shadow">
     <mesh position={[0,-1.96,0]} rotation={[-Math.PI/2,0,0]}>
       <planeGeometry args={[5.4,5.4]}/>
       <shaderMaterial transparent depthWrite={false}
         vertexShader={'varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }'}
         fragmentShader={'varying vec2 vUv; void main(){float r=length((vUv-.5)*2.);float a=(1.-smoothstep(.05,.85,r))*.13;gl_FragColor=vec4(.035,.09,.12,a);}'}/>
     </mesh>
+    </group>
     {rings&&<><mesh position={[0.25,0,-0.65]}><torusGeometry args={[1.95,.006,6,128]}/><meshBasicMaterial color="#79b7c8" transparent opacity={.48}/></mesh>
       <mesh position={[0.25,0,-0.65]}><torusGeometry args={[2.04,.002,4,128]}/><meshBasicMaterial color="#79b7c8" transparent opacity={.4}/></mesh>
+      <group scale={pedestalScale} name="dth-pedestal">
       <mesh position={[0,-1.92,0]} rotation={[-Math.PI/2,0,0]}><torusGeometry args={[1.58,.007,6,128]}/><meshBasicMaterial color="#1c83a3" transparent opacity={.48}/></mesh>
-      <mesh position={[0,-1.92,0]} rotation={[-Math.PI/2,0,0]}><torusGeometry args={[1.77,.003,4,128]}/><meshBasicMaterial color="#68b7ce" transparent opacity={.3}/></mesh></>}
+      <mesh position={[0,-1.92,0]} rotation={[-Math.PI/2,0,0]}><torusGeometry args={[1.77,.003,4,128]}/><meshBasicMaterial color="#68b7ce" transparent opacity={.3}/></mesh></group></>}
   </group>;
 }
 function QualityManager({director,enabled,onSlow}) {
@@ -226,7 +234,7 @@ function QualityManager({director,enabled,onSlow}) {
   });return null;
 }
 function SceneTelemetry({director,api}) {
-  const {gl,camera}=useThree();
+  const {gl,camera,scene}=useThree();
   useFrame(()=>{
     if(import.meta.env.VITE_EXPERIENCE_TESTS!=='true')return;
     gl.domElement.dataset.camera=JSON.stringify(camera.position.toArray());
@@ -239,17 +247,18 @@ function SceneTelemetry({director,api}) {
     gl.domElement.dataset.moving=String(api.current?.isMoving?.() ?? false);
     gl.domElement.dataset.turntableAngle=String(director.state.turntableAngle ?? 0);
     gl.domElement.dataset.turntableRunning=String(director.state.turntableRunning ?? false);
+    gl.domElement.dataset.pedestalScale=JSON.stringify(scene.getObjectByName('dth-pedestal')?.scale.toArray() ?? null);
   });return null;
 }
-export default function CinematicScene({product,director,onReady,onFailure,wireframe=false,compact=false,api,eco=false,onSlow=()=>{},config=CINEMATIC_CONFIG,turntable=null}) {
+export default function CinematicScene({product,director,onReady,onFailure,wireframe=false,compact=false,api,eco=false,onSlow=()=>{},config=CINEMATIC_CONFIG,turntable=null,wheelZoom=true,pedestalScale=[1,1,1]}) {
   return <Canvas dpr={[1,eco?config.ecoDpr:config.maxDpr]} frameloop="demand"
     camera={{position:[0,.35,8.4],fov:32,near:.1,far:50}}
     gl={{antialias:true,alpha:true,powerPreference:'default'}}
     onCreated={({gl})=>{gl.toneMapping=THREE.NeutralToneMapping;gl.toneMappingExposure=config.lighting.exposure;gl.outputColorSpace=THREE.SRGBColorSpace;}}
     fallback={null}>
-    <LightingRig config={config} director={director}/><StageArchitecture rings={config.rings}/>
+    <LightingRig config={config} director={director}/><StageArchitecture rings={config.rings} pedestalScale={pedestalScale}/>
     <ModelBoundary onFailure={onFailure}><Suspense fallback={null}><ProductStage turntable={turntable} product={product} director={director} onReady={onReady} onFailure={onFailure} wireframe={wireframe} compact={compact} config={config}/></Suspense></ModelBoundary>
-    <CameraRig director={director} api={api} compact={compact} onFailure={onFailure} config={config}/>
+    <CameraRig wheelZoom={wheelZoom} director={director} api={api} compact={compact} onFailure={onFailure} config={config}/>
     <SceneTelemetry director={director} api={api}/>
     <QualityManager director={director} enabled={!eco} onSlow={onSlow}/>
   </Canvas>;

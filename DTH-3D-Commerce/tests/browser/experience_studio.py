@@ -26,9 +26,13 @@ def settle(canvas):
  expect(canvas).to_have_attribute('data-moving','false')
 def login(page,email):
  page.goto(base+'/account');expect(page.get_by_role('heading',name='Welcome back.')).to_be_visible();page.get_by_label('Email',exact=True).fill(email);page.get_by_label('Password',exact=True).fill(password);page.get_by_role('button',name='Sign in',exact=True).click();expect(page.get_by_role('heading',name='Your account.')).to_be_visible()
-def scroll(page,n):
- page.evaluate('''p=>{const el=document.querySelector('[data-cinematic]');const st=el.querySelector('[data-stage]');const h=document.querySelector('.dth-header').getBoundingClientRect().height;scrollTo(0,el.getBoundingClientRect().top+scrollY-h+(el.offsetHeight-st.offsetHeight)*p);}''',n)
- page.wait_for_timeout(1800)
+def select_chapter(page,n):
+ index={0:0,.29:1,.61:2,1:3}[n]
+ button=page.get_by_role('navigation',name='Product story chapters').get_by_role('button').nth(index)
+ button.scroll_into_view_if_needed();before=page.evaluate('scrollY');button.click()
+ page.wait_for_function('(p)=>Math.abs(Number(document.querySelector("[data-navigation]").dataset.progress)-p)<.0001',arg=n)
+ assert abs(page.evaluate('scrollY')-before)<2
+ page.wait_for_timeout(800)
 with sync_playwright() as p:
  browser=p.chromium.launch(headless=True,args=['--use-angle=swiftshader','--enable-unsafe-swiftshader'])
  ac=browser.new_context(viewport={'width':1600,'height':1000});cc=browser.new_context(viewport={'width':1440,'height':1000})
@@ -39,9 +43,9 @@ with sync_playwright() as p:
  try:
   customer.goto(base+'/');expect(customer.locator('[data-scene]')).to_have_attribute('data-scene','ready');canvas=customer.locator('[data-stage] canvas');customer.wait_for_timeout(1800)
   assert public(customer)['data'] is None;shot(customer,'01-home-form');initial=camera(canvas)
-  for amount,name in [(.29,'02-home-surface'),(.61,'03-home-assembly'),(1,'04-home-return')]:scroll(customer,amount);shot(customer,name)
-  assert distance(initial,camera(canvas))>.01;ok('Native scroll drives actual rendered camera across four chapters')
-  scroll(customer,.29)
+  for amount,name in [(.29,'02-home-surface'),(.61,'03-home-assembly'),(1,'04-home-return')]:select_chapter(customer,amount);shot(customer,name)
+  assert distance(initial,camera(canvas))>.01;ok('Chapter selection drives the rendered camera while page scroll stays independent')
+  select_chapter(customer,.29)
   enter=customer.get_by_role('button',name='Inspect in 3D',exact=False)
   # Record the frame at the actual click; autoplay and the timeline may keep
   # rendering while Playwright waits for the button to become actionable.

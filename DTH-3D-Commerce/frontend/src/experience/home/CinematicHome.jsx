@@ -4,7 +4,7 @@ import gsap from 'gsap';
 import { useStore } from '../../shop/useStore';
 import ProductImage from '../../shop/catalog/components/ProductImage';
 import { formatMoney } from '../../../../shared/domain.mjs';
-import { CINEMATIC_CONFIG, HOME_AUTOROTATE } from '../motion/motion.config.mjs';
+import { CINEMATIC_CONFIG, HOME_AUTOROTATE, HOME_SHOWROOM } from '../motion/motion.config.mjs';
 import { createDirector, sampleStory } from '../motion/story.mjs';
 import { useScrollDirector } from '../motion/useScrollDirector';
 import { useSceneInputGate } from '../interaction/useSceneInputGate';
@@ -39,7 +39,7 @@ function Story({ product, chooseVehicle, config }) {
   const [explode, setExplode] = useState(0), [wireframe, setWireframe] = useState(false);
   const animated = motion && !policy.reduced;
   const fallback = sceneStatus === 'fallback';
-  const cinematic = animated && !policy.compact && !fallback;
+  const cinematic = HOME_SHOWROOM.scrollLinked && animated && !policy.compact && !fallback;
   const active = useStageActivity(stage);
   const selectChapter = useScrollDirector(root, director, { cinematic, animated, onChapter: setChapter, config });
   const ready = useCallback(supported => { setRigged(supported); setSceneStatus('ready'); }, []);
@@ -90,7 +90,8 @@ function Story({ product, chooseVehicle, config }) {
   }
 
   return <section ref={root} className={styles.story} aria-label="Interactive product story"
-    style={{ '--story-screens': config.storyScreens }}
+    style={{ '--story-screens': config.storyScreens, '--showroom-extra-height': `${HOME_SHOWROOM.extraHeightPx}px` }}
+    data-navigation={cinematic ? 'scroll' : 'chapters'}
     data-cinematic={cinematic} data-inspect={inspect} data-motion={animated ? 'on' : 'off'} data-chapter={text.id}>
     <div ref={stage} className={styles.stage} data-stage data-scene={sceneStatus}
       onPointerMove={pointer} onPointerLeave={() => director.set({ pointerX: 0, pointerY: 0 })}>
@@ -105,7 +106,7 @@ function Story({ product, chooseVehicle, config }) {
       <div className={styles.artwork} aria-hidden="true"><span>DTH</span><i/><i/></div>
       <div className={styles.canvas} data-interactive={inspect} aria-hidden="true">
         {!fallback && <SceneBoundary key={attempt} onFailure={fail}><Suspense fallback={null}>
-          <CinematicScene turntable={HOME_AUTOROTATE} product={product} director={director} api={api} onReady={ready} onFailure={fail} config={config} compact={policy.compact} wireframe={wireframe} eco={eco} onSlow={lowerQuality}/>
+          <CinematicScene wheelZoom={HOME_SHOWROOM.wheelZoom} pedestalScale={policy.compact ? HOME_SHOWROOM.compactPedestalScale : HOME_SHOWROOM.pedestalScale} turntable={HOME_AUTOROTATE} product={product} director={director} api={api} onReady={ready} onFailure={fail} config={config} compact={policy.compact} wireframe={wireframe} eco={eco} onSlow={lowerQuality}/>
         </Suspense></SceneBoundary>}
       </div>
       {sceneStatus !== 'ready' && <div className={styles.poster}><ProductImage product={product} eager className={styles.posterImage}/></div>}
@@ -114,7 +115,7 @@ function Story({ product, chooseVehicle, config }) {
         <h1 key={inspect ? 'inspect' : text.id}>
           {(inspect ? ['A closer', 'point of view.'] : text.title).map((line, index) => <span className={styles.lineMask} key={line}><span data-copy-line className={index ? styles.outlineWord : ''}>{line}</span></span>)}
         </h1>
-        <p className={styles.copyNote} data-copy-note>{inspect ? 'Drag to rotate. Scroll to zoom. Make it your view.' : !rigged && chapter === 2 ? 'Explore the silhouette from a new perspective.' : text.note}</p>
+        <p className={styles.copyNote} data-copy-note>{inspect ? 'Drag to rotate. Use + / − to zoom. Scroll to browse.' : !rigged && chapter === 2 ? 'Explore the silhouette from a new perspective.' : !cinematic && chapter === 2 && text.note === CINEMATIC_CONFIG.chapters[2].note ? 'An illustrative assembly. Select a view or inspect each part.' : text.note}</p>
         <div className={styles.copyAction} data-copy-note>
           {chapter === 3 && !inspect ? <button className={styles.textLink} type="button" onClick={chooseVehicle}>Find my fit <Arrow/></button> : <Link className={styles.textLink} to="/shop">Explore the parts <Arrow/></Link>}
         </div>
@@ -133,7 +134,7 @@ function Story({ product, chooseVehicle, config }) {
       </div>
       <div className={styles.bottomline}>
         <nav className={styles.chapters} aria-label="Product story chapters">{config.chapters.map((item, index) => <button type="button" key={item.id} aria-current={!inspect && chapter === index ? 'step' : undefined} onClick={() => jump(index)}><small>0{index + 1}</small> {item.label}</button>)}</nav>
-        <span className={styles.scrollHint}>{cinematic ? 'SCROLL TO EXPLORE ↓' : 'SELECT A CHAPTER'}</span>
+        <span className={styles.scrollHint}>{cinematic ? 'SCROLL TO EXPLORE ↓' : 'SELECT A VIEW · SCROLL TO BROWSE'}</span>
       </div>
       {inspect && <div className={styles.inspectionTools} aria-label="3D inspection controls">
         {['left','right','in','out','reset'].map(command => <button key={command} type="button" aria-label={{left:'Rotate left',right:'Rotate right',in:'Zoom in',out:'Zoom out',reset:'Reset view'}[command]} onClick={() => { api.current?.(command); if (command === 'reset') {setExplode(0);setWireframe(false);setLightAngle(0);setPart('');} }}>{({left:'↶',right:'↷',in:'+',out:'−',reset:'Reset'})[command]}</button>)}

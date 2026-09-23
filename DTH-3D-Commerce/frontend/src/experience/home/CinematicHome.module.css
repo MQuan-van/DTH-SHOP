@@ -6,6 +6,9 @@
 .story[data-cinematic="true"] { height:calc((var(--story-screens) + 1) * (100svh - var(--header-height) - var(--banner-height))); }
 .stage { position:relative;isolation:isolate;height:calc(100svh - var(--header-height) - var(--banner-height));min-height:580px;max-height:1200px;overflow:clip;margin-inline:auto; }
 .story[data-cinematic="true"] .stage { position:sticky;top:var(--header-height); }
+/* Free-scroll Home has one normal-flow hero, not a multi-screen sticky spacer.
+   Extra height expands only the desktop showroom; compact layouts remain bounded. */
+.story[data-navigation="chapters"] .stage { height:calc(100svh - var(--header-height) - var(--banner-height) + var(--showroom-extra-height, 100px));min-height:680px;max-height:1400px; }
 .stage::before { content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 58% 46%,#d3e7ee7a,transparent 63%);pointer-events:none;z-index:-2; }
 .topline { position:absolute;top:22px;left:4%;right:4%;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:17px;z-index:5;gap:15px;font:10px var(--mono);letter-spacing:.1em; }
 .preferences { display:flex;gap:24px;align-items:center; }
@@ -109,7 +112,7 @@
 }
 @media(max-width:1100px){.preferences{gap:12px}.copy{left:5%}.copy h1{font-size:7vw!important}.stripActions{padding-right:40px;gap:10px}.cinema .productLink,.cinema .inspectButton{gap:16px;padding:11px 16px}.chapters{gap:13px}.scrollHint{display:none}.itemInfo{align-items:start;flex-direction:column}}
 @media(max-width:999px),(max-height:679px){
- .story[data-cinematic="false"] .stage{height:850px;min-height:0;max-height:none;position:relative;top:auto}
+ .story[data-navigation="chapters"][data-cinematic="false"] .stage{height:850px;min-height:0;max-height:none;position:relative;top:auto}
  .topline{left:5%;right:5%;top:16px;align-items:start}.topline>span{max-width:130px;line-height:1.6}.preferences{flex-wrap:wrap;justify-content:end;gap:6px 14px;max-width:65%}
  .copy,.copyRight{left:6%;right:auto;top:105px;max-width:86%}.cinema .copy h1,.cinema .copyRight h1{font-size:clamp(42px,7vw,66px)!important;margin:10px 0 0;line-height:1}
  .copyNote,.copyAction{display:none}.canvas{inset:255px -10% 175px}.artwork>span{top:220px;font-size:65vw;left:15%}.sideNote{display:none}.poster{inset:250px 8% 195px}.status{left:6%;bottom:192px}

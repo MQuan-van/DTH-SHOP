@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef } from 'react';
+import { Component, Suspense, useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -9,6 +9,13 @@ import { sampleStory, damp } from '../motion/story.mjs';
 import { createProductRig } from './apexRig.mjs';
 export const clearCinematicModel = url => useGLTF.clear(url);
 
+// Catch loader failures inside the reconciler as well as outside Canvas.
+class ModelBoundary extends Component {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch() { this.props.onFailure(); }
+  render() { return this.state.failed ? null : this.props.children; }
+}
 function LightingRig() {
   const { gl, scene, invalidate } = useThree();
   useEffect(() => {
@@ -153,7 +160,7 @@ export default function CinematicScene({ product, director, onReady, onFailure, 
     onCreated={({ gl }) => { gl.toneMapping = THREE.NeutralToneMapping; gl.toneMappingExposure = 1; gl.outputColorSpace = THREE.SRGBColorSpace; }}
     fallback={null}>
     <LightingRig/><StageArchitecture/>
-    <Suspense fallback={null}><ProductStage product={product} director={director} onReady={onReady} wireframe={wireframe} compact={compact}/></Suspense>
+    <ModelBoundary onFailure={onFailure}><Suspense fallback={null}><ProductStage product={product} director={director} onReady={onReady} wireframe={wireframe} compact={compact}/></Suspense></ModelBoundary>
     <CameraRig director={director} api={api} compact={compact} onFailure={onFailure}/>
     <QualityManager director={director} enabled={!eco} onSlow={onSlow}/>
   </Canvas>;

@@ -48,15 +48,18 @@ with sync_playwright() as p:
   page.get_by_role('button',name='Reset view',exact=True).click();expect(canvas).to_have_attribute('data-moving','false')
   page.get_by_role('button',name='Return to story',exact=False).click();expect(canvas).to_have_attribute('data-owner','story');expect(canvas).to_have_attribute('data-turntable-running','true')
   a=angle(canvas);page.wait_for_timeout(700);assert angle(canvas)!=a;ok('Returning from Inspect resumes automatic rotation')
-  # Scroll a real Home chapter. The turntable yields while the timeline changes.
-  page.evaluate('''()=>{const el=document.querySelector('[data-cinematic]');const st=el.querySelector('[data-stage]');const h=document.querySelector('.dth-header').getBoundingClientRect().height;scrollTo(0,el.getBoundingClientRect().top+scrollY-h+(el.offsetHeight-st.offsetHeight)*.61);}''')
+  # Free-scroll Home selects camera/assembly via buttons, not page position.
+  chapter=page.get_by_role('navigation',name='Product story chapters').get_by_role('button').nth(2)
+  chapter.scroll_into_view_if_needed();scroll_before=page.evaluate('scrollY');chapter.click()
   expect(page.locator('[data-chapter]')).to_have_attribute('data-chapter','assembly')
-  expect(canvas).to_have_attribute('data-turntable-running','true');ok('Scroll-driven Assembly remains available and idle rotation resumes after scrolling')
+  page.wait_for_function('Number(document.querySelector("[data-stage] canvas").dataset.renderedExplode)>.99')
+  assert abs(page.evaluate('scrollY')-scroll_before)<2
+  expect(canvas).to_have_attribute('data-turntable-running','true');ok('Click-controlled Assembly remains available and idle rotation resumes without scrolling the page')
   page.get_by_role('button',name='Pause cinematic motion',exact=True).click();expect(canvas).to_have_attribute('data-turntable-running','false')
-  # Motion off also removes the long sticky story and returns to the Form chapter.
-  # Observe that resulting frame rather than sampling during the layout change.
+  # Motion off now preserves the selected chapter and the normal-flow layout.
+  # Observe its settled frame before checking that ambient movement has stopped.
   expect(page.locator('[data-cinematic]')).to_have_attribute('data-motion','off')
-  page.wait_for_function('''()=>{const s=document.querySelector('[data-cinematic]'),c=s.querySelector('canvas');if(s.dataset.progress!=='0.0000'||!c?.dataset.pose)return false;const p=JSON.parse(c.dataset.pose);return Math.hypot(p.position[0]-.8,p.position[1]-.1,p.position[2])<.0001&&Number(c.dataset.renderedExplode)<.0001;}''')
+  page.wait_for_function('''()=>{const s=document.querySelector('[data-cinematic]'),c=s.querySelector('canvas');if(Math.abs(Number(s.dataset.progress)-.61)>.0001||!c?.dataset.pose)return false;const p=JSON.parse(c.dataset.pose);return Math.hypot(p.position[0]-.5,p.position[1],p.position[2])<.0001&&Number(c.dataset.renderedExplode)>.9999;}''')
   a=angle(canvas);before=pose(canvas);page.wait_for_timeout(700);assert angle(canvas)==a;assert angular_distance(before,pose(canvas))<.001,(before,pose(canvas))
   page.get_by_role('button',name='Enable cinematic motion',exact=True).click();expect(canvas).to_have_attribute('data-turntable-running','true');ok('Motion off actually stops autoplay and Motion on restarts it')
   page.locator('.dth-header .dth-navigation a[href="/shop"]').click();expect(page.locator('[data-stage] canvas')).to_have_count(0)

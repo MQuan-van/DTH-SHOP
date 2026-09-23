@@ -3,28 +3,48 @@ on:
   push:
     branches: [feat/cinematic-home]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  prepare:
+  review:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Prepare tracked source and resolve the animation dependency
+      - name: Record only the pinned GSAP manifest and lockfile on this feature branch
+        working-directory: DTH-3D-Commerce
         run: |
-          mkdir -p /tmp/dth-cinematic
-          git archive HEAD DTH-3D-Commerce | tar -x -C /tmp/dth-cinematic
-          cd /tmp/dth-cinematic/DTH-3D-Commerce
           npm ci
-          npm install --workspace frontend --save-exact gsap
-          tar -czf /tmp/dth-cinematic-review.tar.gz -C /tmp/dth-cinematic .
-      - uses: actions/upload-artifact@v4
+          npm install --workspace frontend --save-exact gsap@3.15.0
+          git add frontend/package.json package-lock.json
+          if ! git diff --cached --quiet; then
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git commit -m 'build: pin GSAP 3.15.0 for the Home motion director'
+            git push origin HEAD:refs/heads/feat/cinematic-home
+          fi
+      - name: Build Flow without database
+        working-directory: DTH-3D-Commerce
+        run: npm run check && npm run build:flow
+      - uses: actions/setup-python@v5
         with:
-          name: cinematic-development-snapshot
-          path: /tmp/dth-cinematic-review.tar.gz
-          retention-days: 1
+          python-version: '3.12'
+      - name: Prepare Chromium
+        run: python -m pip install -q playwright==1.55.0 && python -m playwright install --with-deps chromium
+      - name: Start compiled frontend
+        working-directory: DTH-3D-Commerce
+        run: |
+          npm run preview > /tmp/cinematic-vite.log 2>&1 &
+          for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:4173 >/dev/null; then exit 0; fi; sleep 1; done
+          cat /tmp/cinematic-vite.log; exit 1
+      - name: Capture actual 3D story and interactions
+        working-directory: DTH-3D-Commerce
+        run: python tests/browser/cinematic_home.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cinematic-browser-evidence
+          path: DTH-3D-Commerce/test-results/cinematic/**
+          retention-days: 7

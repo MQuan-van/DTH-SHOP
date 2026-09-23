@@ -9,6 +9,7 @@ import { sampleStory } from '../motion/story.mjs';
 import { createProductRig } from './apexRig.mjs';
 import { PART_LABELS } from '../../../../shared/experience.mjs';
 import { useOwnedModel } from './useOwnedModel';
+import { createOrbitStepper } from './orbitTransition.mjs';
 export { clearOwnedModelCache as clearCinematicModel } from './useOwnedModel';
 
 class ModelBoundary extends Component {
@@ -52,6 +53,7 @@ function CameraRig({ director, api, compact, config, onFailure }) {
   const controls = useRef(null), target = useRef(new THREE.Vector3());
   const initialized = useRef(false), previousMode = useRef('story'), move = useRef(null);
   const goal = useMemo(() => new THREE.Vector3(), []), cameraGoal = useMemo(() => new THREE.Vector3(), []);
+  const stepOrbit = useMemo(createOrbitStepper, []);
   useEffect(() => {
     const control = new OrbitControls(camera, gl.domElement);
     controls.current = control;
@@ -114,7 +116,7 @@ function CameraRig({ director, api, compact, config, onFailure }) {
       previousMode.current='inspect';
       if(move.current) {
         const factor=state.motion?1-Math.exp(-12*Math.min(delta,.05)):1;
-        camera.position.lerp(move.current.camera,factor);control.target.lerp(move.current.target,factor);control.update();
+        stepOrbit(camera.position,control.target,move.current.camera,move.current.target,factor);control.update();
         if(camera.position.distanceToSquared(move.current.camera)<1e-6 && control.target.distanceToSquared(move.current.target)<1e-6) move.current=null;
         else invalidate();
       }

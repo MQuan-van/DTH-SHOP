@@ -69,7 +69,10 @@ jobs:
       - name: Actual camera ownership and admin publication in Chromium
         env:
           MONGO_URI: mongodb://127.0.0.1:27017/dth_experience_browser_test
-        run: python tests/browser/experience_studio.py
+        run: |
+          mkdir -p test-results/experience
+          set -o pipefail
+          python tests/browser/experience_studio.py 2>&1 | tee test-results/experience/browser.log
       - name: Record source and evidence
         if: always()
         run: |

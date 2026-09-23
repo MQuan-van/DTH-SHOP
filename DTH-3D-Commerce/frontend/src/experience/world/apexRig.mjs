@@ -1,18 +1,21 @@
 import * as THREE from 'three';
-
+import { toCreasedNormals } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 export const PART_OFFSETS = {
   shaft: [0, 0, 0], body: [0, -0.18, 0], spring: [-0.72, 0.05, 0.12],
   upperMount: [0, 0.68, 0], lowerMount: [0, -0.68, 0],
   upperCollar: [0, 0.25, 0], lowerCollar: [0, -0.34, 0],
   reservoir: [0.62, 0.04, 0], bridge: [0.34, 0.24, 0],
 };
-const SIGNATURE = { 'part-0': [908, 5424], 'part-1': [164, 960], 'part-2': [3574, 19872] };
+const SIGNATURE = { 'part-0': [908, 5424, 2325913360], 'part-1': [164, 960, 1813042206], 'part-2': [3574, 19872, 3638377651] };
 const PALETTE = [[165,174,183],[37,43,51],[215,245,92]];
-
+function fingerprint(array) {
+  let hash = 2166136261;
+  for (const byte of new Uint8Array(array.buffer, array.byteOffset, array.byteLength)) hash = Math.imul(hash ^ byte, 16777619) >>> 0;
+  return hash;
+}
 /** Connected components of the ORIGINAL indexed mesh; no invented internal parts. */
 export function componentsOf(geometry) {
-  const position = geometry.getAttribute('position');
-  const index = geometry.getIndex();
+  const position = geometry.getAttribute('position'), index = geometry.getIndex();
   if (!index || !position) return [];
   const parent = Array.from({ length: position.count }, (_, i) => i);
   const find = value => { while (parent[value] !== value) { parent[value] = parent[parent[value]]; value = parent[value]; } return value; };
@@ -28,8 +31,7 @@ export function componentsOf(geometry) {
     components.get(key).push(index.getX(i), index.getX(i + 1), index.getX(i + 2));
   }
   return [...components.values()].map(indices => {
-    const bounds = new THREE.Box3();
-    const point = new THREE.Vector3();
+    const bounds = new THREE.Box3(), point = new THREE.Vector3();
     indices.forEach(i => bounds.expandByPoint(point.fromBufferAttribute(position, i)));
     return { indices, center: bounds.getCenter(new THREE.Vector3()), size: bounds.getSize(new THREE.Vector3()) };
   });
@@ -56,17 +58,18 @@ function subset(source, indices) {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
   geometry.setIndex(faces);
-  geometry.computeVertexNormals();
-  geometry.computeBoundingBox(); geometry.computeBoundingSphere();
-  return geometry;
+  // Smooth curved surfaces but retain machined 90-degree edges.
+  const shaded = toCreasedNormals(geometry, Math.PI / 3);
+  geometry.dispose();
+  shaded.computeBoundingBox(); shaded.computeBoundingSphere();
+  return shaded;
 }
-
 export function createProductRig(scene, url) {
   const meshes = [];
   scene.traverse(object => { if (object.isMesh) meshes.push(object); });
   const supported = url === '/models/dth-demo/apex-suspension.glb' && meshes.length === 3 && meshes.every(mesh => {
     const expected = SIGNATURE[mesh.name];
-    return expected && mesh.geometry.attributes.position.count === expected[0] && mesh.geometry.index?.count === expected[1];
+    return expected && mesh.geometry.attributes.position.count === expected[0] && mesh.geometry.index?.count === expected[1] && fingerprint(mesh.geometry.attributes.position.array) === expected[2] && mesh.position.lengthSq() === 0 && mesh.rotation.x === 0 && mesh.rotation.y === 0 && mesh.rotation.z === 0 && mesh.scale.equals(new THREE.Vector3(1,1,1));
   });
   const root = new THREE.Group(), parts = new Map(), materials = [], geometries = [];
   const cloneMaterial = original => {

@@ -18,6 +18,7 @@
     "build:flow": "npm run build --workspace frontend -- --mode flow",
     "test:account": "node --test tests/account.test.mjs tests/flow.test.mjs",
     "test:admin": "node --test tests/support.test.mjs",
+    "test:cinematic": "node --test tests/cinematic.test.mjs",
     "admin:grant": "node backend/commerce/admin/grant.mjs"
   }
 }

@@ -49,6 +49,7 @@ export function useScrollDirector(root, director, { cinematic, animated, onChapt
     const header = document.querySelector('.dth-header');
     const measure = () => {
       element.style.setProperty('--header-height', `${Math.ceil(header?.getBoundingClientRect().height || 80)}px`);
+      element.style.setProperty('--banner-height', `${Math.ceil(document.querySelector('.dth-demo-banner')?.getBoundingClientRect().height || 0)}px`);
       trigger.current?.refresh();
     };
     const ro = new ResizeObserver(measure);

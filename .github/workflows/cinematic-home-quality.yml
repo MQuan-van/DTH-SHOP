@@ -2,32 +2,39 @@ name: Cinematic Home quality
 on:
   push:
     branches: [feat/cinematic-home]
+  pull_request:
+    paths: ['DTH-3D-Commerce/frontend/src/experience/**', 'DTH-3D-Commerce/frontend/src/shop/home/**', 'DTH-3D-Commerce/tests/cinematic.test.mjs', 'DTH-3D-Commerce/tests/browser/cinematic_home.py', '.github/workflows/cinematic-home-quality.yml']
 permissions:
-  contents: write
+  contents: read
 jobs:
   review:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Record only the pinned GSAP manifest and lockfile on this feature branch
+      - name: Locked install and non-database regressions
         working-directory: DTH-3D-Commerce
         run: |
           npm ci
-          npm install --workspace frontend --save-exact gsap@3.15.0
-          git add frontend/package.json package-lock.json
-          if ! git diff --cached --quiet; then
-            git config user.name 'github-actions[bot]'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m 'build: pin GSAP 3.15.0 for the Home motion director'
-            git push origin HEAD:refs/heads/feat/cinematic-home
-          fi
-      - name: Build Flow without database
+          npm run check
+          npm test
+          npm run test:account
+          npm run test:admin
+          npm run test:cinematic
+          node --test tests/home-stage.test.mjs tests/shop-motion.test.mjs
+      - name: Build API application without touching a database
         working-directory: DTH-3D-Commerce
-        run: npm run check && npm run build:flow
+        env:
+          VITE_STORE_MODE: api
+        run: npm run build
+      - name: Build Flow for database-free browser review
+        working-directory: DTH-3D-Commerce
+        run: npm run build:flow
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -39,7 +46,7 @@ jobs:
           npm run preview > /tmp/cinematic-vite.log 2>&1 &
           for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:4173 >/dev/null; then exit 0; fi; sleep 1; done
           cat /tmp/cinematic-vite.log; exit 1
-      - name: Capture actual 3D story and interactions
+      - name: Real scroll, scene framing, inspection and fallback review
         working-directory: DTH-3D-Commerce
         run: python tests/browser/cinematic_home.py
       - uses: actions/upload-artifact@v4

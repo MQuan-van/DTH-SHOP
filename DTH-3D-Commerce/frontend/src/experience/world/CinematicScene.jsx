@@ -26,7 +26,6 @@ function LightingRig() {
     <hemisphereLight args={['#ffffff', '#536471', 0.35]}/>
   </>;
 }
-
 function CameraRig({ director, api, compact, onFailure }) {
   const { camera, gl, invalidate } = useThree();
   const controls = useRef(null), target = useRef(new THREE.Vector3());
@@ -48,7 +47,7 @@ function CameraRig({ director, api, compact, onFailure }) {
     api.current = command => {
       if (!director.state.inspecting) return;
       if (command === 'reset') {
-        camera.position.set(0, 0.3, compact ? 12 : 8.6); control.target.set(0,0,0);
+        camera.position.set(0, 0.3, compact ? 12 : 10.8); control.target.set(0,0,0);
         director.set({ manualExplode: 0 });
       } else {
         const offset = camera.position.clone().sub(control.target);
@@ -70,7 +69,7 @@ function CameraRig({ director, api, compact, onFailure }) {
     control.enabled = state.inspecting && state.active;
     if (!state.active) return;
     if (state.inspecting) {
-      if (!wasInspecting.current) { camera.position.set(0, 0.3, compact ? 12 : 8.6); control.target.set(0,0,0); control.update(); }
+      if (!wasInspecting.current) { camera.position.set(0, 0.3, compact ? 12 : 10.8); control.target.set(0,0,0); control.update(); }
       wasInspecting.current = true; return;
     }
     wasInspecting.current = false;
@@ -86,7 +85,6 @@ function CameraRig({ director, api, compact, onFailure }) {
   });
   return null;
 }
-
 function ProductStage({ product, director, onReady, wireframe, compact }) {
   const { scene } = useGLTF(product.modelUrl);
   const { invalidate } = useThree();
@@ -122,7 +120,6 @@ function ProductStage({ product, director, onReady, wireframe, compact }) {
   });
   return <group ref={group}><primitive object={rig.root} dispose={null}/></group>;
 }
-
 function StageArchitecture() {
   return <group>
     <mesh position={[0,-1.96,0]} rotation={[-Math.PI/2,0,0]}>
@@ -137,7 +134,6 @@ function StageArchitecture() {
     <mesh position={[0,-1.92,0]} rotation={[-Math.PI/2,0,0]}><torusGeometry args={[1.77,.003,4,128]}/><meshBasicMaterial color="#68b7ce" transparent opacity={.3}/></mesh>
   </group>;
 }
-
 function QualityManager({ director, enabled, onSlow }) {
   const samples = useRef([]), previous = useRef(-1), done = useRef(false);
   useFrame((_, dt) => {
@@ -150,15 +146,13 @@ function QualityManager({ director, enabled, onSlow }) {
   });
   return null;
 }
-
 export default function CinematicScene({ product, director, onReady, onFailure, wireframe, compact, api, eco, onSlow }) {
   return <Canvas dpr={[1, eco ? CINEMATIC_CONFIG.ecoDpr : CINEMATIC_CONFIG.maxDpr]} frameloop="demand"
     camera={{ position: [0,.35,8.4], fov: 32, near: .1, far: 50 }}
     gl={{ antialias: true, alpha: true, powerPreference: 'default' }}
     onCreated={({ gl }) => { gl.toneMapping = THREE.NeutralToneMapping; gl.toneMappingExposure = 1; gl.outputColorSpace = THREE.SRGBColorSpace; }}
     fallback={null}>
-    <LightingRig/>
-    <StageArchitecture/>
+    <LightingRig/><StageArchitecture/>
     <Suspense fallback={null}><ProductStage product={product} director={director} onReady={onReady} wireframe={wireframe} compact={compact}/></Suspense>
     <CameraRig director={director} api={api} compact={compact} onFailure={onFailure}/>
     <QualityManager director={director} enabled={!eco} onSlow={onSlow}/>

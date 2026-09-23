@@ -60,7 +60,7 @@ with sync_playwright() as p:
   held=json.loads(canvas.get_attribute('data-camera'));page.wait_for_timeout(300)
   page.get_by_role('button',name='Close support',exact=True).click();expect(canvas).to_have_attribute('data-blocked','false');settle(canvas);page.wait_for_timeout(500)
   assert math.dist(held,capture(canvas)['camera'])<.03;ok('Support overlay cancels pending camera motion without click-through or delayed jumps')
-  page.get_by_role('slider',name='Assembly separation',exact=True).fill('.7')
+  page.get_by_role('slider',name='Assembly separation',exact=True).fill('0.7')
   page.get_by_role('slider',name='Light direction',exact=True).fill('45')
   page.get_by_role('button',name='Spring',exact=True).click();page.get_by_role('button',name='Wireframe',exact=True).click()
   reset(page,canvas)

@@ -55,6 +55,7 @@ export default function ExperienceStudio() {
   const [previewExplode,setPreviewExplode]=useState(0);
   useEffect(()=>director.subscribe(()=>setPreviewExplode(director.state.manualExplode)),[director]);
   const [sceneStatus,setSceneStatus]=useState('loading'),[rigged,setRigged]=useState(false),[action,setAction]=useState(null),[recovery,setRecovery]=useState(null),[recoveryRevision,setRecoveryRevision]=useState(null);
+  useEffect(()=>{if(sceneStatus!=='ready'){setInspect(false);setPlaying(false);}},[sceneStatus]);
   const active=useRef(true),submitting=useRef(false),key=`dth.experience.draft.v1:${user.id}`;
   const dirty=!!document&&JSON.stringify(value)!==JSON.stringify(document.draft);
   const parsed=useMemo(()=>{try{return {config:validateExperience(value),error:''};}catch(e){return {config:null,error:e.message};}},[value]);
@@ -93,7 +94,9 @@ export default function ExperienceStudio() {
     if(!playing||policy.reduced)return;
     setInspect(false);director.set({inspecting:false});const signal={p:director.state.progress>=.999?0:director.state.progress};
     const tween=gsap.to(signal,{p:1,duration:8*(1-signal.p),ease:'none',onUpdate:()=>progress(signal.p),onComplete:()=>setPlaying(false)});
-    return()=>tween.kill();
+    const gatePlayback=()=>tween.paused(!director.state.active||director.state.blocked||director.state.inspecting||!director.state.motion);
+    gatePlayback();const unsubscribe=director.subscribe(gatePlayback);
+    return()=>{unsubscribe();tween.kill();};
   },[playing,policy.reduced,director]);
   function set(key,next){setValue(v=>({...v,[key]:next}));setNotice('');}
   function setFrameField(key,next){set('frames',value.frames.map((f,i)=>i===frame?{...f,[key]:next}:f));}
@@ -128,7 +131,8 @@ export default function ExperienceStudio() {
       <div className="dth-exp-screen">
         <div className="dth-exp-preview-heading"><span>LIVE PREVIEW / {product?.name||'SELECT PRODUCT'}</span><span>{sceneStatus==='ready'?'3D ready':sceneStatus==='fallback'?'Image fallback':'Loading'}</span></div>
         {previewProduct?<Preview key={previewProduct.modelUrl} product={previewProduct} config={config} director={director} api={api} onStatus={setSceneStatus} wireframe={wireframe} onReady={supported=>setRigged(supported)}/>:<div className="dth-exp-viewport dth-exp-empty">Choose a product with a local GLB.</div>}
-        <div className="dth-exp-preview-tools"><button type="button" aria-pressed={inspect} disabled={sceneStatus!=='ready'} onClick={()=>{setPlaying(false);if(!inspect)director.set({manualExplode:sampleStory(director.state.progress,config.frames).explode});setInspect(v=>!v);}}>{inspect?'Return to timeline':'Inspect / drag'}</button><button type="button" aria-pressed={wireframe} disabled={sceneStatus!=='ready'} onClick={()=>setWireframe(v=>!v)}>Wireframe</button>{inspect&&<><button type="button" onClick={()=>api.current?.('reset')}>Reset view</button><button type="button" className="dth-exp-capture" onClick={capture}>Capture camera → {FRAME_NAMES[frame]}</button></>}</div>
+        <div className="dth-exp-preview-tools"><button type="button" aria-pressed={inspect} disabled={sceneStatus!=='ready'} onClick={()=>{setPlaying(false);if(!inspect)director.set({manualExplode:rigged?(director.state.renderedExplode??sampleStory(director.state.progress,config.frames).explode):0});setInspect(v=>!v);}}>{inspect?'Return to timeline':'Inspect / drag'}</button><button type="button" aria-pressed={wireframe} disabled={sceneStatus!=='ready'} onClick={()=>setWireframe(v=>!v)}>Wireframe</button>{inspect&&<><button type="button" onClick={()=>{if(api.current?.('reset'))setWireframe(false);}}>Reset view</button><button type="button" className="dth-exp-capture" onClick={capture}>Capture camera → {FRAME_NAMES[frame]}</button></>}</div>
+        {inspect&&<div className="dth-exp-preview-tools" role="group" aria-label="Preview named views">{['front','side','rear','top'].map(view=><button type="button" key={view} disabled={sceneStatus!=='ready'} onClick={()=>api.current?.(`view-${view}`)}>{view[0].toUpperCase()+view.slice(1)}</button>)}</div>}
         <div className="dth-exp-timeline"><button type="button" disabled={policy.reduced||sceneStatus!=='ready'} onClick={()=>setPlaying(v=>!v)}>{playing?'Pause':'Play story'}</button><input ref={slider} aria-label="Preview timeline" type="range" min="0" max="1" step=".001" defaultValue="0" onChange={e=>{setPlaying(false);setInspect(false);director.set({inspecting:false});progress(Number(e.target.value));}}/><output ref={progressOutput}>0%</output></div>
         <div className="dth-exp-keyframes" role="group" aria-label="Camera keyframes">{FRAME_NAMES.map((name,i)=><button type="button" aria-pressed={frame===i} key={name} onClick={()=>selectFrame(i)}><small>{String(i+1).padStart(2,'0')}</small>{name}</button>)}</div>
         <p className="dth-exp-help">{rigged?'Apex part profile: assembly + part focus available.':'Unrigged asset: safe whole-model viewing; no Apex assembly is applied.'} {policy.reduced?'Reduced motion: use the timeline manually.':''}</p>

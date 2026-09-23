@@ -72,7 +72,7 @@ function Story({ product, chooseVehicle, config }) {
 
   function toggleInspect() {
     const value = !inspect;
-    if (value) setExplode(rigged ? sampleStory(director.state.progress, config.frames).explode : 0);
+    if (value) setExplode(rigged ? (director.state.renderedExplode ?? sampleStory(director.state.progress, config.frames).explode) : 0);
     setInspect(value); director.set({ inspecting: value });
   }
   function toggleMotion() {

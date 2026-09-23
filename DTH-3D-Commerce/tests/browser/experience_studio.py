@@ -21,6 +21,9 @@ def shot(page,name):page.wait_for_timeout(400);page.screenshot(path=str(out/(nam
 def camera(canvas):return json.loads(canvas.get_attribute('data-camera'))
 def distance(a,b):return math.sqrt(sum((x-y)**2 for x,y in zip(a,b)))
 def public(page):return page.request.get(base+'/api/shop/experience/home').json()
+def settle(canvas):
+ canvas.evaluate('node=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
+ expect(canvas).to_have_attribute('data-moving','false')
 def login(page,email):
  page.goto(base+'/account');expect(page.get_by_role('heading',name='Welcome back.')).to_be_visible();page.get_by_label('Email',exact=True).fill(email);page.get_by_label('Password',exact=True).fill(password);page.get_by_role('button',name='Sign in',exact=True).click();expect(page.get_by_role('heading',name='Your account.')).to_be_visible()
 def scroll(page,n):
@@ -57,6 +60,13 @@ with sync_playwright() as p:
   login(customer,customer_email);customer.goto(base+'/admin/experience');expect(customer.get_by_role('heading',name='Administrator access required.')).to_be_visible();assert customer.request.get(base+'/api/shop/admin/experience/home').status==403;ok('Customer cannot open or fetch the experience editor')
   login(admin,admin_email);admin.goto(base+'/admin/experience');expect(admin.get_by_role('heading',name='Experience',exact=True)).to_be_visible();expect(admin.locator('[data-preview-scene]')).to_have_attribute('data-preview-scene','ready');shot(admin,'07-admin-experience')
   assert admin.evaluate('document.documentElement.scrollWidth<=innerWidth+1');ok('Admin Studio loads the shared real 3D renderer')
+  admin.get_by_role('button',name='Inspect / drag',exact=True).click()
+  admin.get_by_role('group',name='Preview named views',exact=True).get_by_role('button',name='Side',exact=True).click()
+  settle(admin.locator('.dth-exp-viewport canvas'))
+  admin.get_by_role('button',name='Wireframe',exact=True).click();admin.get_by_role('button',name='Reset view',exact=True).click()
+  expect(admin.get_by_role('button',name='Wireframe',exact=True)).to_have_attribute('aria-pressed','false')
+  settle(admin.locator('.dth-exp-viewport canvas'))
+  admin.get_by_role('button',name='Return to timeline',exact=True).click();ok('Admin shares named viewpoints and full wireframe reset with the storefront renderer')
   admin.get_by_role('button',name='Camera',exact=True).click();admin.get_by_role('button',name='Inspect / drag',exact=True).click();admin.wait_for_timeout(500)
   c=admin.locator('.dth-exp-viewport canvas');rect=c.bounding_box();old=camera(c);admin.mouse.move(rect['x']+rect['width']*.55,rect['y']+rect['height']*.55);admin.mouse.down();admin.mouse.move(rect['x']+rect['width']*.55+35,rect['y']+rect['height']*.55+10,steps=10);admin.mouse.up();admin.wait_for_timeout(600)
   assert distance(old,camera(c))>.1;admin.get_by_role('button',name='Capture this angle',exact=True).click();expect(admin.get_by_role('button',name='Save draft',exact=True)).to_be_enabled();shot(admin,'08-admin-camera-capture')

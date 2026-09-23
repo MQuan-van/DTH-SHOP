@@ -21,13 +21,15 @@ export function damp(current, target, dt, rate = CINEMATIC_CONFIG.settleRate) {
 /** One owner for the camera. Frame snapshots are read-only observations, not commands. */
 export function createDirector() {
   const listeners = new Set();
-  const state = { progress:0,reveal:1,pointerX:0,pointerY:0,mode:'story',inspecting:false,manualExplode:0,selectedPart:'',lightAngle:0,resetSerial:0,motion:true,active:true,blocked:false,pose:null };
+  const state = { progress:0,reveal:1,pointerX:0,pointerY:0,mode:'story',inspecting:false,manualExplode:0,selectedPart:'',lightAngle:0,resetSerial:0,motion:true,active:true,blocked:false,pose:null,renderedExplode:null };
   return {
     state,
     set(patch) {
       const next={...patch};
-      if('inspecting' in next && next.inspecting!==state.inspecting)next.mode=next.inspecting?'inspect':'returning';
+      if ('inspecting' in next && typeof next.inspecting !== 'boolean') throw new Error('Inspection state must be boolean');
+      if ('inspecting' in next && next.inspecting !== state.inspecting) next.mode = next.inspecting ? 'inspect' : 'returning';
       if(next.mode&&!['story','inspect','returning'].includes(next.mode))throw new Error('Unknown motion owner');
+      if (next.mode) next.inspecting = next.mode === 'inspect';
       if('progress' in next)next.progress=clamp01(next.progress);
       if('manualExplode' in next)next.manualExplode=clamp01(next.manualExplode);
       const changed=Object.keys(next).some(key=>state[key]!==next[key]);

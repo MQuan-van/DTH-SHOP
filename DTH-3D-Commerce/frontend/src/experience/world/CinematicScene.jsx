@@ -9,7 +9,7 @@ import { sampleStory } from '../motion/story.mjs';
 import { createProductRig } from './apexRig.mjs';
 import { PART_LABELS } from '../../../../shared/experience.mjs';
 import { useOwnedModel } from './useOwnedModel';
-import { createOrbitStepper } from './orbitTransition.mjs';
+import { createInspectionCommands } from './inspectionCommands.mjs';
 export { clearOwnedModelCache as clearCinematicModel } from './useOwnedModel';
 
 class ModelBoundary extends Component {
@@ -51,9 +51,8 @@ function LightingRig({ config, director }) {
 function CameraRig({ director, api, compact, config, onFailure }) {
   const { camera, gl, invalidate } = useThree();
   const controls = useRef(null), target = useRef(new THREE.Vector3());
-  const initialized = useRef(false), previousMode = useRef('story'), move = useRef(null);
+  const initialized = useRef(false);
   const goal = useMemo(() => new THREE.Vector3(), []), cameraGoal = useMemo(() => new THREE.Vector3(), []);
-  const stepOrbit = useMemo(createOrbitStepper, []);
   useEffect(() => {
     const control = new OrbitControls(camera, gl.domElement);
     controls.current = control;
@@ -62,67 +61,43 @@ function CameraRig({ director, api, compact, config, onFailure }) {
     control.minPolarAngle = 0.15; control.maxPolarAngle = Math.PI - 0.15;
     control.enabled = false;
     const change = () => { target.current.copy(control.target); invalidate(); };
-    const start = () => { move.current = null; invalidate(); };
+    const command = createInspectionCommands({ camera, control, target: target.current, director, compact, invalidate });
+    const start = () => { command.cancel(); invalidate(); };
+    let inspecting = false, enabled = false;
     const sync = () => {
-      const state=director.state;
-      control.enabled = state.inspecting && state.active && !state.blocked;
-      if (state.inspecting && previousMode.current !== 'inspect') { control.target.copy(target.current); control.update(); }
+      const state = director.state;
+      const nextEnabled = state.inspecting && state.active && !state.blocked;
+      if (state.inspecting !== inspecting || (enabled && !nextEnabled)) command.cancel();
+      if (state.inspecting && !inspecting) {
+        control.target.copy(target.current); control.update();
+      }
+      inspecting = state.inspecting; enabled = nextEnabled;
+      control.enabled = nextEnabled;
       invalidate();
     };
     control.addEventListener('change', change); control.addEventListener('start', start);
     const unsubscribe = director.subscribe(sync);
     const lost = event => { event.preventDefault(); onFailure(); };
     gl.domElement.addEventListener('webglcontextlost', lost);
-    const command = name => {
-      if (!director.state.inspecting || director.state.blocked) return;
-      const center=target.current.clone(), offset=camera.position.clone().sub(center);
-      if(name==='reset') {
-        director.set({manualExplode:0, selectedPart:'', lightAngle:0, resetSerial:(director.state.resetSerial||0)+1});
-        center.set(0,0,0); offset.set(0,0.3,compact?12:10.8);
-      } else if (name.startsWith('view-')) {
-        const pose=director.state.pose;
-        const axis={front:[0,0.15,1],side:[1,0.12,0],rear:[0,0.15,-1],top:[0,1,0.05]}[name.slice(5)];
-        if(!axis) return;
-        const distance=Math.max(6,Math.min(14,offset.length()));
-        if(pose) center.fromArray(pose.position);
-        offset.fromArray(axis).normalize().multiplyScalar(distance);
-        if(pose) offset.applyEuler(new THREE.Euler(...pose.rotation));
-      } else if(name==='left'||name==='right') {
-        offset.applyAxisAngle(new THREE.Vector3(0,1,0),name==='left'?-0.3:0.3);
-      } else if(name==='in'||name==='out') offset.setLength(THREE.MathUtils.clamp(offset.length()*(name==='in'?0.88:1.12),4.5,20));
-      else return;
-      move.current={camera:center.clone().add(offset),target:center}; invalidate();
-    };
-    command.capture = () => director.state.pose ? {
-      camera:camera.position.toArray(),target:target.current.toArray(),
-      ...director.state.pose, explode:director.state.manualExplode,
-    } : null;
     api.current=command; sync();
     return () => {
       unsubscribe(); control.removeEventListener('change',change); control.removeEventListener('start',start); control.dispose();
-      gl.domElement.removeEventListener('webglcontextlost',lost); controls.current=null; api.current=null; move.current=null;
+      gl.domElement.removeEventListener('webglcontextlost',lost); command.cancel(); controls.current=null; api.current=null;
     };
   }, [camera, gl, invalidate, director, api, compact, onFailure]);
   useEffect(() => {
     if(controls.current) { controls.current.rotateSpeed=config.controls.rotateSpeed; controls.current.zoomSpeed=config.controls.zoomSpeed; }
     invalidate();
-  },[config, invalidate]);
+  },[config, compact, invalidate]);
   useFrame((_, delta) => {
     const state=director.state, control=controls.current;
     if(!control || !state.active || state.blocked) return;
     control.enabled=state.inspecting;
     if(state.inspecting && initialized.current) {
-      if(previousMode.current!=='inspect') { control.target.copy(target.current); move.current=null; control.update(); }
-      previousMode.current='inspect';
-      if(move.current) {
-        const factor=state.motion?1-Math.exp(-12*Math.min(delta,.05)):1;
-        stepOrbit(camera.position,control.target,move.current.camera,move.current.target,factor);control.update();
-        if(camera.position.distanceToSquared(move.current.camera)<1e-6 && control.target.distanceToSquared(move.current.target)<1e-6) move.current=null;
-        else invalidate();
-      }
+      api.current?.step(delta);
       return;
     }
-    move.current=null;
+    api.current?.cancel();
     const sampled=sampleStory(state.progress, config.frames);
     const frame=compact ? {...sampled,camera:[0,0.2,12],target:[0,0,0]} : sampled;
     cameraGoal.fromArray(frame.camera); cameraGoal.z+=(1-state.reveal);
@@ -130,7 +105,7 @@ function CameraRig({ director, api, compact, config, onFailure }) {
     const rate=state.mode==='returning'?7/config.returnSeconds:config.settleRate;
     const factor=!state.motion||!initialized.current?1:1-Math.exp(-rate*Math.min(delta,.05));
     camera.position.lerp(cameraGoal,factor);target.current.lerp(goal,factor);
-    camera.lookAt(target.current); control.target.copy(target.current); initialized.current=true; previousMode.current=state.mode;
+    camera.lookAt(target.current); control.target.copy(target.current); initialized.current=true;
     const unsettled=camera.position.distanceToSquared(cameraGoal)>1e-7||target.current.distanceToSquared(goal)>1e-7;
     if(unsettled) invalidate();
     else if(state.mode==='returning') director.set({mode:'story'});
@@ -177,6 +152,7 @@ function ProductStage({ product, director, onReady, onFailure, wireframe, compac
     group.current.scale.setScalar(val(group.current.scale.x,frame.scale));
     explosion.current=val(explosion.current,(state.inspecting?state.manualExplode:frame.explode)*config.maxExplode);
     rig.explode(explosion.current); rig.focus(state.inspecting?state.selectedPart:'');
+    state.renderedExplode = rig.supported && config.maxExplode > 0 ? THREE.MathUtils.clamp(explosion.current / config.maxExplode, 0, 1) : 0;
     state.pose={position:group.current.position.toArray(),rotation:group.current.rotation.toArray().slice(0,3),scale:group.current.scale.x};
     if(state.inspecting && (!resetting.current || !unsettled)) { frozen.current={...state.pose}; resetting.current=false; }
     first.current=false;
@@ -240,7 +216,7 @@ function QualityManager({director,enabled,onSlow}) {
     if(samples.current.reduce((a,b)=>a+b,0)/samples.current.length>1/38)onSlow();done.current=true;
   });return null;
 }
-function SceneTelemetry({director}) {
+function SceneTelemetry({director,api}) {
   const {gl,camera}=useThree();
   useFrame(()=>{
     if(import.meta.env.VITE_EXPERIENCE_TESTS!=='true')return;
@@ -249,6 +225,9 @@ function SceneTelemetry({director}) {
     gl.domElement.dataset.owner=director.state.mode;
     gl.domElement.dataset.blocked=String(director.state.blocked);
     gl.domElement.dataset.listeners=String(director.listenerCount);
+    gl.domElement.dataset.renderedExplode=String(director.state.renderedExplode ?? 0);
+    gl.domElement.dataset.capture=JSON.stringify(api.current?.capture?.() ?? null);
+    gl.domElement.dataset.moving=String(api.current?.isMoving?.() ?? false);
   });return null;
 }
 export default function CinematicScene({product,director,onReady,onFailure,wireframe=false,compact=false,api,eco=false,onSlow=()=>{},config=CINEMATIC_CONFIG}) {
@@ -260,7 +239,7 @@ export default function CinematicScene({product,director,onReady,onFailure,wiref
     <LightingRig config={config} director={director}/><StageArchitecture rings={config.rings}/>
     <ModelBoundary onFailure={onFailure}><Suspense fallback={null}><ProductStage product={product} director={director} onReady={onReady} onFailure={onFailure} wireframe={wireframe} compact={compact} config={config}/></Suspense></ModelBoundary>
     <CameraRig director={director} api={api} compact={compact} onFailure={onFailure} config={config}/>
-    <SceneTelemetry director={director}/>
+    <SceneTelemetry director={director} api={api}/>
     <QualityManager director={director} enabled={!eco} onSlow={onSlow}/>
   </Canvas>;
 }

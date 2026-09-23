@@ -1,0 +1,17 @@
+/* Inspection is a work surface, not a second marketing hero. */
+[data-experience-version] [data-inspect="true"] [data-story-copy] { opacity:0; pointer-events:none; }
+.dth-cinema-inspection-panel { position:absolute;left:5%;top:18%;z-index:4;width:190px;display:grid;gap:15px;pointer-events:auto; }
+.dth-cinema-inspection-panel small { font-size:10px;line-height:1.7;color:var(--muted); }
+.dth-cinema-view-buttons,.dth-cinema-part-buttons { display:flex;flex-wrap:wrap;gap:6px; }
+[data-experience-version] .dth-cinema-inspection-panel button { min-height:35px;padding:6px 10px;border:1px solid var(--line);font-size:11px;background:#ffffffd9;color:var(--ink); }
+[data-experience-version] .dth-cinema-inspection-panel button[aria-pressed="true"] { border-color:var(--blue);color:var(--blue);background:#e8f4fa; }
+.dth-cinema-light-control { display:grid;gap:10px;font-size:11px; }
+.dth-cinema-light-control input { width:100%;accent-color:var(--blue); }
+.dth-part-hotspot { pointer-events:none;white-space:nowrap;font:11px/1.4 Consolas,monospace;color:#123747;background:#ffffffed;padding:6px 10px;border-left:2px solid #0066cc;transform:translate(10px,-20px); }
+@media(max-width:1000px),(max-height:700px) {
+ .dth-cinema-inspection-panel { top:82px;left:4%;width:auto;right:4%;grid-template-columns:1fr 1fr;gap:8px; }
+ .dth-cinema-inspection-panel>span,.dth-cinema-inspection-panel small { display:none; }
+ .dth-cinema-part-buttons { grid-column:1/-1; }
+ .dth-cinema-light-control { max-width:200px;justify-self:end; }
+ [data-experience-version] [aria-label="3D inspection controls"] { flex-wrap:wrap;bottom:215px; }
+}

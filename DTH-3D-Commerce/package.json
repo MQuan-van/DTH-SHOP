@@ -19,6 +19,7 @@
     "test:account": "node --test tests/account.test.mjs tests/flow.test.mjs",
     "test:admin": "node --test tests/support.test.mjs",
     "test:cinematic": "node --test tests/cinematic.test.mjs",
-    "admin:grant": "node backend/commerce/admin/grant.mjs"
+    "admin:grant": "node backend/commerce/admin/grant.mjs",
+    "test:experience": "node --test tests/experience.test.mjs tests/cinematic.test.mjs"
   }
 }

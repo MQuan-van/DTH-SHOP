@@ -1,5 +1,6 @@
 import { lazy, Suspense, useLayoutEffect, useState } from 'react';
 import { CINEMATIC_CONFIG } from '../../experience/motion/motion.config.mjs';
+import { usePublishedExperience } from '../../experience/home/usePublishedExperience';
 import { useStore } from '../useStore.jsx';
 import { useOutletContext } from 'react-router-dom';
 import { HOME_CONFIG, enabledSections } from './home.config.mjs';
@@ -33,5 +34,7 @@ function LegacyHomePage() {
   </div>;
 }
 export default function HomePage() {
-  return CINEMATIC_CONFIG.enabled ? <Suspense fallback={<div className="dth-empty" role="status">Opening the product studio…</div>}><CinematicHome /></Suspense> : <LegacyHomePage />;
+  const experience=usePublishedExperience();
+  if(experience.loading)return <div className="dth-empty" role="status">Opening the product studio…</div>;
+  return CINEMATIC_CONFIG.enabled && experience.config.enabled ? <Suspense fallback={<div className="dth-empty" role="status">Opening the product studio…</div>}><CinematicHome config={experience.config} version={experience.version} binding={experience.binding} /></Suspense> : <LegacyHomePage />;
 }

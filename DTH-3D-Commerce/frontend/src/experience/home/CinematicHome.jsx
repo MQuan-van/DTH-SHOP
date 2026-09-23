@@ -7,9 +7,12 @@ import { formatMoney } from '../../../../shared/domain.mjs';
 import { CINEMATIC_CONFIG } from '../motion/motion.config.mjs';
 import { createDirector, sampleStory } from '../motion/story.mjs';
 import { useScrollDirector } from '../motion/useScrollDirector';
+import { useSceneInputGate } from '../interaction/useSceneInputGate';
+import { PART_LABELS } from '../../../../shared/experience.mjs';
 import { hasWebGL, useExperiencePolicy } from '../interaction/useExperiencePolicy';
 import { useStageActivity } from '../../shop/home/hooks/useStudioMotion';
 import styles from './CinematicHome.module.css';
+import './experience-controls.css';
 const CinematicScene = lazy(() => import('../world/CinematicScene'));
 const categories = { suspension: 'Suspension', wheels: 'Wheels', exhausts: 'Exhausts', mirrors: 'Mirrors', brakes: 'Brakes' };
 
@@ -21,10 +24,13 @@ class SceneBoundary extends Component {
 }
 function Arrow() { return <span aria-hidden="true">↗</span>; }
 
-function Story({ product, chooseVehicle }) {
+function Story({ product, chooseVehicle, config }) {
   const root = useRef(null), stage = useRef(null), copy = useRef(null), api = useRef(null);
   const director = useMemo(createDirector, []);
   const policy = useExperiencePolicy();
+  useSceneInputGate(director);
+  const [lightAngle,setLightAngle]=useState(0), [part,setPart]=useState('');
+  useEffect(()=>director.subscribe(()=>{setPart(director.state.selectedPart);setLightAngle(director.state.lightAngle);}),[director]);
   const [capable] = useState(hasWebGL);
   const [sceneStatus, setSceneStatus] = useState(capable && product.modelUrl ? 'loading' : 'fallback');
   const [attempt, setAttempt] = useState(0), [rigged, setRigged] = useState(false);
@@ -35,26 +41,26 @@ function Story({ product, chooseVehicle }) {
   const fallback = sceneStatus === 'fallback';
   const cinematic = animated && !policy.compact && !fallback;
   const active = useStageActivity(stage);
-  const selectChapter = useScrollDirector(root, director, { cinematic, animated, onChapter: setChapter });
+  const selectChapter = useScrollDirector(root, director, { cinematic, animated, onChapter: setChapter, config });
   const ready = useCallback(supported => { setRigged(supported); setSceneStatus('ready'); }, []);
   const fail = useCallback(() => { setSceneStatus('fallback'); setInspect(false); }, []);
   const lowerQuality = useCallback(() => setSlow(true), []);
   const eco = quality === 'eco' || policy.saveData || policy.compact || slow;
-  const text = CINEMATIC_CONFIG.chapters[chapter];
+  const text = config.chapters[chapter];
 
   useEffect(() => { director.set({ motion: animated, active, inspecting: inspect, manualExplode: explode }); }, [director, animated, active, inspect, explode]);
   useEffect(() => {
     if (sceneStatus !== 'loading') return;
-    const timeout = setTimeout(fail, CINEMATIC_CONFIG.loadTimeoutMs);
+    const timeout = setTimeout(fail, config.loadTimeoutMs);
     return () => clearTimeout(timeout);
-  }, [sceneStatus, attempt, fail]);
+  }, [sceneStatus, attempt, fail, config.loadTimeoutMs]);
   useLayoutEffect(() => {
     if (sceneStatus !== 'ready' || !animated) { director.set({ reveal: 1 }); return; }
     const intro = { reveal: 0 };
     director.set({ reveal: 0 });
-    const tween = gsap.to(intro, { reveal: 1, duration: CINEMATIC_CONFIG.entranceSeconds, ease: 'power3.out', onUpdate: () => director.set({ reveal: intro.reveal }) });
+    const tween = gsap.to(intro, { reveal: 1, duration: config.entranceSeconds, ease: 'power3.out', onUpdate: () => director.set({ reveal: intro.reveal }) });
     return () => tween.kill();
-  }, [director, sceneStatus, animated]);
+  }, [director, sceneStatus, animated, config.entranceSeconds]);
   useLayoutEffect(() => {
     if (!animated || inspect) return;
     const ctx = gsap.context(() => {
@@ -66,14 +72,14 @@ function Story({ product, chooseVehicle }) {
 
   function toggleInspect() {
     const value = !inspect;
-    if (value) setExplode(rigged ? sampleStory(director.state.progress).explode : 0);
+    if (value) setExplode(rigged ? sampleStory(director.state.progress, config.frames).explode : 0);
     setInspect(value); director.set({ inspecting: value });
   }
   function toggleMotion() {
     if (cinematic) window.scrollTo({ top: Math.max(0, root.current.getBoundingClientRect().top + window.scrollY - 79), behavior: 'instant' });
     setMotion(v => !v);
   }
-  function jump(index) { setInspect(false); director.set({ inspecting: false }); selectChapter.current?.(CINEMATIC_CONFIG.chapters[index].at); }
+  function jump(index) { setInspect(false); director.set({ inspecting: false }); selectChapter.current?.(config.chapters[index].at); }
   function pointer(event) {
     if (!animated || inspect || policy.compact || event.pointerType === 'touch') return;
     const rect = stage.current.getBoundingClientRect();
@@ -84,7 +90,7 @@ function Story({ product, chooseVehicle }) {
   }
 
   return <section ref={root} className={styles.story} aria-label="Interactive product story"
-    style={{ '--story-screens': CINEMATIC_CONFIG.storyScreens }}
+    style={{ '--story-screens': config.storyScreens }}
     data-cinematic={cinematic} data-inspect={inspect} data-motion={animated ? 'on' : 'off'} data-chapter={text.id}>
     <div ref={stage} className={styles.stage} data-stage data-scene={sceneStatus}
       onPointerMove={pointer} onPointerLeave={() => director.set({ pointerX: 0, pointerY: 0 })}>
@@ -99,11 +105,11 @@ function Story({ product, chooseVehicle }) {
       <div className={styles.artwork} aria-hidden="true"><span>DTH</span><i/><i/></div>
       <div className={styles.canvas} data-interactive={inspect} aria-hidden="true">
         {!fallback && <SceneBoundary key={attempt} onFailure={fail}><Suspense fallback={null}>
-          <CinematicScene product={product} director={director} api={api} onReady={ready} onFailure={fail} compact={policy.compact} wireframe={wireframe} eco={eco} onSlow={lowerQuality}/>
+          <CinematicScene product={product} director={director} api={api} onReady={ready} onFailure={fail} config={config} compact={policy.compact} wireframe={wireframe} eco={eco} onSlow={lowerQuality}/>
         </Suspense></SceneBoundary>}
       </div>
       {sceneStatus !== 'ready' && <div className={styles.poster}><ProductImage product={product} eager className={styles.posterImage}/></div>}
-      <div ref={copy} className={`${styles.copy} ${chapter === 3 ? styles.copyRight : ''}`}>
+      <div ref={copy} data-story-copy className={`${styles.copy} ${chapter === 3 ? styles.copyRight : ''}`}>
         <p className={styles.eyebrow}>{inspect ? 'IN YOUR HANDS' : `${String(chapter + 1).padStart(2,'0')} / ${text.label}`}</p>
         <h1 key={inspect ? 'inspect' : text.id}>
           {(inspect ? ['A closer', 'point of view.'] : text.title).map((line, index) => <span className={styles.lineMask} key={line}><span data-copy-line className={index ? styles.outlineWord : ''}>{line}</span></span>)}
@@ -126,24 +132,32 @@ function Story({ product, chooseVehicle }) {
         </div>
       </div>
       <div className={styles.bottomline}>
-        <nav className={styles.chapters} aria-label="Product story chapters">{CINEMATIC_CONFIG.chapters.map((item, index) => <button type="button" key={item.id} aria-current={!inspect && chapter === index ? 'step' : undefined} onClick={() => jump(index)}><small>0{index + 1}</small> {item.label}</button>)}</nav>
+        <nav className={styles.chapters} aria-label="Product story chapters">{config.chapters.map((item, index) => <button type="button" key={item.id} aria-current={!inspect && chapter === index ? 'step' : undefined} onClick={() => jump(index)}><small>0{index + 1}</small> {item.label}</button>)}</nav>
         <span className={styles.scrollHint}>{cinematic ? 'SCROLL TO EXPLORE ↓' : 'SELECT A CHAPTER'}</span>
       </div>
       {inspect && <div className={styles.inspectionTools} aria-label="3D inspection controls">
-        {['left','right','in','out','reset'].map(command => <button key={command} type="button" aria-label={{left:'Rotate left',right:'Rotate right',in:'Zoom in',out:'Zoom out',reset:'Reset view'}[command]} onClick={() => { api.current?.(command); if (command === 'reset') setExplode(0); }}>{({left:'↶',right:'↷',in:'+',out:'−',reset:'Reset'})[command]}</button>)}
+        {['left','right','in','out','reset'].map(command => <button key={command} type="button" aria-label={{left:'Rotate left',right:'Rotate right',in:'Zoom in',out:'Zoom out',reset:'Reset view'}[command]} onClick={() => { api.current?.(command); if (command === 'reset') {setExplode(0);setWireframe(false);setLightAngle(0);setPart('');} }}>{({left:'↶',right:'↷',in:'+',out:'−',reset:'Reset'})[command]}</button>)}
         <button type="button" aria-pressed={wireframe} onClick={() => setWireframe(v => !v)}>Wireframe</button>
         {rigged && <label>Explode <input aria-label="Assembly separation" type="range" min="0" max="1" step="0.01" value={explode} onChange={e => setExplode(Number(e.target.value))}/></label>}
       </div>}
+      {inspect && <aside className="dth-cinema-inspection-panel" aria-label="Inspection options">
+        <span className={styles.eyebrow}>YOUR VIEW</span>
+        <div className="dth-cinema-view-buttons">{['front','side','rear','top'].map(view=><button key={view} type="button" onClick={()=>api.current?.(`view-${view}`)}>{view[0].toUpperCase()+view.slice(1)}</button>)}</div>
+        <label className="dth-cinema-light-control">Move the light<input type="range" min="-90" max="90" step="1" aria-label="Light direction" value={lightAngle} onChange={e=>{const value=Number(e.target.value);setLightAngle(value);director.set({lightAngle:value});}}/></label>
+        {rigged && <><span className={styles.eyebrow}>PART FOCUS</span><div className="dth-cinema-part-buttons"><button type="button" aria-pressed={!part} onClick={()=>director.set({selectedPart:''})}>All parts</button>{Object.entries(PART_LABELS).map(([id,label])=><button key={id} type="button" aria-pressed={part===id} onClick={()=>director.set({selectedPart:id})}>{label}</button>)}</div></>}
+        <small>{rigged?'Part positions are illustrative, not installation instructions.':'This model supports viewing. Assembly controls require a matching part profile.'}</small>
+      </aside>}
       <p className={styles.disclaimer}>Original illustrative geometry · Not installation guidance</p>
     </div>
   </section>;
 }
 
-export default function CinematicHome() {
+export default function CinematicHome({ config = CINEMATIC_CONFIG, version = 0, binding }) {
   const { data, vehicleId } = useStore();
   const { chooseVehicle } = useOutletContext();
   const live = data.products.filter(p => p && p.active !== false);
-  const product = live.find(p => p.id === CINEMATIC_CONFIG.productId) || live[0];
+  const record = live.find(p => p.id === config.productId) || live[0];
+  const product=useMemo(()=>record ? {...record,modelUrl:binding?.sha256 && record.modelUrl===binding.modelUrl ? `${record.modelUrl}?v=${binding.sha256}` : record.modelUrl} : null,[record,binding]);
   const selected = live.filter(p => p.featured).slice(0, 3);
   const collection = selected.length ? selected : live.slice(0, 3);
   const vehicle = data.vehicles.find(v => v.id === vehicleId);
@@ -152,8 +166,8 @@ export default function CinematicHome() {
     return () => { delete document.documentElement.dataset.dthCinematic; };
   }, []);
   if (!product) return <section className="dth-empty"><h1>The collection is taking shape.</h1><p>No active products are available.</p><Link to="/shop">Back to parts</Link></section>;
-  return <div className={styles.cinema}>
-    <Story key={`${product.id}:${product.modelUrl}`} product={product} chooseVehicle={chooseVehicle}/>
+  return <div className={styles.cinema} data-experience-version={version}>
+    <Story key={`${product.id}:${product.modelUrl}`} product={product} chooseVehicle={chooseVehicle} config={config}/>
     <section className={styles.collection} id="dth-collection" aria-labelledby="collection-title">
       <div className={styles.collectionHeading}><div><p className={styles.eyebrow}>THE SELECTED COLLECTION</p><h2 id="collection-title" tabIndex={-1}>Different parts.<br/><em>Same curiosity.</em></h2></div><Link className={styles.textLink} to="/shop">All parts <Arrow/></Link></div>
       <div className={styles.collectionGrid}>{collection.map((item, index) => <article key={item.id} className={styles.collectionItem}>

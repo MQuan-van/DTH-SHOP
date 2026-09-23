@@ -31,9 +31,15 @@ with sync_playwright() as p:
  page=browser.new_page(viewport={'width':1440,'height':1000});page.on('pageerror',lambda e:errors.append(str(e)))
  try:
   page.goto(base+'/');expect(page.locator('[data-scene]')).to_have_attribute('data-scene','ready');page.wait_for_timeout(1600)
-  canvas=page.locator('[data-stage] canvas');before=json.loads(canvas.get_attribute('data-camera'))
-  page.get_by_role('button',name='Inspect in 3D',exact=False).click();expect(canvas).to_have_attribute('data-owner','inspect');page.wait_for_timeout(200)
-  assert math.dist(before,capture(canvas)['camera'])<.08;ok('Inspect keeps the current camera rather than jumping to a preset')
+  canvas=page.locator('[data-stage] canvas')
+  enter=page.get_by_role('button',name='Inspect in 3D',exact=False)
+  # Observe the actual camera at the click, not before Playwright waits for an
+  # animating button to become actionable. This also exercises mid-intro entry.
+  enter.evaluate('button=>button.addEventListener("click",()=>{const canvas=document.querySelector("[data-stage] canvas");canvas.dataset.entryCamera=canvas.dataset.camera;},{once:true,capture:true})')
+  enter.click();before=json.loads(canvas.get_attribute('data-entry-camera'))
+  expect(canvas).to_have_attribute('data-owner','inspect');page.wait_for_timeout(200)
+  after=capture(canvas)['camera']
+  assert math.dist(before,after)<.08,(before,after);ok('Inspect keeps the current camera rather than jumping to a preset')
   reset(page,canvas);initial=capture(canvas)
   click_many(page,'Rotate right',4);settle(canvas);rotated=capture(canvas)
   delta=(yaw(rotated)-yaw(initial)+math.pi)%(2*math.pi)-math.pi

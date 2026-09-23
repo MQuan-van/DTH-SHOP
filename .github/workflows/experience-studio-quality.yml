@@ -1,0 +1,41 @@
+name: Experience Studio quality
+on:
+  push:
+    branches: [feat/experience-studio]
+  pull_request:
+    paths: ['DTH-3D-Commerce/**', '.github/workflows/experience-studio-quality.yml']
+permissions:
+  contents: read
+jobs:
+  review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the current lockfile
+        working-directory: DTH-3D-Commerce
+        run: npm ci
+      - name: Prepare isolated local test tools
+        run: |
+          docker create --name dth-review-mongo mongo:8.0
+          docker cp dth-review-mongo:/usr/bin/mongod /tmp/mongod
+          docker rm dth-review-mongo
+          chmod +x /tmp/mongod
+      - name: Package exact source and locked dependencies
+        run: |
+          mkdir -p /tmp/dth-review
+          git archive HEAD DTH-3D-Commerce .github | tar -x -C /tmp/dth-review
+          cp -a DTH-3D-Commerce/node_modules /tmp/dth-review/DTH-3D-Commerce/
+          cp /tmp/mongod /tmp/dth-review/mongod
+          git rev-parse HEAD > /tmp/dth-review/source-commit.txt
+          tar -czf /tmp/experience-review.tar.gz -C /tmp/dth-review .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: experience-review-workspace
+          path: /tmp/experience-review.tar.gz
+          retention-days: 1

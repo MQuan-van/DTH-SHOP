@@ -21,8 +21,8 @@ export const BASE_CINEMATIC_CONFIG = {
 
 // Creative framing only. These are scene units, NOT dimensions/specifications.
 export const STORY_FRAMES = [
-  { at: 0, camera: [0, 0.35, 8.4], target: [0, 0, 0], position: [0.8, 0.10, 0], rotation: [-0.08, -0.50, -0.32], scale: 1.4, explode: 0 },
-  { at: 0.15, camera: [0.7, 0.45, 7.5], target: [0.25, 0.1, 0], position: [0.8, 0.10, 0], rotation: [-0.06, -0.20, -0.19], scale: 1.4, explode: 0 },
+  { at: 0, camera: [0, 0.35, 8.4], target: [0, 0, 0],position: [0, 0, 0], rotation: [-0.08, -0.50, -0.32], scale: 1.4, explode: 0 },
+  { at: 0.15, camera: [0.7, 0.45, 7.5], target: [0.25, 0.1, 0], position: [0, 0, 0], rotation: [-0.06, -0.20, -0.19], scale: 1.4, explode: 0 },
   { at: 0.29, camera: [1.6, 0.7, 5.5], target: [0.75, 0.3, 0], position: [1.0, 0.02, 0], rotation: [0.02, 0.50, 0.12], scale: 1.4, explode: 0 },
   { at: 0.44, camera: [1.3, 0.8, 7.8], target: [0.15, 0.05, 0], position: [0.6, 0, 0], rotation: [0.04, 0.24, 0.05], scale: 1.4, explode: 0.4 },
   { at: 0.61, camera: [1.4, 0.65, 10.5], target: [0, 0, 0], position: [0.5, 0, 0], rotation: [0, 0.08, 0], scale: 1.4, explode: 1 },

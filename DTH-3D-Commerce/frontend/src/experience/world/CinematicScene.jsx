@@ -207,7 +207,82 @@ function PartCaption({director}) {
   },[director]);
   return <span ref={ref}/>;
 }
-function StageArchitecture({rings,pedestalScale}) {
+function RingOrbitDot({
+  director,
+  radius = 2.04,
+  secondsPerTurn = 14,
+}) {
+  const dotRef = useRef(null);
+  const angle = useRef(Math.PI / 2);
+  const { invalidate } = useThree();
+
+  // Yêu cầu khung hình đầu tiên khi component xuất hiện.
+  useEffect(() => {
+    invalidate();
+  }, [invalidate]);
+
+  useFrame((_, delta) => {
+    if (!dotRef.current || !director) return;
+
+    const state = director.state;
+
+    // Dừng khi tắt Motion, rời sân khấu, mở Support
+    // hoặc đang Inspect / trở về chế độ trình diễn.
+    if (
+      !state.motion ||
+      !state.active ||
+      state.blocked ||
+      state.mode !== 'story'
+    ) {
+      return;
+    }
+
+    // Không cộng bù một khoảng thời gian lớn khi quay lại tab.
+    const dt = Number.isFinite(delta)
+      ? Math.min(Math.max(delta, 0), 0.05)
+      : 0;
+
+    const duration =
+      Number.isFinite(secondsPerTurn) && secondsPerTurn > 0
+        ? secondsPerTurn
+        : 14;
+
+    // Chiều kim đồng hồ khi nhìn chính diện vòng.
+    angle.current =
+      (angle.current - (Math.PI * 2 * dt) / duration) %
+      (Math.PI * 2);
+
+    dotRef.current.position.set(
+      Math.cos(angle.current) * radius,
+      Math.sin(angle.current) * radius,
+      0
+    );
+
+    // Tiếp tục render khi chấm đang chuyển động.
+    invalidate();
+  });
+
+  return (
+    <mesh
+      ref={dotRef}
+      position={[0, radius, 0]}
+      raycast={() => null}
+    >
+      <sphereGeometry args={[0.035, 16, 12]} />
+      <meshBasicMaterial
+        color="#0066cc"
+        toneMapped={false}
+      />
+    </mesh>
+  );
+}
+// function StageArchitecture({rings,pedestalScale}) {
+function StageArchitecture({
+  rings,
+  pedestalScale,
+  director,
+  orbitDots = false,
+}) {
   return <group>
     <group scale={pedestalScale} name="dth-ground-shadow">
     <mesh position={[0,-1.96,0]} rotation={[-Math.PI/2,0,0]}>
@@ -217,8 +292,17 @@ function StageArchitecture({rings,pedestalScale}) {
         fragmentShader={'varying vec2 vUv; void main(){float r=length((vUv-.5)*2.);float a=(1.-smoothstep(.05,.85,r))*.13;gl_FragColor=vec4(.035,.09,.12,a);}'}/>
     </mesh>
     </group>
-    {rings&&<><mesh position={[0.25,0,-0.65]}><torusGeometry args={[1.95,.006,6,128]}/><meshBasicMaterial color="#79b7c8" transparent opacity={.48}/></mesh>
-      <mesh position={[0.25,0,-0.65]}><torusGeometry args={[2.04,.002,4,128]}/><meshBasicMaterial color="#79b7c8" transparent opacity={.4}/></mesh>
+    {rings&&<><mesh position={[0,0,-0.65]}><torusGeometry args={[1.95,.006,6,128]}/><meshBasicMaterial color="#79b7c8" transparent opacity={.48}/></mesh>
+      <mesh position={[0,0,-0.65]}><torusGeometry args={[2.04,.002,4,128]}/><meshBasicMaterial color="#79b7c8" transparent opacity={.4}/></mesh>
+      {orbitDots && (
+        <group position={[0, 0, -0.65]}>
+          <RingOrbitDot
+            director={director}
+            radius={2.04}
+            secondsPerTurn={14}
+          />
+        </group>
+      )}
       <group scale={pedestalScale} name="dth-pedestal">
       <mesh position={[0,-1.92,0]} rotation={[-Math.PI/2,0,0]}><torusGeometry args={[1.58,.007,6,128]}/><meshBasicMaterial color="#1c83a3" transparent opacity={.48}/></mesh>
       <mesh position={[0,-1.92,0]} rotation={[-Math.PI/2,0,0]}><torusGeometry args={[1.77,.003,4,128]}/><meshBasicMaterial color="#68b7ce" transparent opacity={.3}/></mesh></group></>}
@@ -250,13 +334,40 @@ function SceneTelemetry({director,api}) {
     gl.domElement.dataset.pedestalScale=JSON.stringify(scene.getObjectByName('dth-pedestal')?.scale.toArray() ?? null);
   });return null;
 }
-export default function CinematicScene({product,director,onReady,onFailure,wireframe=false,compact=false,api,eco=false,onSlow=()=>{},config=CINEMATIC_CONFIG,turntable=null,wheelZoom=true,pedestalScale=[1,1,1]}) {
+export default function CinematicScene({
+  product,
+  director,
+  onReady,
+  onFailure,
+  wireframe=false,
+  compact=false,
+  api,
+  eco=false,
+  onSlow=()=>{},
+  config=CINEMATIC_CONFIG,
+  turntable=null,
+  wheelZoom=true,
+  pedestalScale=[1,1,1],
+  cameraFov=32
+}) {
   return <Canvas dpr={[1,eco?config.ecoDpr:config.maxDpr]} frameloop="demand"
-    camera={{position:[0,.35,8.4],fov:32,near:.1,far:50}}
+  camera={{
+    position: [0, 0.35, 8.4],
+    fov: cameraFov,
+    near: 0.1,
+    far: 50,
+  }}
     gl={{antialias:true,alpha:true,powerPreference:'default'}}
     onCreated={({gl})=>{gl.toneMapping=THREE.NeutralToneMapping;gl.toneMappingExposure=config.lighting.exposure;gl.outputColorSpace=THREE.SRGBColorSpace;}}
     fallback={null}>
-    <LightingRig config={config} director={director}/><StageArchitecture rings={config.rings} pedestalScale={pedestalScale}/>
+    <LightingRig config={config} director={director}/>
+    {/* <StageArchitecture rings={config.rings} pedestalScale={pedestalScale}/> */}
+    <StageArchitecture
+      rings={config.rings}
+      pedestalScale={pedestalScale}
+      director={director}
+      orbitDots={Boolean(turntable)}
+    />
     <ModelBoundary onFailure={onFailure}><Suspense fallback={null}><ProductStage turntable={turntable} product={product} director={director} onReady={onReady} onFailure={onFailure} wireframe={wireframe} compact={compact} config={config}/></Suspense></ModelBoundary>
     <CameraRig wheelZoom={wheelZoom} director={director} api={api} compact={compact} onFailure={onFailure} config={config}/>
     <SceneTelemetry director={director} api={api}/>

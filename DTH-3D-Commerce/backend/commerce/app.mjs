@@ -10,6 +10,7 @@ import { cookieToken, digest, hashPassword, randomToken, rateLimiter, verifyPass
 import { installSupport, isChatMessageRequest } from './support/routes.mjs';
 import { supportModels, purgeCustomerSupport } from './support/models.mjs';
 import { installAdmin } from './admin/routes.mjs';
+import { installExperience } from './experience/routes.mjs';
 const asyncRoute = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 const userView = user => ({ id: String(user._id), email: user.email, role: user.role, savedVehicleId: user.savedVehicleId || '', createdAt: user.createdAt });
 const orderView = order => ({ id: order.id, lines: order.lines, total: order.total, subtotal: order.subtotal, delivery: order.delivery, currency: order.currency, paymentStatus: order.paymentStatus, status: order.status, demoOnly: true, createdAt: order.createdAt });
@@ -67,6 +68,7 @@ export async function makeApp() {
   const supportHub = installSupport(router, { authenticated, admin, sessionFor, origins });
   app.locals.supportHub = supportHub;
   installAdmin(router, { authenticated, admin, writeLimit });
+  installExperience(router, { authenticated, admin, writeLimit });
   router.get('/health', (req, res) => res.json({ success: true, demoOnly: true, paymentMode: 'simulation' }));
   router.get('/products', asyncRoute(async (req, res) => res.json({ data: await Product.find({ active: true }).select('-_id -__v').sort({ name: 1 }).lean() })));
   router.get('/vehicles', asyncRoute(async (req, res) => res.json({ data: await Vehicle.find().select('-_id -__v').sort({ make: 1, model: 1, year: 1 }).lean() })));

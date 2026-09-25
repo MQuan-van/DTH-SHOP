@@ -1,0 +1,72 @@
+name: Motion controls step 1
+on:
+  push:
+    branches: [feat/experience-studio]
+    paths: ['DTH-3D-Commerce/**', '.github/workflows/motion-step1-quality.yml']
+permissions:
+  contents: read
+jobs:
+  controls:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: DTH-3D-Commerce
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Locked install, imports and motion unit regression
+        run: |
+          npm ci
+          npm run check
+          npm run test:experience
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare browser
+        run: |
+          python -m pip install -q playwright==1.55.0
+          python -m playwright install --with-deps chromium >/tmp/motion-browser-install.log 2>&1 || { tail -60 /tmp/motion-browser-install.log; exit 1; }
+      - name: Compile Flow without API or database
+        env:
+          VITE_EXPERIENCE_TESTS: 'true'
+        run: |
+          npm run build:flow
+          npm run preview --workspace frontend -- --host 127.0.0.1 >/tmp/motion-preview.log 2>&1 &
+          for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi; sleep 1; done
+          cat /tmp/motion-preview.log; exit 1
+      - name: Actual camera queue, drag interruption and input gates
+        run: |
+          mkdir -p test-results/motion-controls
+          set -o pipefail
+          python tests/browser/motion_controls.py 2>&1 | tee test-results/motion-controls/browser.log
+      - name: Home default autoplay and inspection handoff
+        run: |
+          mkdir -p test-results/home-autoplay
+          set -o pipefail
+          python tests/browser/home_autorotate.py 2>&1 | tee test-results/home-autoplay/browser.log
+      - name: Native page wheel, wider stage and independent chapter controls
+        run: |
+          mkdir -p test-results/home-freescroll
+          set -o pipefail
+          python tests/browser/home_freescroll.py 2>&1 | tee test-results/home-freescroll/browser.log
+      - name: Record tested source
+        if: always()
+        run: |
+          mkdir -p test-results/motion-controls test-results/home-autoplay test-results/home-freescroll
+          git rev-parse HEAD > test-results/motion-controls/source-commit.txt
+          git rev-parse HEAD > test-results/home-autoplay/source-commit.txt
+          git rev-parse HEAD > test-results/home-freescroll/source-commit.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: motion-controls-step1-evidence
+          path: |
+            DTH-3D-Commerce/test-results/motion-controls/**
+            DTH-3D-Commerce/test-results/home-autoplay/**
+            DTH-3D-Commerce/test-results/home-freescroll/**
+          retention-days: 7

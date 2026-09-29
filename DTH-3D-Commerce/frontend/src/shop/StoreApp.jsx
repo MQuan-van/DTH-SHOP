@@ -11,6 +11,7 @@ import ProductCard from './components/ProductCard.jsx';
 import HomePage from './home/HomePage.jsx';
 import ShopPage from './catalog/ShopPage';
 import ProductImage from './catalog/components/ProductImage';
+const StoryPage = lazy(() => import('../experience/story/StoryPage'));
 const Viewer3D = lazy(() => import('./Viewer3D'));
 const categoryNames = { suspension: 'Suspension', wheels: 'Wheels', exhausts: 'Exhausts', mirrors: 'Mirrors', brakes: 'Brakes' };
 function Dialog({ title, onClose, children }) {
@@ -53,7 +54,12 @@ function Shell() {
     <div className="dth-demo-banner">FYP DEMONSTRATOR <span>Illustrative 3D assets · Synthetic fitment · No real payments</span><b data-flow={FLOW}>{FLOW ? 'FLOW DEMO / NO DATABASE' : PREVIEW ? 'LOCAL PREVIEW' : 'MONGODB / API MODE'}</b></div>
     <header className="dth-header">
       <Link to="/" className="dth-brand" aria-label="DTH store home"><span className="dth-brand-symbol">///</span><span>DTH<span className="dth-brand-sub">PARTS STUDIO</span></span></Link>
-      <nav className="dth-navigation" aria-label="Main navigation"><NavLink to="/" end>Studio</NavLink><NavLink to="/shop">Shop parts</NavLink><NavLink to="/account">My account</NavLink></nav>
+      <nav className="dth-navigation" aria-label="Main navigation">
+        <NavLink to="/" end>Studio</NavLink>
+        <NavLink to="/story">Story</NavLink>
+        <NavLink to="/shop">Shop parts</NavLink>
+        <NavLink to="/account">My account</NavLink>
+      </nav>
       <div className="dth-header-tools"><button className="dth-vehicle-button" onClick={() => setVehicleOpen(true)} disabled={store.loading || !!store.error}><Icon name="vehicle" /><span>{vehicle ? `${vehicle.model} · ${vehicle.year}` : 'Select your vehicle'}</span><span className="dth-lime">＋</span></button><Link to="/account" className="dth-icon-button" aria-label="Your account"><Icon name="user" /></Link><Link to="/bag" className="dth-bag-button" aria-label={`Shopping bag, ${count} items`}><Icon name="bag" /><span>{count}</span></Link></div>
     </header>
     <main id="dth-content" tabIndex={-1}>
@@ -1324,6 +1330,31 @@ function Admin() {
 }
 function NotFound() { return <div className="dth-empty"><p className="dth-eyebrow">404 / OFF THE GRID</p><h1>This part of the studio is empty.</h1><Link className="dth-button dth-primary" to="/shop">Back to the collection</Link></div>; }
 export default function StoreApp() {
-  return <StoreProvider><Routes><Route element={<Shell />}><Route index element={<HomePage />} /><Route path="shop" element={<ShopPage  />} /><Route path="products/:slug" element={<Product />} /><Route path="bag" element={<Bag />} /><Route path="order-complete" element={<Completed />} /><Route path="account" element={<AccountPage />} /><Route path="admin" element={<Admin />} /><Route path="*" element={<NotFound />} /></Route></Routes></StoreProvider>;
+  return <StoreProvider>
+      <Routes>
+        <Route element={<Shell />}>
+          <Route index element={<HomePage />} />
+          <Route
+            path="story"
+            element={
+              <Suspense
+                fallback={
+                  <div className="dth-empty" role="status">
+                    Preparing the story…
+                  </div>
+                }
+              >
+                <StoryPage />
+              </Suspense>
+            }
+          />
+          <Route path="shop" element={<ShopPage  />} /><Route path="products/:slug" element={<Product />} />
+          <Route path="bag" element={<Bag />} /><Route path="order-complete" element={<Completed />} />
+          <Route path="account" element={<AccountPage />} />
+          <Route path="admin" element={<Admin />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+    </Routes>
+  </StoreProvider>;
 }
  

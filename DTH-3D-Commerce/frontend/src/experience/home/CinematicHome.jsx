@@ -6,7 +6,8 @@ import ProductImage from '../../shop/catalog/components/ProductImage';
 import { formatMoney } from '../../../../shared/domain.mjs';
 import { CINEMATIC_CONFIG, HOME_AUTOROTATE, HOME_SHOWROOM } from '../motion/motion.config.mjs';
 import { createDirector, sampleStory } from '../motion/story.mjs';
-import { useScrollDirector } from '../motion/useScrollDirector';
+// import { useScrollDirector } from '../motion/useScrollDirector';
+import { useChapterTransition } from '../motion/useChapterTransition';
 import { useSceneInputGate } from '../interaction/useSceneInputGate';
 import { PART_LABELS } from '../../../../shared/experience.mjs';
 import { hasWebGL, useExperiencePolicy } from '../interaction/useExperiencePolicy';
@@ -41,7 +42,23 @@ function Story({ product, chooseVehicle, config }) {
   const fallback = sceneStatus === 'fallback';
   const cinematic = HOME_SHOWROOM.scrollLinked && animated && !policy.compact && !fallback;
   const active = useStageActivity(stage);
-  const selectChapter = useScrollDirector(root, director, { cinematic, animated, onChapter: setChapter, config });
+  // const selectChapter = useScrollDirector(root, director, { cinematic, animated, onChapter: setChapter, config });
+  const changeChapter = useChapterTransition(
+    root,
+    copy,
+    director,
+    {
+      cinematic,
+      animated,
+      active,
+      chapter,
+      inspect,
+      onChapter: setChapter,
+      setInspect,
+      config,
+    }
+  );
+
   const ready = useCallback(supported => { setRigged(supported); setSceneStatus('ready'); }, []);
   const fail = useCallback(() => { setSceneStatus('fallback'); setInspect(false); }, []);
   const lowerQuality = useCallback(() => setSlow(true), []);
@@ -61,14 +78,14 @@ function Story({ product, chooseVehicle, config }) {
     const tween = gsap.to(intro, { reveal: 1, duration: config.entranceSeconds, ease: 'power3.out', onUpdate: () => director.set({ reveal: intro.reveal }) });
     return () => tween.kill();
   }, [director, sceneStatus, animated, config.entranceSeconds]);
-  useLayoutEffect(() => {
-    if (!animated || inspect) return;
-    const ctx = gsap.context(() => {
-      gsap.fromTo('[data-copy-line]', { yPercent: 110, rotate: 3 }, { yPercent: 0, rotate: 0, duration: .7, stagger: .065, ease: 'power3.out' });
-      gsap.fromTo('[data-copy-note]', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: .55, delay: .16 });
-    }, copy);
-    return () => ctx.revert();
-  }, [chapter, inspect, animated]);
+  // useLayoutEffect(() => {
+  //   if (!animated || inspect) return;
+  //   const ctx = gsap.context(() => {
+  //     gsap.fromTo('[data-copy-line]', { yPercent: 110, rotate: 3 }, { yPercent: 0, rotate: 0, duration: .7, stagger: .065, ease: 'power3.out' });
+  //     gsap.fromTo('[data-copy-note]', { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: .55, delay: .16 });
+  //   }, copy);
+  //   return () => ctx.revert();
+  // }, [chapter, inspect, animated]);
 
   function toggleInspect() {
     const value = !inspect;
@@ -79,7 +96,12 @@ function Story({ product, chooseVehicle, config }) {
     if (cinematic) window.scrollTo({ top: Math.max(0, root.current.getBoundingClientRect().top + window.scrollY - 79), behavior: 'instant' });
     setMotion(v => !v);
   }
-  function jump(index) { setInspect(false); director.set({ inspecting: false }); selectChapter.current?.(config.chapters[index].at); }
+  // function jump(index) { setInspect(false); director.set({ inspecting: false }); selectChapter.current?.(config.chapters[index].at); }
+
+  function jump(index) {
+  changeChapter(index);
+}
+
   function pointer(event) {
     if (!animated || inspect || policy.compact || event.pointerType === 'touch') return;
     const rect = stage.current.getBoundingClientRect();
@@ -190,7 +212,33 @@ function Story({ product, chooseVehicle, config }) {
           </div>
         )}
       </div>
-      <div className={styles.sideNote} aria-hidden="true"><span>FORM / FINISH / PERSPECTIVE</span><b>360°</b><i/></div>
+      {/* <div className={styles.sideNote} aria-hidden="true"><span>FORM / FINISH / PERSPECTIVE</span><b>360°</b><i/></div> */}
+      <nav
+        className={styles.chapterNavText}
+        aria-label="Product story chapters"
+      >
+        {config.chapters.map((item, index) => (
+          <button
+            type="button"
+            key={item.id}
+            className={styles.chapterNavButton}
+            aria-current={
+              !inspect && chapter === index
+                ? 'step'
+                : undefined
+            }
+            onClick={() => jump(index)}
+          >
+            <span className={styles.chapterNavNumber}>
+              {String(index + 1).padStart(2, '0')}
+            </span>
+
+            <span className={styles.chapterNavLabel}>
+              {item.label}
+            </span>
+          </button>
+        ))}
+      </nav>
       <div className={styles.status} role="status">
         <i/>{sceneStatus === 'loading' ? 'Preparing the 3D study…' : fallback ? 'Image view — 3D unavailable' : inspect ? 'Interactive 3D' : 'Live 3D study'}
         {fallback && capable && product.modelUrl && <button type="button" onClick={retry}>Retry 3D</button>}

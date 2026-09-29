@@ -59,6 +59,236 @@
 .sideNote>span { writing-mode:vertical-rl;font:8px var(--mono);letter-spacing:.17em; }
 .sideNote b { order:-1;font:10px var(--mono); }
 .sideNote i { width:16px;flex:1;opacity:.55;background:repeating-linear-gradient(0deg,var(--line) 0 1px,transparent 1px 9px);border-right:1px solid var(--line); }
+/* Desktop chapter rail — replaces the old 360 ruler */
+.chapterRail {
+  display: none;
+}
+
+@media (min-width: 1000px) and (min-height: 680px) {
+  .chapterRail {
+    position: absolute;
+    right: 3%;
+    top: 19%;
+    bottom: 25%;
+    z-index: 6;
+
+    width: clamp(190px, 14vw, 250px);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 10px;
+
+    pointer-events: auto;
+  }
+
+  /* Desktop dùng rail bên phải, không lặp lại menu ở đáy */
+  .bottomline .chapters {
+    display: none;
+  }
+
+  .bottomline {
+    justify-content: flex-end;
+  }
+}
+.cinema .chapterRailButton {
+  position: relative;
+
+  display: grid;
+  grid-template-columns: 42px 1fr 12px;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  min-height: 60px;
+  padding: 13px 14px;
+
+  border: 1px solid transparent;
+  background: transparent;
+
+  color: #536d7b;
+  text-align: left;
+
+  cursor: pointer;
+  overflow: hidden;
+
+  transition:
+    transform 320ms cubic-bezier(.2,.8,.2,1),
+    color 220ms ease,
+    border-color 220ms ease,
+    background 220ms ease,
+    box-shadow 320ms ease;
+}
+
+.chapterRailIndex {
+  position: relative;
+  z-index: 2;
+
+  font: 10px var(--mono);
+  letter-spacing: .12em;
+
+  color: #597381;
+}
+
+.chapterRailLabel {
+  position: relative;
+  z-index: 2;
+
+  font-size: clamp(15px, 1.05vw, 19px);
+  font-weight: 650;
+  line-height: 1.1;
+  letter-spacing: -.025em;
+
+  color: inherit;
+}
+
+.chapterRailPulse {
+  position: relative;
+  z-index: 2;
+
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+  background: var(--cyan);
+
+  opacity: 0;
+  transform: scale(.25);
+}
+/* Cyan energy line */
+.cinema .chapterRailButton::before {
+  content: "";
+
+  position: absolute;
+  left: 0;
+  top: 12%;
+
+  width: 3px;
+  height: 76%;
+
+  border-radius: 999px;
+
+  background: linear-gradient(
+    to bottom,
+    var(--cyan),
+    var(--blue)
+  );
+
+  opacity: 0;
+  transform: scaleY(.2);
+  transform-origin: center;
+
+  transition:
+    opacity 220ms ease,
+    transform 360ms cubic-bezier(.2,.8,.2,1);
+}
+
+/* Soft energy field */
+.cinema .chapterRailButton::after {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  background:
+    radial-gradient(
+      circle at 0% 50%,
+      rgba(0, 194, 255, .18),
+      rgba(0, 102, 204, .06) 38%,
+      transparent 72%
+    );
+
+  opacity: 0;
+  transform: translateX(-18px);
+
+  transition:
+    opacity 300ms ease,
+    transform 400ms cubic-bezier(.2,.8,.2,1);
+
+  pointer-events: none;
+}
+
+.cinema .chapterRailButton:hover {
+  transform: translateX(-6px);
+
+  color: var(--blue);
+
+  border-color: rgba(0, 102, 204, .24);
+
+  background: rgba(255, 255, 255, .55);
+
+  box-shadow:
+    0 12px 32px rgba(0, 102, 204, .08);
+}
+.cinema .chapterRailButton[aria-current="step"] {
+  transform: translateX(-10px);
+
+  color: var(--blue);
+
+  border-color: rgba(0, 102, 204, .38);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0, 194, 255, .12),
+      rgba(255, 255, 255, .68)
+    );
+
+  box-shadow:
+    0 16px 38px rgba(0, 102, 204, .13);
+}
+
+.cinema .chapterRailButton[aria-current="step"]::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.cinema .chapterRailButton[aria-current="step"]::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.cinema
+.chapterRailButton[aria-current="step"]
+.chapterRailIndex {
+  color: var(--blue);
+}
+
+.cinema
+.chapterRailButton[aria-current="step"]
+.chapterRailPulse {
+  opacity: 1;
+  transform: scale(1);
+
+  animation: chapterRailPulse 1.8s ease-out infinite;
+}
+@keyframes chapterRailPulse {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(0, 194, 255, .42);
+
+    transform: scale(1);
+  }
+
+  65% {
+    box-shadow:
+      0 0 0 13px rgba(0, 194, 255, 0);
+
+    transform: scale(1.12);
+  }
+
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(0, 194, 255, 0);
+
+    transform: scale(1);
+  }
+}
+.cinema .chapterRailButton:active {
+  transform:
+    translateX(-7px)
+    scale(.965);
+}
 .status { position:absolute;left:50%;bottom:198px;z-index:3;display:flex;align-items:center;gap:8px;font:9px var(--mono);color:#456371; }
 .status>i { width:5px;height:5px;background:#006a9c;border-radius:50%; }
 .cinema .status button { color:var(--blue);text-decoration:underline;min-height:32px;font:10px var(--mono); }
@@ -136,6 +366,9 @@
  .bottomline{left:6%;right:6%;bottom:29px}.chapters{gap:22px}.disclaimer{left:6%;right:auto;font-size:8px;bottom:8px}
  .story[data-inspect="true"] .copy{top:102px;max-width:90%}.story[data-inspect="true"] .copy h1{font-size:42px!important}
  .inspectionTools{bottom:200px;width:max-content;max-width:94%;flex-wrap:wrap;justify-content:center}.inspectionTools input{width:85px}.canvas[data-interactive=true]{inset:230px -10% 220px}
+ .chapterRail {
+    display: none;
+  }
 }
 @media(max-width:600px){
  .topline{font-size:8px}.preferences select,.cinema .preferences button,.preferences a{font-size:9px}.preferences{gap:2px 10px}
@@ -287,3 +520,256 @@
     top: clamp(112px, 16%, 190px);
   }
 }
+/* EDITORIAL CHAPTER NAV — START */
+
+/* Kích thước riêng cho cột navigation bên phải */
+.cinema .story {
+  --chapter-nav-width: clamp(172px, 13vw, 220px);
+  --chapter-nav-edge: clamp(24px, 3vw, 52px);
+  --chapter-nav-gap: clamp(28px, 3vw, 52px);
+}
+
+/* Mặc định dùng navigation dưới đáy */
+.cinema .story .chapterNavText {
+  display: none;
+}
+
+.cinema .story .bottomline .chapters {
+  display: flex;
+}
+
+.cinema .story .bottomline {
+  justify-content: space-between;
+}
+
+/* Chỉ dùng cột bên phải khi cửa sổ đủ rộng và cao */
+@media (min-width: 1280px) and (min-height: 680px) {
+  .cinema .story[data-inspect="false"] .chapterNavText {
+    position: absolute;
+    top: 96px;
+    bottom: 250px;
+    right: var(--chapter-nav-edge);
+    width: var(--chapter-nav-width);
+    z-index: 6;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 18px;
+
+    pointer-events: auto;
+  }
+
+  /* Không hiện hai menu cùng lúc */
+  .cinema .story[data-inspect="false"] .bottomline .chapters {
+    display: none;
+  }
+
+  .cinema .story[data-inspect="false"] .bottomline {
+    justify-content: flex-end;
+  }
+
+  /*
+   * Chừa khoảng riêng giữa Your build và navigation.
+   * Không thay rule .copy chung.
+   */
+  .cinema .story[data-inspect="false"] .copyRight {
+    left: 56%;
+
+    right: calc(
+      var(--chapter-nav-edge) +
+      var(--chapter-nav-width) +
+      var(--chapter-nav-gap)
+    );
+
+    top: 21%;
+    width: auto;
+    max-width: none;
+  }
+
+  /*
+   * Rule .copyRight h1 cũ có !important.
+   * Chỉ ghi đè cỡ chữ ở đúng bố cục này.
+   */
+  .cinema .story[data-inspect="false"] .copyRight h1 {
+    font-size: clamp(40px, 3.8vw, 72px) !important;
+    line-height: 1.05;
+    letter-spacing: -0.06em;
+    max-width: 100%;
+  }
+
+  .cinema .story[data-inspect="false"] .copyRight .copyNote {
+    max-width: 26ch;
+  }
+}
+
+/* Nút chỉ còn số và chữ — không nền, không hộp */
+.cinema .chapterNavButton {
+  appearance: none;
+  position: relative;
+
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  min-height: 60px;
+  padding: 14px 0 18px;
+
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+
+  color: var(--muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  transition: color 220ms ease;
+}
+
+.chapterNavNumber {
+  font: 12px/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+  color: inherit;
+}
+
+.chapterNavLabel {
+  display: block;
+
+  font-size: clamp(18px, 1.35vw, 24px);
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  white-space: nowrap;
+  color: inherit;
+
+  transition:
+    transform 320ms cubic-bezier(.2, .8, .2, 1);
+}
+
+/* Gạch mảnh: ngắn khi nghỉ, dài khi được chọn */
+.cinema .chapterNavButton::before {
+  content: "";
+  position: absolute;
+  left: 40px;
+  right: 0;
+  bottom: 5px;
+  height: 1px;
+
+  background: var(--line);
+
+  transform: scaleX(.2);
+  transform-origin: left;
+
+  transition:
+    transform 420ms cubic-bezier(.2, .8, .2, 1),
+    background 220ms ease;
+
+  pointer-events: none;
+}
+
+/* Vệt sáng chạy trên gạch, không phủ nền nút */
+.cinema .chapterNavButton::after {
+  content: "";
+  position: absolute;
+  left: 40px;
+  right: 0;
+  bottom: 4px;
+  height: 3px;
+
+  background: linear-gradient(
+    90deg,
+    transparent 35%,
+    var(--cyan) 48%,
+    var(--blue) 52%,
+    transparent 65%
+  );
+
+  background-size: 240% 100%;
+  background-position: 120% 0;
+  opacity: 0;
+
+  pointer-events: none;
+}
+
+/* Hover */
+.cinema .chapterNavButton:hover,
+.cinema .chapterNavButton[aria-current="step"] {
+  color: var(--blue);
+}
+
+.cinema .chapterNavButton:hover::before {
+  transform: scaleX(.55);
+}
+
+/* Chương đang được chọn */
+.cinema .chapterNavButton[aria-current="step"]::before {
+  transform: scaleX(1);
+  background: var(--blue);
+}
+
+.cinema .chapterNavButton:hover .chapterNavLabel,
+.cinema .chapterNavButton[aria-current="step"] .chapterNavLabel {
+  transform: translateX(4px);
+}
+
+/* Phản hồi nhẹ lúc nhấn, không phóng to cả menu */
+.cinema .chapterNavButton:active .chapterNavLabel {
+  transform: translateX(2px);
+}
+
+/* Giữ dấu focus khi điều khiển bằng bàn phím */
+.cinema .chapterNavButton:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 5px;
+}
+
+/* Quét một lượt khi chương trở thành active */
+.cinema .story[data-motion="on"]
+.chapterNavButton[aria-current="step"]::after {
+  animation: editorialChapterScan 680ms ease-out both;
+}
+
+@keyframes editorialChapterScan {
+  0% {
+    background-position: 120% 0;
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  80% {
+    opacity: 1;
+  }
+
+  100% {
+    background-position: -20% 0;
+    opacity: 0;
+  }
+}
+
+/* Tắt Motion thì menu đổi trạng thái ngay, không chạy hiệu ứng */
+.cinema .story[data-motion="off"] .chapterNavText *,
+.cinema .story[data-motion="off"] .chapterNavText *::before,
+.cinema .story[data-motion="off"] .chapterNavText *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Tôn trọng cài đặt giảm chuyển động của thiết bị */
+@media (prefers-reduced-motion: reduce) {
+  .cinema .chapterNavText *,
+  .cinema .chapterNavText *::before,
+  .cinema .chapterNavText *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* EDITORIAL CHAPTER NAV — END */

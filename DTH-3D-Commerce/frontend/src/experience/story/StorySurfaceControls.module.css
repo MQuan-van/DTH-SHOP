@@ -1,0 +1,15 @@
+.surfaceControls{position:relative;z-index:2;width:100%;margin:0 auto 8px;font-family:inherit;}
+.tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;border-top:1px solid #cbd6dc;padding-top:8px;}
+.surfaceControls .tabs button{appearance:none;position:relative;min-height:44px;padding:8px 0;font:600 12px/1.3 'Space Grotesk','Segoe UI',sans-serif;background:none;border:0;border-radius:0;box-shadow:none;color:#53616b;text-align:left;}
+.surfaceControls .tabs button::after{content:'';position:absolute;inset:auto 0 0;height:2px;background:#007887;transform:scaleX(0);transform-origin:left;transition:transform .3s ease;}
+.surfaceControls .tabs button[aria-pressed='true']{color:#006b78;}
+.surfaceControls .tabs button[aria-pressed='true']::after{transform:scaleX(1);}
+.surfaceControls button:hover:not(:disabled){color:#007887;cursor:pointer;}
+.surfaceControls button:disabled{opacity:.45;cursor:not-allowed;}
+.note{display:flex;gap:8px 16px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding-top:12px;color:#53616b;font-size:11px;line-height:1.5;}
+.note>span{flex:1 1 220px;}
+.surfaceControls .note button{border:0;background:none;min-height:40px;padding:4px 0;color:#006b78;font:600 11px/1.4 'Space Grotesk','Segoe UI',sans-serif;white-space:nowrap;}
+.surfaceControls .touchNote{margin-top:7px;font-size:11px;color:#53616b;line-height:1.5;}
+.surfaceControls button:focus-visible{outline:2px solid #007887;outline-offset:5px;}
+@media(prefers-reduced-motion:reduce){.surfaceControls *, .surfaceControls *::after{animation:none!important;transition:none!important;}}
+:global([data-story-motion='false']) .surfaceControls *::after{transition:none;}

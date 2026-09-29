@@ -23,12 +23,24 @@ test('frontend dependency set includes its imported runtime libraries', async ()
   const p = await json('frontend/package.json');
   for (const name of ['react', 'react-dom', 'react-router-dom', 'three', '@react-three/fiber', '@react-three/drei']) assert.ok(p.dependencies[name]);
 });
+
+// test('standalone router and navigation no longer require legacy pages', async () => {
+//   const app = await read('frontend/src/App.jsx');
+//   const store = await read('frontend/src/shop/StoreApp.jsx');
+//   assert.doesNotMatch(app, /\.\/pages\/|legacyRoutes/);
+//   assert.doesNotMatch(store, /to="\/(?:Home|story|welcome|gallery)/);
+// });
 test('standalone router and navigation no longer require legacy pages', async () => {
   const app = await read('frontend/src/App.jsx');
   const store = await read('frontend/src/shop/StoreApp.jsx');
+
   assert.doesNotMatch(app, /\.\/pages\/|legacyRoutes/);
-  assert.doesNotMatch(store, /to="\/(?:Home|story|welcome|gallery)/);
+
+  // /story is now an intentional first-class route.
+  assert.doesNotMatch(store, /to="\/(?:Home|welcome|gallery)/);
+  assert.match(store, /to="\/story"/);
 });
+
 test('backend no longer imports or mounts the legacy router', async () => {
   for (const file of ['backend/server.mjs', 'backend/commerce/app.mjs']) {
     assert.doesNotMatch(await read(file), /legacyRoutes|routes\/api\.js/);

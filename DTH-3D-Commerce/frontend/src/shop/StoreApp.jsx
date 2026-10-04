@@ -11,6 +11,7 @@ import ProductCard from './components/ProductCard.jsx';
 import HomePage from './home/HomePage.jsx';
 import ShopPage from './catalog/ShopPage';
 import ProductImage from './catalog/components/ProductImage';
+import ProductDecisionPage from './product/ProductDecisionPage';
 const StoryPage = lazy(() => import('../experience/story/StoryPage'));
 const Viewer3D = lazy(() => import('./Viewer3D'));
 const categoryNames = { suspension: 'Suspension', wheels: 'Wheels', exhausts: 'Exhausts', mirrors: 'Mirrors', brakes: 'Brakes' };
@@ -97,7 +98,7 @@ function Product() {
   );
 
   return product ? (
-    <ProductDetails
+    <ProductDecisionPage
       key={`${product.id}:${product.slug}`}
       product={product}
     />

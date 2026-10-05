@@ -1,0 +1,57 @@
+name: DTH Ignition Loader quality
+on:
+  pull_request:
+    paths:
+      - 'DTH-3D-Commerce/frontend/src/experience/loader/**'
+      - 'DTH-3D-Commerce/frontend/public/branding/**'
+      - 'DTH-3D-Commerce/frontend/src/main.jsx'
+      - 'DTH-3D-Commerce/frontend/src/shop/useStore.jsx'
+      - 'DTH-3D-Commerce/tests/app-loader.test.mjs'
+      - 'DTH-3D-Commerce/tests/loader-cinematic.test.mjs'
+      - 'DTH-3D-Commerce/tests/browser/app_loader.py'
+      - '.github/workflows/app-loader-quality.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: DTH-3D-Commerce
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: DTH-3D-Commerce/package-lock.json
+      - name: Locked install and baseline + loader regression
+        run: |
+          npm ci
+          npm run check
+          npm test
+          npm run test:experience
+          node --test tests/app-loader.test.mjs tests/loader-cinematic.test.mjs
+          npm run build
+          npm run build:flow
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare Chromium
+        run: |
+          python -m pip install playwright==1.57.0
+          python -m playwright install --with-deps chromium
+      - name: Actual compiled Flow loader, session and navigation checks
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/dth-loader-preview.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
+          python tests/browser/app_loader.py --url http://127.0.0.1:4173
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dth-ignition-loader-evidence
+          path: DTH-3D-Commerce/test-results/app-loader/**
+          if-no-files-found: ignore
+          retention-days: 7

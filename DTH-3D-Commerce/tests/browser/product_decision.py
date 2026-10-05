@@ -6,6 +6,7 @@ import json, mimetypes, os, time
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 from playwright.sync_api import sync_playwright, expect
+from cart_helpers import close_added_cart
 BASE = os.environ.get('DTH_APP_URL', 'http://127.0.0.1:4173')
 OUT = Path(os.environ.get('DTH_EVIDENCE', 'test-results/product-decision')); OUT.mkdir(parents=True, exist_ok=True)
 STATIC = os.environ.get('DTH_STATIC_DIR')
@@ -49,7 +50,7 @@ with sync_playwright() as p:
         dialog.get_by_role('button',name='Show matching parts',exact=True).click()
         expect(page.locator('[data-product-detail] [data-fitment-status]')).to_have_attribute('data-fitment-status','compatible');ok('vehicle picker uses existing store / correct mapping')
         page.get_by_label('Quantity',exact=True).select_option('2')
-        page.get_by_role('button',name='Add to bag',exact=True).click()
+        page.get_by_role('button',name='Add to bag',exact=True).click(); close_added_cart(page)
         expect(page.get_by_text('2 × Apex Coilover',exact=True)).to_be_visible()
         expect(page.get_by_role('link',name='Shopping bag, 2 items')).to_be_visible();ok('two items added only after store accepted')
         bag=page.evaluate("JSON.parse(localStorage.getItem('dth.flow.bag.v1'))")

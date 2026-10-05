@@ -147,7 +147,7 @@ function OrderContent({ order }) {
     <ul className={s.receipt}>{order.lines.map(line => {
       const vehicle = store.data.vehicles.find(v => v.id === line.vehicleId);
       const product = store.data.products.find(p => p.id === line.productId);
-      return <li key={`${line.productId}:${line.vehicleId}`}>{product && <Link className={s.receiptThumb} to={`/products/${product.slug}`} aria-label={`View ${line.name}`}><ProductImage product={product} /></Link>}<div className={s.receiptInfo}><strong>{line.name}</strong><p>{vehicle ? vehicleName(vehicle) : line.vehicleId}</p><small>{line.quantity} × {formatMoney(line.unitPrice)}</small></div><b>{formatMoney(line.lineTotal)}</b></li>;
+      return <li key={`${line.productId}:${line.vehicleId}`}>{product && <Link className={s.receiptThumb} to={`/products/${product.slug}`} aria-label={`View ${line.name}`}><ProductImage product={product} /></Link>}<div className={s.receiptInfo}><strong>{line.name}</strong><p>{line.vehicleLabel || (vehicle ? vehicleName(vehicle) : line.vehicleId)}</p><small>{line.quantity} × {formatMoney(line.unitPrice)}</small></div><b>{formatMoney(line.lineTotal)}</b></li>;
     })}</ul>
     <div className={s.receiptTotal}><span>Demo total</span><strong>{formatMoney(order.total)}</strong></div>
     <p className={s.fine}>No payment was charged. No products will be shipped.</p>

@@ -10,6 +10,9 @@ import FilterPanel from './components/FilterPanel';
 import ShopProductCard from './components/ShopProductCard';
 import QuickView from './components/QuickView';
 import ShopDialog from './components/ShopDialog';
+import VehicleFitmentStrip from './fitment/VehicleFitmentStrip';
+import { matchingQuery } from './fitment/fitment.logic.mjs';
+import SearchDiscovery from './search/SearchDiscovery';
 import styles from './ShopPage.module.css';
 
 export default function ShopPage() {
@@ -45,12 +48,17 @@ export default function ShopPage() {
     pendingVehicleFrame.current = requestAnimationFrame(() => chooseVehicle());
   }
   function pageChange(page) { scrollToResults.current = true; update({ page }); }
+  function showCompatibleParts() {
+    setQuick(null);
+    scrollToResults.current = true;
+    setParams(previous => matchingQuery(previous));
+  }
   useEffect(() => {
     if (!scrollToResults.current) return;
     scrollToResults.current = false;
     resultHeading.current?.scrollIntoView({ block: 'start', behavior: motion ? 'smooth' : 'auto' });
     resultHeading.current?.focus({ preventScroll: true });
-  }, [query.page, motion]);
+  }, [query.page, query.fit, quick, motion]);
   const filterProps = { query, counts, ceiling, vehicle, vehicleId, onPatch: update, onChooseVehicle: openVehicle, onReset: reset };
   const selectedFilterCount = query.categories.length + Number(Boolean(query.search)) + Number(query.maxPrice < ceiling);
   const allProductsCount = data.products.filter(item => item.active !== false).length;
@@ -61,15 +69,18 @@ export default function ShopPage() {
         <div><p className={styles.eyebrow}><span />DTH / THE PARTS COLLECTION</p><h1>{SHOP_CONFIG.title}</h1><p className={styles.intro}>{SHOP_CONFIG.description}</p></div>
         <div className={styles.headingSide}><span><ShopIcon name="cube" />{allProductsCount} demo parts. Every angle.</span><button type="button" className={styles.motionButton} disabled={reduced || !SHOP_CONFIG.motion.enabled} aria-pressed={motion} onClick={() => setPaused(!paused)}>{motion ? 'Ⅱ Motion on' : '▷ Motion off'}{reduced && ' · system'}</button></div>
       </header>
-      <form className={styles.searchForm} role="search" aria-label="Search product catalog" onSubmit={e => { e.preventDefault(); update({ q: searchDraft.trim() }); }}>
-        <ShopIcon name="search" /><label htmlFor="dth-shop-search" className={styles.srOnly}>Search parts by name or finish</label><input id="dth-shop-search" name="q" type="search" maxLength="160" placeholder="Search suspension, wheels, exhausts…" value={searchDraft} onChange={e => setSearchDraft(e.target.value)} />
-        {searchDraft && <button type="button" className={styles.iconButton} aria-label="Clear search" onClick={() => { setSearchDraft(''); update({ q: '' }); }}><ShopIcon name="close" /></button>}
-        <button className={styles.primaryButton} type="submit">Search<ShopIcon name="arrow" /></button>
-      </form>
-      <section className={styles.vehicleStrip} aria-label="Selected vehicle">
-        <span className={styles.vehicleIcon}><ShopIcon name="vehicle" /></span><div><span className={styles.microLabel}>YOUR VEHICLE</span><strong>{vehicle ? `${vehicle.make} ${vehicle.model} · ${vehicle.year}` : vehicleId ? 'Saved vehicle not in this dataset' : 'Start with the right fit.'}</strong><p>{vehicle ? query.fit === 'match' ? 'Showing matches in the demo dataset.' : 'Showing all parts. Check each compatibility label.' : 'Choose a demo vehicle to find compatible parts.'}</p></div>
-        <div className={styles.vehicleActions}><button className={styles.outlineButton} type="button" onClick={openVehicle}>{vehicleId ? 'Change vehicle' : 'Select vehicle'}<ShopIcon name="arrow" /></button>{vehicleId && <button className={styles.textButton} type="button" onClick={() => { setVehicle(''); update({ page: 1 }); }}>Clear vehicle</button>}</div>
-      </section>
+      <SearchDiscovery
+        products={data.products} vehicles={data.vehicles} vehicleId={vehicleId}
+        query={query} params={params} value={searchDraft} onValueChange={setSearchDraft}
+        onSearch={value => update({ q: value })}
+        onClear={() => { setSearchDraft(''); update({ q: '' }); }}
+        onReset={reset} motion={motion}
+      />
+      <VehicleFitmentStrip
+        products={data.products} vehicles={data.vehicles} vehicleId={vehicleId}
+        query={query} motion={motion} onPatch={update} onChooseVehicle={openVehicle}
+        onClearVehicle={() => { setVehicle(''); update({ page: 1 }); }}
+      />
       <div className={styles.catalogLayout}>
         <aside className={styles.sidebar} aria-label="Catalog filters"><FilterPanel {...filterProps} /></aside>
         <div className={styles.results}>
@@ -82,13 +93,13 @@ export default function ShopPage() {
             <button type="button" className={styles.textButton} onClick={reset}>Clear filters</button>
           </div>}
           {visible.length ? <><ul ref={gridRef} className={styles.grid} aria-label="Products">
-            {pagination.items.map((item, index) => <li data-shop-id={item.id} key={item.id}><ShopProductCard product={item} vehicleId={vehicleId} vehicles={data.vehicles} eager={index < 3} onQuickView={(id, trigger) => setQuick({ id, trigger })} /></li>)}
+            {pagination.items.map((item, index) => <li data-shop-id={item.id} key={item.id}><ShopProductCard product={item} vehicleId={vehicleId} vehicles={data.vehicles} motion={motion} eager={index < 3} onQuickView={(id, trigger) => setQuick({ id, trigger })} /></li>)}
           </ul><nav className={styles.pagination} aria-label="Catalog pagination"><span>{pagination.from}–{pagination.to} of {pagination.total} parts</span><div><button type="button" className={styles.pageButton} disabled={pagination.page === 1} onClick={() => pageChange(pagination.page - 1)} aria-label="Previous page">←</button>{Array.from({ length: pagination.pages }, (_, index) => index + 1).map(page => <button type="button" key={page} className={styles.pageButton} aria-current={page === pagination.page ? 'page' : undefined} aria-label={`Page ${page}`} onClick={() => pageChange(page)}>{page}</button>)}<button type="button" className={styles.pageButton} disabled={pagination.page === pagination.pages} onClick={() => pageChange(pagination.page + 1)} aria-label="Next page">→</button></div></nav></> : <div className={styles.empty}><span><ShopIcon name="search" /></span><h3>No matching parts.</h3><p>Try a broader search, a different price limit or another demo vehicle. Your selected vehicle will not be cleared automatically.</p><div><button className={styles.primaryButton} type="button" onClick={reset}>Reset product filters</button><button className={styles.outlineButton} type="button" onClick={openVehicle}>Change vehicle</button>{vehicleId && query.fit === 'match' && <button className={styles.textButton} type="button" onClick={() => update({ fit: 'all' })}>Show all parts</button>}</div></div>}
           <p className={styles.catalogNote}><ShopIcon name="info" />Illustrative products and prices. Compatibility is based on synthetic demo data. No real transactions.</p>
         </div>
       </div>
     </div>
     {mobileFilters && <ShopDialog title="Refine your search" onClose={() => setMobileFilters(false)} restoreFocus={filterTrigger.current} motion={motion} duration={SHOP_CONFIG.motion.modalDurationMs} className={styles.filterDialog}><FilterPanel {...filterProps} /><footer className={styles.filterDialogFooter}><button type="button" className={styles.primaryButton} onClick={() => setMobileFilters(false)}>Show {visible.length} parts<ShopIcon name="arrow" /></button></footer></ShopDialog>}
-    {product && <QuickView key={product.id} product={product} trigger={quick.trigger} onClose={() => setQuick(null)} onChooseVehicle={openVehicle} motion={motion} />}
+    {product && <QuickView key={product.id} product={product} trigger={quick.trigger} onClose={() => setQuick(null)} onChooseVehicle={openVehicle} onExploreMatches={showCompatibleParts} motion={motion} />}
   </section>;
 }

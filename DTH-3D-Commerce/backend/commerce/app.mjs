@@ -4,16 +4,19 @@ import cors from 'cors';
 import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
-import { InputError, normalizeItems, quoteOrder, validateProduct, validateRegistration } from '../../shared/domain.mjs';
+import { InputError, normalizeItems, validateProduct, validateRegistration } from '../../shared/domain.mjs';
+import { quoteCart } from '../../shared/cartQuote.mjs';
+import { normalizeCheckoutDetails } from '../../shared/checkout.mjs';
 import { Product, Vehicle, User, Session, Order } from './models.mjs';
 import { cookieToken, digest, hashPassword, randomToken, rateLimiter, verifyPassword } from './security.mjs';
 import { installSupport, isChatMessageRequest } from './support/routes.mjs';
 import { supportModels, purgeCustomerSupport } from './support/models.mjs';
 import { installAdmin } from './admin/routes.mjs';
 import { installExperience } from './experience/routes.mjs';
+import { installCart } from './cart/routes.mjs';
 const asyncRoute = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
 const userView = user => ({ id: String(user._id), email: user.email, role: user.role, savedVehicleId: user.savedVehicleId || '', createdAt: user.createdAt });
-const orderView = order => ({ id: order.id, lines: order.lines, total: order.total, subtotal: order.subtotal, delivery: order.delivery, currency: order.currency, paymentStatus: order.paymentStatus, status: order.status, demoOnly: true, createdAt: order.createdAt });
+const orderView = order => ({ id: order.id, lines: order.lines, total: order.total, subtotal: order.subtotal, delivery: order.delivery, currency: order.currency, paymentStatus: order.paymentStatus, status: order.status, demoOnly: true, createdAt: order.createdAt, quotedAt: order.quotedAt, quoteFingerprint: order.quoteFingerprint, checkout: order.checkout || null });
 export async function makeApp() {
   await Promise.all(supportModels.map(model => model.init()));
   const app = express();
@@ -69,6 +72,7 @@ export async function makeApp() {
   app.locals.supportHub = supportHub;
   installAdmin(router, { authenticated, admin, writeLimit });
   installExperience(router, { authenticated, admin, writeLimit });
+  installCart(router, { Product, Vehicle });
   router.get('/health', (req, res) => res.json({ success: true, demoOnly: true, paymentMode: 'simulation' }));
   router.get('/products', asyncRoute(async (req, res) => res.json({ data: await Product.find({ active: true }).select('-_id -__v').sort({ name: 1 }).lean() })));
   router.get('/vehicles', asyncRoute(async (req, res) => res.json({ data: await Vehicle.find().select('-_id -__v').sort({ make: 1, model: 1, year: 1 }).lean() })));
@@ -134,20 +138,41 @@ export async function makeApp() {
     if (req.body?.demoAcknowledged !== true) throw new InputError('Confirm the simulated nature of this order.');
     const idempotencyKey = req.body?.idempotencyKey;
     if (typeof idempotencyKey !== 'string' || !/^[a-zA-Z0-9-]{8,80}$/.test(idempotencyKey)) throw new InputError('Invalid idempotency key.');
-    const items = normalizeItems(req.body.items), requestHash = digest(JSON.stringify(items));
+    const items = normalizeItems(req.body.items);
+    const checkout = req.body.checkout === undefined ? null : normalizeCheckoutDetails(req.body.checkout);
+    const requestHash = digest(JSON.stringify(checkout ? { items, checkout } : items));
     const query = { userId: req.auth.user._id, idempotencyKey };
     const previous = await Order.findOne(query).lean();
     if (previous) {
       if (previous.requestHash !== requestHash) throw new InputError('This order key has already been used for a different bag.', 409);
       return res.json({ data: orderView(previous) });
     }
-    const products = await Product.find({ id: { $in: items.map(i => i.productId) } }).lean();
-    const vehicles = await Vehicle.find({ id: { $in: items.map(i => i.vehicleId) } }).lean();
-    const quote = quoteOrder(items, products, vehicles);
+    const [products, vehicles] = await Promise.all([
+      Product.find({ id: { $in: [...new Set(items.map(i => i.productId))] } }).lean(),
+      Vehicle.find({ id: { $in: [...new Set(items.map(i => i.vehicleId))] } }).lean(),
+    ]);
+    const checked = quoteCart(items, products, vehicles, { source: 'api' });
+    if (!checked.valid) throw new InputError(checked.lines.find(line => line.status !== 'compatible').issue, 409);
+    const quote = {
+      lines: checked.lines.map(({ status, issue, ...line }) => line),
+      subtotal: checked.subtotal,
+      total: checked.total,
+      currency: checked.currency,
+      delivery: checked.delivery,
+      paymentStatus: checked.paymentStatus,
+      quotedAt: checked.quotedAt,
+      quoteFingerprint: checked.fingerprint,
+    };
     if (!Number.isSafeInteger(req.body.expectedTotal) || req.body.expectedTotal < 0) throw new InputError('Review the current total before confirming this demo order.');
     if (req.body.expectedTotal !== quote.total) throw new InputError('The catalog price changed. Refresh your bag and review the total again.', 409);
+    // Older clients can still submit expectedTotal alone. A reviewed quote also
+    // binds each line's price, name and vehicle, even if aggregate totals match.
+    if (req.body.expectedQuoteFingerprint !== undefined) {
+      if (typeof req.body.expectedQuoteFingerprint !== 'string') throw new InputError('Invalid reviewed quote. Review your bag again.');
+      if (req.body.expectedQuoteFingerprint !== checked.fingerprint) throw new InputError('The reviewed parts or prices changed. Check your bag and review the latest quote again.', 409);
+    }
     try {
-      const order = await Order.create({ ...quote, ...query, requestHash, id: `DTH-${randomUUID().slice(0, 13).toUpperCase()}`, demoOnly: true, status: 'demo-confirmed' });
+      const order = await Order.create({ ...quote, ...query, requestHash, checkout, id: `DTH-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${randomUUID().slice(0, 8).toUpperCase()}`, demoOnly: true, status: 'demo-confirmed' });
       res.status(201).json({ data: orderView(order) });
     } catch (error) {
       if (error.code !== 11000) throw error;

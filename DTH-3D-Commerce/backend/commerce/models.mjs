@@ -21,8 +21,11 @@ const Session = mongoose.model('StoreSession', new Schema({
 const orderSchema = new Schema({
   id: { type: String, required: true, unique: true }, userId: { type: Schema.Types.ObjectId, required: true },
   idempotencyKey: { type: String, required: true }, requestHash: { type: String, required: true },
-  lines: [{ productId: String, vehicleId: String, name: String, quantity: Number, unitPrice: Number, lineTotal: Number, _id: false }],
+  lines: [{ productId: String, vehicleId: String, name: String, vehicleLabel: String, quantity: Number, unitPrice: Number, lineTotal: Number, _id: false }],
   subtotal: Number, delivery: Number, total: Number, currency: String, paymentStatus: String,
+  quotedAt: Date, quoteFingerprint: String,
+  checkout: { recipientName: String, phone: String, email: String, addressLine: String, city: String, note: String,
+    fulfillment: String, paymentMethod: String, demoOnly: Boolean, _id: false },
   status: { type: String, default: 'demo-confirmed' }, demoOnly: { type: Boolean, default: true },
 }, { timestamps: true, collection: 'store_orders' });
 orderSchema.index({ userId: 1, idempotencyKey: 1 }, { unique: true });

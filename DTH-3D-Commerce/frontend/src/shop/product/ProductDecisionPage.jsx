@@ -6,6 +6,7 @@ import FitmentStatus from '../catalog/fitment/FitmentStatus';
 import { vehicleCaption } from '../catalog/fitment/fitment.logic.mjs';
 import { useExperiencePolicy } from '../../experience/interaction/useExperiencePolicy';
 import ProductMedia from './ProductMedia';
+import ProductRecommendations from './recommendations/ProductRecommendations';
 import { animateBagFeedback, useProductActivity, useProductEntrance } from './useProductMotion';
 import { CATEGORY_LABELS, matchingPartsHref, productSpecs, purchaseState, safeShopReturn, validatePurchase, validAccent } from './productDecision.logic.mjs';
 import styles from './ProductDecision.module.css';
@@ -124,6 +125,8 @@ export default function ProductDecisionPage({ product }) {
           </div>
         </div>
       </div>
+      <ProductRecommendations product={product} products={store.data.products} vehicles={store.data.vehicles}
+        vehicleId={store.vehicleId} fromShop={returnTo} onChooseVehicle={chooseVehicle} motion={motion}/>
       <nav className={styles.sectionLinks} aria-label="Product information">
         <a href="#dth-product-about">01 / Description</a><a href="#dth-product-specs">02 / Specifications</a><a href="#dth-product-fitment">03 / Compatibility</a>
       </nav>

@@ -4,19 +4,28 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 export function useProductActivity(ref) {
   const [state, setState] = useState({ active: false, blocked: true });
   useEffect(() => {
-    let visible = true;
+    let disposed = false, frame = 0;
     const update = () => {
-      const blocked = !!(ref.current?.closest('[inert]') || document.querySelector('dialog[open], .dth-support-panel'));
-      const active = visible && !document.hidden && !blocked;
-      setState(previous => previous.active === active && previous.blocked === blocked ? previous : { active, blocked });
+      if(disposed)return;
+      const node=ref.current, rect=node?.getBoundingClientRect();
+      const visible=!!rect && rect.width>0 && rect.height>0 && rect.bottom>0 && rect.top<window.innerHeight && rect.right>0 && rect.left<window.innerWidth;
+      const blocked=!!(node?.closest('[inert]') || document.querySelector('dialog[open], .dth-support-panel'));
+      const active=visible && !document.hidden && !blocked;
+      setState(previous => previous.active===active && previous.blocked===blocked ? previous : {active,blocked});
     };
-    const io = typeof IntersectionObserver === 'function'
-      ? new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; update(); }, { threshold: .01 }) : null;
-    if (ref.current) io?.observe(ref.current);
-    const mo = new MutationObserver(update);
-    mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['open','inert'] });
-    document.addEventListener('visibilitychange', update); update();
-    return () => { io?.disconnect(); mo.disconnect(); document.removeEventListener('visibilitychange', update); };
+    const schedule=()=>{if(disposed||frame)return;frame=requestAnimationFrame(()=>{frame=0;update();});};
+    const io=typeof IntersectionObserver==='function'?new IntersectionObserver(schedule,{threshold:[0,.01]}):null;
+    if(ref.current)io?.observe(ref.current);
+    const mo=new MutationObserver(schedule);
+    mo.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['open','inert']});
+    // Reconcile actual geometry after scrolling/resizing, rather than retaining a stale
+    // isIntersecting value across section height changes or an inspector opening.
+    window.addEventListener('scroll',schedule,{passive:true,capture:true});
+    window.addEventListener('resize',schedule,{passive:true});
+    document.addEventListener('visibilitychange',update);update();
+    return()=>{disposed=true;cancelAnimationFrame(frame);io?.disconnect();mo.disconnect();
+      window.removeEventListener('scroll',schedule,true);window.removeEventListener('resize',schedule);
+      document.removeEventListener('visibilitychange',update);};
   }, [ref]);
   return state;
 }

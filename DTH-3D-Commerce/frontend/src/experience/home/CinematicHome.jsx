@@ -124,7 +124,7 @@ function Story({ product, chooseVehicle, config }) {
 
         <p className={styles.price}>
           {formatMoney(product.price)}
-          <small>DEMO PRICE</small>
+          {/* <small>DEMO PRICE</small> */}
         </p>
       </div>
 

@@ -28,6 +28,6 @@ export default function FilterPanel({ query, counts, ceiling, vehicle, vehicleId
       <p className={styles.filterHelp}>{vehicle ? `Using ${vehicle.model} · ${vehicle.year}.` : vehicleId ? 'The saved vehicle is not in this demo dataset. Choose another vehicle.' : 'Select a vehicle to activate matching. Until then, all parts are shown.'}</p>
       {!vehicle && <button className={styles.outlineButton} type="button" onClick={onChooseVehicle}><ShopIcon name="vehicle" />Select vehicle</button>}
     </fieldset>
-    <p className={styles.datasetNote}><ShopIcon name="info" />Compatibility uses synthetic demo data, not manufacturer verification.</p>
+    {/* <p className={styles.datasetNote}><ShopIcon name="info" />Compatibility uses synthetic demo data, not manufacturer verification.</p> */}
   </div>;
 }

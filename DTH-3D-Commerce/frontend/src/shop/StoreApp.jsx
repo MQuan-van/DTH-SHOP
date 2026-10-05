@@ -1,10 +1,13 @@
 import AccountPage from './account/AccountPage';
+import CheckoutPage from './checkout/CheckoutPage.jsx';
 import { ConfirmationSeal } from './account/AccountMotion';
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, Route, Routes, useLocation, useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import { CATEGORIES, filterProducts, fitment, formatMoney,normalizeItems, quoteOrder } from '../../../shared/domain.mjs';
 import { PREVIEW, FLOW, createOrder, saveProduct, loadAdminProducts, loadOrder } from './api';
 import { StoreProvider, useStore } from './useStore';
+import CartDrawer from './cart/CartDrawer';
+import FullCartPage from './cart/page/FullCartPage';
 import './store.css';
 import Icon from './components/StoreIcon.jsx';
 import ProductCard from './components/ProductCard.jsx';
@@ -61,7 +64,12 @@ function Shell() {
         <NavLink to="/shop">Shop parts</NavLink>
         <NavLink to="/account">My account</NavLink>
       </nav>
-      <div className="dth-header-tools"><button className="dth-vehicle-button" onClick={() => setVehicleOpen(true)} disabled={store.loading || !!store.error}><Icon name="vehicle" /><span>{vehicle ? `${vehicle.model} · ${vehicle.year}` : 'Select your vehicle'}</span><span className="dth-lime">＋</span></button><Link to="/account" className="dth-icon-button" aria-label="Your account"><Icon name="user" /></Link><Link to="/bag" className="dth-bag-button" aria-label={`Shopping bag, ${count} items`}><Icon name="bag" /><span>{count}</span></Link></div>
+      <div className="dth-header-tools"><button className="dth-vehicle-button" onClick={() => setVehicleOpen(true)} disabled={store.loading || !!store.error}><Icon name="vehicle" /><span>{vehicle ? `${vehicle.model} · ${vehicle.year}` : 'Select your vehicle'}</span><span className="dth-lime">＋</span></button><Link to="/account" className="dth-icon-button" aria-label="Your account"><Icon name="user" /></Link><Link to="/bag" className="dth-bag-button" aria-label={`Shopping bag, ${count} items`} aria-haspopup="dialog" aria-controls="dth-cart-drawer"
+        onClick={event => {
+          if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+          if (location.pathname === '/bag') return;
+          event.preventDefault(); store.openCart(event.currentTarget);
+        }}><Icon name="bag" /><span>{count}</span></Link></div>
     </header>
     <main id="dth-content" tabIndex={-1}>
       {store.loading ? <div className="dth-empty">Loading the studio…</div> : store.error ? <div className="dth-empty"><h1>We could not load the store.</h1><p role="alert">{store.error}</p><button className="dth-button dth-primary" onClick={store.refresh}>Try again</button><p>Check the API, MongoDB and the seed step. API mode never silently switches to preview data.</p></div> : <Outlet context={{ chooseVehicle: () => setVehicleOpen(true) }} />}
@@ -69,6 +77,7 @@ function Shell() {
     <footer className="dth-footer"><Link to="/" className="dth-footer-brand">DTH<span> / PARTS STUDIO</span></Link><p>Inspect the design. Check the demo fit. Explore with confidence.</p><div><span>COMP1682 · Final Year Project</span><span>Demo models are not installation guidance.</span></div></footer>
     <div className={`dth-toast ${store.notice ? 'is-visible' : ''}`} role="status" aria-live="polite">{store.notice}</div>
     {vehicleOpen && <VehiclePicker onClose={() => setVehicleOpen(false)} />}
+    <CartDrawer />
   </div>;
 }
 function ModelView({ product, hero = false }) {
@@ -1276,6 +1285,13 @@ function ProductDetails({ product }) {
           </span>
         </div>
 
+        {order.checkout && <div className="dth-receipt-meta" aria-label="Demo checkout details">
+          <strong>{order.checkout.recipientName}</strong>
+          <span>{order.checkout.email} · {order.checkout.phone}</span>
+          <span>{order.checkout.addressLine} · {order.checkout.city}</span>
+          <span>Demo pay on delivery · No real shipment</span>
+        </div>}
+
         <ul className="dth-receipt-lines">
           {order.lines.map(line => {
             const vehicle = store.data.vehicles.find(
@@ -1287,9 +1303,9 @@ function ProductDetails({ product }) {
                 <div>
                   <h2>{line.name}</h2>
                   <p>
-                    {vehicle
+                    {line.vehicleLabel || (vehicle
                       ? `${vehicle.make} ${vehicle.model} · ${vehicle.year}`
-                      : line.vehicleId}
+                      : line.vehicleId)}
                   </p>
                   <small>
                     {line.quantity} × {formatMoney(line.unitPrice)}
@@ -1350,7 +1366,8 @@ export default function StoreApp() {
             }
           />
           <Route path="shop" element={<ShopPage  />} /><Route path="products/:slug" element={<Product />} />
-          <Route path="bag" element={<Bag />} /><Route path="order-complete" element={<Completed />} />
+          <Route path="bag" element={<FullCartPage />} /><Route path="order-complete" element={<Completed />} />
+          <Route path="checkout" element={<CheckoutPage />} />
           <Route path="account" element={<AccountPage />} />
           <Route path="admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
@@ -1358,4 +1375,3 @@ export default function StoreApp() {
     </Routes>
   </StoreProvider>;
 }
- 

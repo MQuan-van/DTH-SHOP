@@ -1,3 +1,4 @@
+import { buildNVXDemoCatalog } from '../../../shared/nvx.mjs';
 /** Explicit UI rehearsal, NOT authentication or a database. Only fictitious @dth.test identities and the public fixture password work. No passwords stored, no API requests. */
 import { normalizeItems, quoteOrder, validateRegistration } from '../../../shared/domain.mjs';
 import { quoteCart } from '../../../shared/cartQuote.mjs';
@@ -109,7 +110,7 @@ export function createFlowSession({ catalog, storage, uuid = () => crypto.random
 let instance;
 export async function flowRequest(path, options) {
   if (!instance) {
-    const catalog = (await import('../../../shared/catalog.json')).default;
+    const catalog = buildNVXDemoCatalog((await import('../../../shared/catalog.json')).default);
     let storage;
     try { storage = window.sessionStorage; } catch { storage = null; }
     instance = createFlowSession({ catalog, storage });

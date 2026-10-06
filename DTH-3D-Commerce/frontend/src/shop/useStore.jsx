@@ -1,3 +1,4 @@
+import useNVXSelection from './garage/useNVXSelection';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { FLOW, currentUser, loadCatalog, logout as apiLogout } from './api';
 import { SupportProvider } from './support/SupportProvider';
@@ -77,6 +78,7 @@ export function StoreProvider({ children }) {
     setNotice(`${result.name} added to your bag.`);
     return true;
   }
+  useNVXSelection({ loading, error, data, vehicleId, setVehicle, setNotice, storageKey: VEHICLE_KEY });
   const value = useMemo(() => ({ data, loading, error, refresh, getCatalogEpoch, bag, setBag, getBagSnapshot, cartRequest, openCart, closeCart, changeBagQuantity, adjustBagQuantity, removeBagLine, vehicleId, setVehicle, user, setUser, getIdentityEpoch, authLoading, authError, retrySession, add, notice, setNotice, lastOrder, setLastOrder, logout: async () => { await apiLogout(); setUser(null); setLastOrder(null); setBag([]); setVehicle(''); } }), [data, loading, error, bag, cartRequest, vehicleId, user, authLoading, authError, notice, lastOrder]);
   return <StoreContext.Provider value={value}><SupportProvider>{children}<SupportWidget/></SupportProvider></StoreContext.Provider>;
 }

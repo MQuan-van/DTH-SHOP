@@ -1,3 +1,4 @@
+import NVXQuickPick from '../../garage/NVXQuickPick';
 import { useMemo, useRef } from 'react';
 import { summarizeFitment, vehicleCaption } from './fitment.logic.mjs';
 import { useFitmentMotion } from './useFitmentMotion';
@@ -38,6 +39,7 @@ export default function VehicleFitmentStrip({ products, vehicles, vehicleId, que
         {vehicleId && <button type="button" className={styles.clear} onClick={onClearVehicle}>Clear vehicle</button>}
       </div>
     </div>
+    <NVXQuickPick vehicles={vehicles} vehicleId={vehicleId} onPatch={onPatch} motion={motion} />
     {vehicle && <div className={styles.filterRow}>
       <div className={styles.fitModes} role="group" aria-label="Compatibility filter">
         <button type="button" aria-pressed={query.fit === 'match'} onClick={() => onPatch({ fit: 'match' })}>

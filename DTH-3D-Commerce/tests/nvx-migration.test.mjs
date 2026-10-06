@@ -1,0 +1,18 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { buildNVXMigrationPlan } from '../backend/commerce/nvx/plan.mjs';
+import { NVX_IDS, NVX_VEHICLES, buildNVXDemoCatalog } from '../shared/nvx.mjs';
+import { makeNVXBaselineFixture } from './nvx-fixtures.mjs';
+const base = makeNVXBaselineFixture();
+test('empty DB plan provisions only 3 versions and 20 synthetic products', () => { const plan = buildNVXMigrationPlan(base, [], []); assert.equal(plan.operations.length, 23); assert.equal(plan.conflicts.length, 0); assert.ok(plan.operations.every(o => o.kind === 'insert')); });
+test('legacy DB plan changes fitment only, not prices/users/orders', () => { const plan = buildNVXMigrationPlan(base, base.products, []); assert.equal(plan.operations.filter(o => o.kind === 'fitment').length, 20); assert.ok(plan.operations.every(o => ['store_vehicles','store_products'].includes(o.collection))); assert.ok(plan.operations.filter(o => o.kind === 'fitment').every(o => !('price' in o) && !('name' in o))); });
+test('planning does not mutate source/database snapshots', () => { const p = structuredClone(base.products), v = []; const old = structuredClone(p); buildNVXMigrationPlan(base, p, v); assert.deepEqual(p, old); assert.deepEqual(v, []); });
+test('second apply plan is empty (idempotent)', () => { const data = buildNVXDemoCatalog(base); assert.equal(buildNVXMigrationPlan(base, data.products, data.vehicles).operations.length, 0); });
+test('existing administrator NVX mappings stay unchanged', () => { const data = buildNVXDemoCatalog(base); data.products[0].vehicleIds = [NVX_IDS[2]]; assert.equal(buildNVXMigrationPlan(base, data.products, data.vehicles).operations.length, 0); });
+for (const field of ['demoOnly','modelUrl','assetLicense','vehicleIds']) test(`custom ${field} is preserved`, () => { const products = structuredClone(base.products); products[0][field] = { demoOnly:false, modelUrl:'/models/custom.glb', assetLicense:'Licensed asset', vehicleIds:['custom'] }[field]; const plan = buildNVXMigrationPlan(base, products, []); assert.ok(!plan.operations.some(o => o.kind === 'fitment' && o.id === products[0].id)); assert.ok(plan.skipped.some(s => s.startsWith(products[0].id))); });
+test('price/name changes do not get overwritten during a valid mapping migration', () => { const products = structuredClone(base.products); products[0].price = 999999; products[0].name = 'Edited price/title'; const op = buildNVXMigrationPlan(base, products, []).operations.find(o => o.id === products[0].id); assert.equal(op.kind, 'fitment'); assert.ok(!op.document); });
+test('a conflicting existing NVX identity blocks the plan', () => { const plan = buildNVXMigrationPlan(base, [], [{ ...NVX_VEHICLES[0], model:'Other model' }]); assert.equal(plan.conflicts.length, 1); });
+test('any existing year, even null, requires review rather than silently stripping data', () => assert.equal(buildNVXMigrationPlan(base, [], [{ ...NVX_VEHICLES[0], year:null }]).conflicts.length, 1));
+test('duplicate IDs are a hard error', () => assert.throws(() => buildNVXMigrationPlan(base, [base.products[0], base.products[0]], [])));
+test('legacy vehicle documents are not deleted by a plan', () => { const plan = buildNVXMigrationPlan(base, base.products, [{ id:'street155-2022' }]); assert.ok(plan.operations.every(o => o.kind !== 'delete')); });
+test('customised source fixture is not used to infer new mappings', () => { const changed = structuredClone(base); changed.products[0].vehicleIds = ['custom']; const plan = buildNVXMigrationPlan(changed, [], []); assert.ok(!plan.operations.some(o => o.id === changed.products[0].id)); });

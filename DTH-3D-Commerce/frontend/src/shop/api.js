@@ -1,4 +1,6 @@
-import catalog from '../../../shared/catalog.json';
+import baseCatalog from '../../../shared/catalog.json';
+import { buildNVXDemoCatalog, assertNVXCatalog } from '../../../shared/nvx.mjs';
+const catalog = buildNVXDemoCatalog(baseCatalog);
 import { normalizeItems, quoteOrder } from '../../../shared/domain.mjs';
 import { quoteCart } from '../../../shared/cartQuote.mjs';
 import { verifyCartQuoteResponse } from '../../../shared/cartQuoteResponse.mjs';
@@ -38,7 +40,7 @@ export async function loadCatalog() {
   if (PREVIEW || FLOW) return structuredClone(catalog);
   const [products, vehicles] = await Promise.all([request('/products'), request('/vehicles')]);
   if (!Array.isArray(products.data) || !Array.isArray(vehicles.data)) throw new Error('The catalog response could not be read.');
-  return { products: products.data, vehicles: vehicles.data };
+  return assertNVXCatalog({ products: products.data, vehicles: vehicles.data });
 }
 export async function requestCartQuote(items) {
   const clean = normalizeItems(items);

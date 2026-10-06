@@ -1,3 +1,4 @@
+import { vehicleLabel as nvxVehicleLabel } from '../../../../../shared/nvx.mjs';
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { formatMoney } from '../../../../../shared/domain.mjs';
@@ -64,7 +65,7 @@ export default function FullCartPage() {
       </div> : <div className={styles.layout}>
         <div className={styles.itemsColumn}>
           <div className={styles.itemsHeading}><h2>Selected parts <span>{String(view.count).padStart(2, '0')}</span></h2><p>{view.lines.length} {view.lines.length === 1 ? 'line' : 'lines'} · {view.vehicleCount} {view.vehicleCount === 1 ? 'vehicle' : 'vehicles'}</p></div>
-          <div className={styles.vehicleNotice}><Icon name="vehicle"/><div><strong>{selectedVehicle ? `Browsing for ${selectedVehicle.make} ${selectedVehicle.model} · ${selectedVehicle.year}` : 'Each part keeps its own vehicle'}</strong><p>Changing the header vehicle never changes existing bag lines. Use a line’s selector to change that line explicitly.</p></div></div>
+          <div className={styles.vehicleNotice}><Icon name="vehicle"/><div><strong>{selectedVehicle ? `Browsing for ${nvxVehicleLabel(selectedVehicle)}` : 'Each part keeps its own vehicle'}</strong><p>Changing the header vehicle never changes existing bag lines. Use a line’s selector to change that line explicitly.</p></div></div>
           {view.blocked && <div className={styles.warning}><Icon name="warning"/><div><strong>Review needed before continuing.</strong><p>{view.inputError || `${view.issueCount} ${view.issueCount === 1 ? 'line needs' : 'lines need'} attention. Resolve the messages below; no item is silently removed.`}</p></div></div>}
           <div ref={list} className={styles.lines}>
             {view.lines.map((row, index) => <BagLine key={row.key} row={row} number={index} reviewing={reviewing} busy={busy} onQuantity={cart.quantity} onAdjust={cart.adjust} onRemove={remove} onVehicle={cart.vehicle} onAlternatives={alternatives}/>)}

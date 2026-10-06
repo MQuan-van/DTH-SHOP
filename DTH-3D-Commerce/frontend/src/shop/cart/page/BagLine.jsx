@@ -1,3 +1,4 @@
+import { vehicleLabel as nvxVehicleLabel } from '../../../../../shared/nvx.mjs';
 import { Link } from 'react-router-dom';
 import { formatMoney } from '../../../../../shared/domain.mjs';
 import ProductImage from '../../catalog/components/ProductImage';
@@ -30,7 +31,7 @@ export default function BagLine({ row, number, reviewing, busy, onQuantity, onAd
       {editable && row.vehicleOptions.length > 0 && <label className={styles.vehicleSelect}>Vehicle for this part
         <select aria-label={`Vehicle for ${row.name}`} value={row.vehicleId} onChange={event => onVehicle(row, event.target.value)}>
           {!row.vehicleOptions.some(v => v.id === row.vehicleId) && <option value={row.vehicleId}>{row.vehicleLabel} — review required</option>}
-          {row.vehicleOptions.map(v => <option key={v.id} value={v.id}>{v.make} {v.model} · {v.year}</option>)}
+          {row.vehicleOptions.map(v => <option key={v.id} value={v.id}>{nvxVehicleLabel(v)}</option>)}
         </select>
       </label>}
       {row.issue && <p className={styles.lineIssue}>{row.issue}</p>}

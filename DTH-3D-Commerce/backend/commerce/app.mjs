@@ -1,3 +1,4 @@
+import { nvxVehicleQuery } from '../../shared/nvx.mjs';
 import express from 'express';
 import { vehiclePreference, orderQuery, literalSearch } from '../../shared/account.mjs';
 import cors from 'cors';
@@ -72,10 +73,10 @@ export async function makeApp() {
   app.locals.supportHub = supportHub;
   installAdmin(router, { authenticated, admin, writeLimit });
   installExperience(router, { authenticated, admin, writeLimit });
-  installCart(router, { Product, Vehicle });
+  installCart(router, { Product, Vehicle, vehicleQuery: nvxVehicleQuery });
   router.get('/health', (req, res) => res.json({ success: true, demoOnly: true, paymentMode: 'simulation' }));
   router.get('/products', asyncRoute(async (req, res) => res.json({ data: await Product.find({ active: true }).select('-_id -__v').sort({ name: 1 }).lean() })));
-  router.get('/vehicles', asyncRoute(async (req, res) => res.json({ data: await Vehicle.find().select('-_id -__v').sort({ make: 1, model: 1, year: 1 }).lean() })));
+  router.get('/vehicles', asyncRoute(async (req, res) => res.json({ data: await Vehicle.find(nvxVehicleQuery()).select('-_id -__v -year').sort({ make: 1, model: 1 }).lean() })));
   router.get('/auth/me', asyncRoute(async (req, res) => { const result = await sessionFor(req); res.json(result ? { user: userView(result.user), csrf: result.session.csrf } : { user: null, csrf: '' }); }));
   router.post('/auth/register', authLimit, asyncRoute(async (req, res) => {
     const { email, password } = validateRegistration(req.body);
@@ -115,7 +116,7 @@ export async function makeApp() {
   }));
   router.put('/account/vehicle', authenticated, writeLimit, asyncRoute(async (req, res) => {
     const savedVehicleId = vehiclePreference(req.body);
-    if (savedVehicleId && !await Vehicle.exists({ id: savedVehicleId })) throw new InputError('This vehicle is no longer in the catalog.', 409);
+    if (savedVehicleId && !await Vehicle.exists(nvxVehicleQuery([savedVehicleId]))) throw new InputError('This vehicle is no longer in the catalog.', 409);
     const user = await User.findOneAndUpdate({ _id: req.auth.user._id, disabled: false }, { $set: { savedVehicleId } }, { new: true, runValidators: true });
     if (!user) throw new InputError('Please sign in again.', 401);
     res.json({ user: userView(user) });
@@ -149,7 +150,7 @@ export async function makeApp() {
     }
     const [products, vehicles] = await Promise.all([
       Product.find({ id: { $in: [...new Set(items.map(i => i.productId))] } }).lean(),
-      Vehicle.find({ id: { $in: [...new Set(items.map(i => i.vehicleId))] } }).lean(),
+      Vehicle.find(nvxVehicleQuery(items.map(i => i.vehicleId))).select('id make model -_id').lean(),
     ]);
     const checked = quoteCart(items, products, vehicles, { source: 'api' });
     if (!checked.valid) throw new InputError(checked.lines.find(line => line.status !== 'compatible').issue, 409);
@@ -184,7 +185,7 @@ export async function makeApp() {
   // Retained for backwards compatibility with the legacy JSON editor.
   router.get('/admin/products', authenticated, admin, asyncRoute(async (req, res) => res.json({ data: await Product.find().select('-_id -__v').sort({ name: 1 }).lean() })));
   router.put('/admin/products/:id', authenticated, admin, writeLimit, asyncRoute(async (req, res) => {
-    const vehicles = await Vehicle.find().lean();
+    const vehicles = await Vehicle.find(nvxVehicleQuery()).lean();
     const record = validateProduct(req.body, vehicles);
     if (record.id !== req.params.id) throw new InputError('Path and product ID must match.');
     const result = await Product.findOneAndUpdate({ id: record.id }, { $set: record }, { upsert: true, new: true, runValidators: true }).select('-_id -__v').lean();

@@ -1,3 +1,5 @@
+import { vehicleLabel as nvxVehicleLabel } from '../../../../shared/nvx.mjs';
+import NVXGarage from '../garage/NVXGarage';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { accountReturnPath, orderUnits } from '../../../../shared/account.mjs';
@@ -13,7 +15,7 @@ import ProductImage from '../catalog/components/ProductImage';
 
 const date = value => Number.isFinite(new Date(value).getTime())
   ? new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value)) : '—';
-const vehicleName = vehicle => vehicle ? `${vehicle.make} ${vehicle.model} · ${vehicle.year}` : 'No vehicle saved';
+const vehicleName = vehicle => vehicle ? `${nvxVehicleLabel(vehicle)}` : 'No vehicle saved';
 const views = { overview: 'Your account.', vehicle: 'Your vehicle.', orders: 'Your orders.', security: 'Account settings.' };
 
 function useLive() {
@@ -90,55 +92,7 @@ function AuthForm() {
   </div>;
 }
 
-function VehicleForm() {
-  const store = useStore(), live = useLive(), lock = useRef(false), fieldId = useId();
-  const saved = store.data.vehicles.find(v => v.id === store.user.savedVehicleId);
-  const [make, setMake] = useState(saved?.make || ''), [model, setModel] = useState(saved?.model || ''), [year, setYear] = useState(saved ? String(saved.year) : '');
-  const [busy, setBusy] = useState(false), [message, setMessage] = useState(''), [error, setError] = useState('');
-  const { vehicles } = store.data;
-  const unique = values => [...new Set(values)];
-  const selected = vehicles.find(v => v.make === make && v.model === model && String(v.year) === year);
-  const active = vehicles.find(v => v.id === store.vehicleId);
-  function useActive() { if (active) { setMake(active.make); setModel(active.model); setYear(String(active.year)); setMessage(''); } }
-  async function save(id) {
-    if (lock.current) return;
-    lock.current = true; setBusy(true); setError(''); setMessage('');
-    try {
-      const user = await saveAccountVehicle(id);
-      if (!live.current) return;
-      const previousSaved = store.user.savedVehicleId;
-      store.setUser(user);
-      if (id || store.vehicleId === previousSaved) store.setVehicle(id);
-      if (!id) { setMake(''); setModel(''); setYear(''); }
-      setMessage(id ? (FLOW ? 'Demo vehicle saved in this tab.' : 'Vehicle saved to your account.') : 'Saved vehicle removed.');
-    } catch (e) {
-      if (!live.current) return;
-      if (e.status === 401) { store.setUser(null); store.setNotice('Your session expired. Please sign in again.'); }
-      else setError(e.message);
-    } finally { lock.current = false; if (live.current) setBusy(false); }
-  }
-  return <div className={s.vehicleGrid}>
-    <section className={s.panel}>
-      <div className={s.panelHeading}><Icon name="vehicle" /><h2>Save your ride</h2></div>
-      <form onSubmit={e => { e.preventDefault(); if (selected) void save(selected.id); }} aria-busy={busy}>
-        <div className={s.field}><label htmlFor={`${fieldId}-make`}>Make</label><select id={`${fieldId}-make`} required disabled={busy} value={make} onChange={e => { setMake(e.target.value); setModel(''); setYear(''); setMessage(''); }}><option value="">Choose make</option>{unique(vehicles.map(v => v.make)).map(v => <option key={v}>{v}</option>)}</select></div>
-        <div className={s.field}><label htmlFor={`${fieldId}-model`}>Model</label><select id={`${fieldId}-model`} required disabled={!make || busy} value={model} onChange={e => { setModel(e.target.value); setYear(''); setMessage(''); }}><option value="">Choose model</option>{unique(vehicles.filter(v => v.make === make).map(v => v.model)).map(v => <option key={v}>{v}</option>)}</select></div>
-        <div className={s.field}><label htmlFor={`${fieldId}-year`}>Year</label><select id={`${fieldId}-year`} required disabled={!model || busy} value={year} onChange={e => { setYear(e.target.value); setMessage(''); }}><option value="">Choose year</option>{unique(vehicles.filter(v => v.make === make && v.model === model).map(v => v.year)).sort((a, b) => b - a).map(v => <option key={v}>{v}</option>)}</select></div>
-        <Notice error>{error}</Notice><Notice>{message}</Notice>
-        <button type="submit" className={s.primary} disabled={!selected || busy}>{busy ? 'Saving…' : 'Save vehicle'}<Icon name="check" /></button>
-        {active && <button type="button" className={s.textButton} disabled={busy} onClick={useActive}>Use current shop selection</button>}
-      </form>
-    </section>
-    <aside className={`${s.panel} ${s.vehicleSummary}`}>
-      <span className={s.pill}>{saved ? (FLOW ? 'SAVED IN THIS TAB' : 'SAVED IN ACCOUNT') : 'NOT SAVED YET'}</span>
-      <div className={s.vehicleSymbol} aria-hidden="true"><Icon name="vehicle" /></div>
-      <h2>{vehicleName(saved)}</h2>
-      <p>Restored when you sign in. Each bag item keeps its own vehicle.</p>
-      
-      {store.user.savedVehicleId && <button type="button" className={s.textButton} disabled={busy} onClick={() => save('')}>Remove saved vehicle</button>}
-    </aside>
-  </div>;
-}
+function VehicleForm() { return <NVXGarage />; }
 
 function OrderContent({ order }) {
   const store = useStore();

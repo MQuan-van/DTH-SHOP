@@ -1,3 +1,4 @@
+import { vehicleLabel as nvxVehicleLabel } from '../../../../shared/nvx.mjs';
 import { fitment } from '../../../../shared/domain.mjs';
 
 export const CART_LIMITS = Object.freeze({ lines: 20, quantity: 10, maxPrice: 1000000000 });
@@ -68,7 +69,7 @@ export function describeBag(bag, data, { loading = false, error = '' } = {}) {
     else if (match === 'incompatible') issue = 'No match in demo data';
     else if (match !== 'compatible') issue = 'Compatibility not established';
     return { ...item, key: lineKey(item.productId, item.vehicleId), product, name: typeof product?.name === 'string' ? product.name : item.productId,
-      vehicleLabel: vehicle ? `${vehicle.make} ${vehicle.model} · ${vehicle.year}` : `Saved vehicle: ${item.vehicleId} (not in catalog)`,
+      vehicleLabel: vehicle ? `${nvxVehicleLabel(vehicle)}` : `Saved vehicle: ${item.vehicleId} (not in catalog)`,
       match, issue, unitPrice: priceOK ? product.price : null, lineTotal: priceOK ? product.price * item.quantity : null,
       canIncrease: !issue && item.quantity < CART_LIMITS.quantity };
   });

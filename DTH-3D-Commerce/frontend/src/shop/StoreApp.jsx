@@ -1,3 +1,5 @@
+import { vehicleLabel as nvxVehicleLabel } from '../../../shared/nvx.mjs';
+import NVXPicker from './garage/NVXPicker';
 import AccountPage from './account/AccountPage';
 import CheckoutPage from './checkout/CheckoutPage.jsx';
 import { ConfirmationSeal } from './account/AccountMotion';
@@ -25,27 +27,8 @@ function Dialog({ title, onClose, children }) {
     <div className="dth-dialog-title"><h2>{title}</h2><button onClick={onClose} aria-label="Close dialog">×</button></div>{children}
   </dialog>;
 }
-function VehiclePicker({ onClose }) {
-  const { data, vehicleId, setVehicle } = useStore();
-  const existing = data.vehicles.find(v => v.id === vehicleId);
-  const [make, setMake] = useState(existing?.make || '');
-  const [model, setModel] = useState(existing?.model || '');
-  const [year, setYear] = useState(existing?.year ? String(existing.year) : '');
-  const unique = list => [...new Set(list)];
-  const models = unique(data.vehicles.filter(v => v.make === make).map(v => v.model));
-  const years = unique(data.vehicles.filter(v => v.make === make && v.model === model).map(v => v.year));
-  const match = data.vehicles.find(v => v.make === make && v.model === model && String(v.year) === year);
-  return <Dialog title="Find your fit." onClose={onClose}>
-    <p className="dth-muted">Choose a vehicle to filter the demo catalog. These fictional vehicles and mappings are for evaluation only.</p>
-    <form className="dth-form" onSubmit={e => { e.preventDefault(); if (match) { setVehicle(match.id); onClose(); } }}>
-      <label>Make<select value={make} required onChange={e => { setMake(e.target.value); setModel(''); setYear(''); }}><option value="">Choose make</option>{unique(data.vehicles.map(v => v.make)).map(m => <option key={m}>{m}</option>)}</select></label>
-      <label>Model<select value={model} required disabled={!make} onChange={e => { setModel(e.target.value); setYear(''); }}><option value="">Choose model</option>{models.map(m => <option key={m}>{m}</option>)}</select></label>
-      <label>Year<select value={year} required disabled={!model} onChange={e => setYear(e.target.value)}><option value="">Choose year</option>{years.map(y => <option key={y}>{y}</option>)}</select></label>
-      <button className="dth-button dth-primary" type="submit" disabled={!match}>Show matching parts <Icon name="arrow" /></button>
-      {vehicleId && <button className="dth-button dth-ghost" type="button" onClick={() => { setVehicle(''); onClose(); }}>Clear selected vehicle</button>}
-    </form>
-  </Dialog>;
-}
+function VehiclePicker({ onClose }) { return <NVXPicker onClose={onClose} />; }
+
 function Shell() {
   const store = useStore(), location = useLocation();
   const [vehicleOpen, setVehicleOpen] = useState(false);
@@ -64,7 +47,7 @@ function Shell() {
         <NavLink to="/shop">Shop parts</NavLink>
         <NavLink to="/account">My account</NavLink>
       </nav>
-      <div className="dth-header-tools"><button className="dth-vehicle-button" onClick={() => setVehicleOpen(true)} disabled={store.loading || !!store.error}><Icon name="vehicle" /><span>{vehicle ? `${vehicle.model} · ${vehicle.year}` : 'Select your vehicle'}</span><span className="dth-lime">＋</span></button><Link to="/account" className="dth-icon-button" aria-label="Your account"><Icon name="user" /></Link><Link to="/bag" className="dth-bag-button" aria-label={`Shopping bag, ${count} items`} aria-haspopup="dialog" aria-controls="dth-cart-drawer"
+      <div className="dth-header-tools"><button className="dth-vehicle-button" onClick={() => setVehicleOpen(true)} disabled={store.loading || !!store.error}><Icon name="vehicle" /><span>{vehicle ? `${nvxVehicleLabel(vehicle)}` : 'Select your vehicle'}</span><span className="dth-lime">＋</span></button><Link to="/account" className="dth-icon-button" aria-label="Your account"><Icon name="user" /></Link><Link to="/bag" className="dth-bag-button" aria-label={`Shopping bag, ${count} items`} aria-haspopup="dialog" aria-controls="dth-cart-drawer"
         onClick={event => {
           if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
           if (location.pathname === '/bag') return;
@@ -346,7 +329,7 @@ function ProductDetails({ product }) {
 
             {vehicle && (
               <p>
-                {vehicle.make} {vehicle.model} · {vehicle.year}
+                {nvxVehicleLabel(vehicle)}
               </p>
             )}
 
@@ -466,7 +449,7 @@ function ProductDetails({ product }) {
               <ul>
                 {matches.map(item => (
                   <li key={item.id}>
-                    {item.make} {item.model} · {item.year}
+                    {nvxVehicleLabel(item)}
                   </li>
                 ))}
               </ul>
@@ -503,7 +486,7 @@ function ProductDetails({ product }) {
 //     const product = store.data.products.find(p => p.id === item.productId);
 //     const vehicle = store.data.vehicles.find(v => v.id === item.vehicleId);
 //     return <article className="dth-bag-item" key={`${item.productId}:${item.vehicleId}`}>
-//       {product && <Link to={`/products/${product.slug}`}><img src={product.imageUrl} alt={product.name} /></Link>}<div><h2>{product?.name || 'Unavailable product'}</h2><p>{product?.finish}</p><p className="dth-fit">{vehicle ? `${vehicle.model} · ${vehicle.year} · demo mapping` : 'Unknown demo vehicle'}</p><button disabled={busy} className="dth-text-button" onClick={() => store.setBag(items => items.filter((_, n) => n !== index))} aria-label={`Remove ${product?.name || item.productId}`}>Remove</button></div><div className="dth-bag-item-end"><strong>{formatMoney((product?.price || 0) * item.quantity)}</strong><label>Qty<select disabled={busy} aria-label={`Quantity for ${product?.name || item.productId}`} value={item.quantity} onChange={e => change(index, Number(e.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1}>{i + 1}</option>)}</select></label></div></article>;
+//       {product && <Link to={`/products/${product.slug}`}><img src={product.imageUrl} alt={product.name} /></Link>}<div><h2>{product?.name || 'Unavailable product'}</h2><p>{product?.finish}</p><p className="dth-fit">{vehicle ? `${nvxVehicleLabel(vehicle)} · demo mapping` : 'Unknown demo vehicle'}</p><button disabled={busy} className="dth-text-button" onClick={() => store.setBag(items => items.filter((_, n) => n !== index))} aria-label={`Remove ${product?.name || item.productId}`}>Remove</button></div><div className="dth-bag-item-end"><strong>{formatMoney((product?.price || 0) * item.quantity)}</strong><label>Qty<select disabled={busy} aria-label={`Quantity for ${product?.name || item.productId}`} value={item.quantity} onChange={e => change(index, Number(e.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1}>{i + 1}</option>)}</select></label></div></article>;
 //   })}<Link className="dth-text-button" to="/shop">← Continue exploring</Link></div><aside className="dth-order-summary"><p className="dth-eyebrow">MOCK CHECKOUT</p><h2>Build summary</h2><div><span>Subtotal</span><strong>{quote ? formatMoney(quote.total) : '—'}</strong></div><div><span>Delivery</span><span>Not applicable — demo</span></div><div className="dth-total"><span>Total</span><strong>{quote ? formatMoney(quote.total) : '—'}</strong></div><p className="dth-muted">{PREVIEW ? 'Preview: the simulated result exists only in this page session. It is not sent to a server.' : 'The API rechecks product prices and demo compatibility before saving the simulated order to MongoDB.'}</p><label className="dth-checkbox"><input type="checkbox" checked={ack} disabled={busy} onChange={e => setAck(e.target.checked)} />I understand this is a demonstration, with no payment, shipment or real fitment guarantee.</label>{!PREVIEW && !store.user ? <Link className="dth-button dth-primary" to="/account?return=/bag">Sign in to continue</Link> : <button className="dth-button dth-primary" disabled={!ack || !quote || busy || store.authLoading} onClick={checkout}>{busy ? 'Creating simulated order…' : 'Place simulated order'}<Icon name="arrow" /></button>}{(quoteError || error) && <p className="dth-error" role="alert">{quoteError || error}</p>}</aside></div>}</section>;
 // }
 // function Completed() {
@@ -869,7 +852,7 @@ function ProductDetails({ product }) {
                       {reviewing ? (
                         <p>
                           {vehicle
-                            ? `${vehicle.make} ${vehicle.model} · ${vehicle.year}`
+                            ? `${nvxVehicleLabel(vehicle)}`
                             : item.vehicleId}
                         </p>
                       ) : (
@@ -904,7 +887,7 @@ function ProductDetails({ product }) {
                                   ).status !== 'compatible'
                                 }
                               >
-                                {v.make} {v.model} · {v.year}
+                                {nvxVehicleLabel(v)}
                               </option>
                             ))}
                           </select>
@@ -1304,7 +1287,7 @@ function ProductDetails({ product }) {
                   <h2>{line.name}</h2>
                   <p>
                     {line.vehicleLabel || (vehicle
-                      ? `${vehicle.make} ${vehicle.model} · ${vehicle.year}`
+                      ? `${nvxVehicleLabel(vehicle)}`
                       : line.vehicleId)}
                   </p>
                   <small>

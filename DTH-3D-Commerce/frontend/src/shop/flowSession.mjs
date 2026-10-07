@@ -1,3 +1,4 @@
+import { handleGarageFlow, saveGarageFlowVehicle } from './account/member/garageFlow.mjs';
 import { buildNVXDemoCatalog } from '../../../shared/nvx.mjs';
 /** Explicit UI rehearsal, NOT authentication or a database. Only fictitious @dth.test identities and the public fixture password work. No passwords stored, no API requests. */
 import { normalizeItems, quoteOrder, validateRegistration } from '../../../shared/domain.mjs';
@@ -37,6 +38,8 @@ export function createFlowSession({ catalog, storage, uuid = () => crypto.random
     let body = {};
     if (options.body) { try { body = JSON.parse(options.body); } catch { fail('Invalid JSON.'); } }
     if (body === null || typeof body !== 'object' || Array.isArray(body)) fail('Invalid request body.');
+    const garageResult = handleGarageFlow({ route, method, body, member, catalog, persist });
+    if (garageResult !== undefined) return garageResult;
     if (method === 'GET' && route === '/auth/me') return { user: copy(user()) };
     if (method === 'GET' && route === '/products') return { data: copy(catalog.products) };
     if (method === 'GET' && route === '/vehicles') return { data: copy(catalog.vehicles) };
@@ -58,7 +61,7 @@ export function createFlowSession({ catalog, storage, uuid = () => crypto.random
     if (method === 'PUT' && route === '/account/vehicle') {
       const current = member(), id = vehiclePreference(body);
       if (id && !catalog.vehicles.some(v => v.id === id)) fail('Choose a vehicle from the catalog.');
-      current.savedVehicleId = id; persist(); return { user: copy(current) };
+      return saveGarageFlowVehicle(current, id, catalog, persist);
     }
     if (method === 'POST' && route === '/orders') {
       const current = member();

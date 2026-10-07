@@ -1,3 +1,4 @@
+import { NVX_IDS } from '../../shared/nvx.mjs';
 import mongoose from 'mongoose';
 const { Schema } = mongoose;
 const Product = mongoose.model('StoreProduct', new Schema({
@@ -11,6 +12,9 @@ const Vehicle = mongoose.model('StoreVehicle', new Schema({
 }, { collection: 'store_vehicles' }));
 const User = mongoose.model('StoreUser', new Schema({
   savedVehicleId: { type: String, default: '' },
+  garageVehicleIds: { type: [{ type: String, enum: NVX_IDS }], default: undefined,
+    validate: { validator: ids => ids === undefined || (ids.length <= 3 && new Set(ids).size === ids.length), message: 'Choose up to three distinct NVX versions.' } },
+  garageRevision: { type: Number, default: 0, min: 0, validate: Number.isSafeInteger },
   email: { type: String, required: true, unique: true }, passwordHash: { type: String, required: true },
   role: { type: String, enum: ['customer', 'admin'], default: 'customer' }, disabled: { type: Boolean, default: false },
 }, { timestamps: true, collection: 'store_users' }));

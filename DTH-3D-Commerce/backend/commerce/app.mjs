@@ -1,3 +1,5 @@
+import { installGarage } from './garage/routes.mjs';
+import { publicGarageUser } from '../../shared/garage.mjs';
 import { nvxVehicleQuery } from '../../shared/nvx.mjs';
 import express from 'express';
 import { vehiclePreference, orderQuery, literalSearch } from '../../shared/account.mjs';
@@ -16,7 +18,7 @@ import { installAdmin } from './admin/routes.mjs';
 import { installExperience } from './experience/routes.mjs';
 import { installCart } from './cart/routes.mjs';
 const asyncRoute = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
-const userView = user => ({ id: String(user._id), email: user.email, role: user.role, savedVehicleId: user.savedVehicleId || '', createdAt: user.createdAt });
+const userView = publicGarageUser;
 const orderView = order => ({ id: order.id, lines: order.lines, total: order.total, subtotal: order.subtotal, delivery: order.delivery, currency: order.currency, paymentStatus: order.paymentStatus, status: order.status, demoOnly: true, createdAt: order.createdAt, quotedAt: order.quotedAt, quoteFingerprint: order.quoteFingerprint, checkout: order.checkout || null });
 export async function makeApp() {
   await Promise.all(supportModels.map(model => model.init()));
@@ -74,6 +76,7 @@ export async function makeApp() {
   installAdmin(router, { authenticated, admin, writeLimit });
   installExperience(router, { authenticated, admin, writeLimit });
   installCart(router, { Product, Vehicle, vehicleQuery: nvxVehicleQuery });
+  installGarage(router, { User, Vehicle, authenticated, writeLimit });
   router.get('/health', (req, res) => res.json({ success: true, demoOnly: true, paymentMode: 'simulation' }));
   router.get('/products', asyncRoute(async (req, res) => res.json({ data: await Product.find({ active: true }).select('-_id -__v').sort({ name: 1 }).lean() })));
   router.get('/vehicles', asyncRoute(async (req, res) => res.json({ data: await Vehicle.find(nvxVehicleQuery()).select('-_id -__v -year').sort({ make: 1, model: 1 }).lean() })));
@@ -114,13 +117,7 @@ export async function makeApp() {
     if (!order) throw new InputError('Order not found.', 404);
     res.json({ data: orderView(order) });
   }));
-  router.put('/account/vehicle', authenticated, writeLimit, asyncRoute(async (req, res) => {
-    const savedVehicleId = vehiclePreference(req.body);
-    if (savedVehicleId && !await Vehicle.exists(nvxVehicleQuery([savedVehicleId]))) throw new InputError('This vehicle is no longer in the catalog.', 409);
-    const user = await User.findOneAndUpdate({ _id: req.auth.user._id, disabled: false }, { $set: { savedVehicleId } }, { new: true, runValidators: true });
-    if (!user) throw new InputError('Please sign in again.', 401);
-    res.json({ user: userView(user) });
-  }));
+  // Step16: /account/vehicle is registered by installGarage (one atomic garage writer).
   router.get('/account/orders', authenticated, asyncRoute(async (req, res) => {
     const { page, pageSize, search } = orderQuery(req.query);
     const query = { userId: req.auth.user._id };

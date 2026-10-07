@@ -87,3 +87,37 @@
 .sidebar .visual[data-compact=true] .visualControls{bottom:6px}
 .root .sidebar .visualControls .motionButton{min-height:30px;font-size:10px;padding:4px 12px}
 @media(max-width:760px){.sidebar .visual[data-compact=true]{display:none}}
+
+/* DTH GARAGE16 — member area only. Login, Home, Store CSS and loader stay unchanged. */
+.memberLayout { display:block; min-width:0; border:0; background:transparent; }
+.memberLayout .sidebar { position:static; display:flex; align-items:center; flex-wrap:wrap; gap:16px; padding:0 0 20px; border:0; border-bottom:1px solid #dce5eb; background:transparent; width:100%; }
+.memberLayout .identity { display:flex; align-items:center; gap:10px; margin:0; max-width:245px; text-align:left; min-width:0; }
+.memberLayout .identity strong { font-size:12px; font-weight:500; overflow-wrap:anywhere; }
+.memberLayout .avatar { width:32px; height:32px; min-width:32px; font-size:13px; margin:0; background:#edf5ff; color:#0066cc; border-radius:50%; }
+.memberLayout .sidebar nav { display:flex; flex-direction:row; gap:3px; margin:0 0 0 auto; padding:0; border:0; }
+.memberLayout .sidebar nav a { min-height:42px; display:flex; gap:8px; padding:9px 14px; border:0; border-radius:999px; color:#5b7487; font-size:12px; background:transparent; text-decoration:none; }
+.memberLayout .sidebar nav a[aria-current="page"] { background:#edf5ff; color:#0066cc; }
+.memberLayout .sidebar nav a>span { display:none; }
+.memberLayout .sidebar nav svg { width:15px; height:15px; }
+.memberLayout .logout { width:auto; min-height:40px; padding:8px 0; margin:0; border:0; background:transparent; font-size:12px; color:#617787; }
+.memberLayout .logout>span { display:none; }
+.memberLayout .memberContent { min-width:0; padding:30px 0 0; }
+.memberLayout .pageHeading { margin:0 0 26px; align-items:center; }
+.memberLayout .pageHeading h1 { font-size:clamp(30px,4vw,44px); line-height:1.1; letter-spacing:-.045em; font-weight:600; margin:0; }
+.memberLayout .pageHeading .back { margin:0; font-size:12px; }
+.memberLayout .panel { border:1px solid #dce5eb; border-radius:16px; padding:24px; box-shadow:none; background:#fff; }
+.memberLayout .overviewCards { display:grid; grid-template-columns:minmax(0,1.65fr) minmax(0,1fr); gap:18px; margin-bottom:26px; }
+.memberLayout .orderStat { min-height:0; background:#fff; }
+.memberLayout .orderStat>strong { font-size:44px; font-weight:500; letter-spacing:-.04em; }
+.memberLayout .cardTop { font-size:11px; }
+.memberLayout .panelHeading h2 { font-size:17px; font-weight:600; letter-spacing:-.02em; }
+.memberLayout .orderRow { padding:17px 0; }
+.memberLayout .orderGlyph { width:36px; height:36px; background:#f3f7fa; color:#58758a; }
+.memberLayout .orderName strong { font-size:12px; }.memberLayout .orderName small { font-size:11px; }
+.memberLayout .orderAmount b { font-size:13px; }.memberLayout .orderAmount small { font-size:10px; }
+.memberLayout .empty { padding:32px 16px; }.memberLayout .empty h3 { font-size:18px; font-weight:500; }
+.memberLayout .dangerArea { margin-top:32px; border-top:1px solid #e2e8ee; padding-top:24px; }
+@media(max-width:1000px){ .memberLayout .identity{max-width:180px;} .memberLayout .sidebar{gap:10px;} .memberLayout .sidebar nav a{padding:9px 11px;} }
+@media(max-width:760px){ .memberLayout .sidebar{gap:10px;}.memberLayout .identity{max-width:calc(100% - 100px);order:0;} .memberLayout .logout{order:1;margin-left:auto;} .memberLayout .sidebar nav{width:100%;margin:6px 0 0;justify-content:space-between;order:2;} .memberLayout .sidebar nav svg{display:none;} .memberLayout .sidebar nav a{font-size:12px;padding:9px 13px;justify-content:center;} .memberLayout .memberContent{padding-top:24px;} .memberLayout .overviewCards{grid-template-columns:1fr;} .memberLayout .panel{padding:20px;} }
+@media(prefers-reduced-motion:reduce){.memberLayout *{animation:none!important;transition:none!important;}}
+/* END DTH GARAGE16 MEMBER AREA */

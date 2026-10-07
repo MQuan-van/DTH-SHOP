@@ -130,3 +130,18 @@ export async function studioRequest(path, options={}) {
   if (MODE !== 'api') throw new Error('Admin and live support require API mode.');
   return request(path, options);
 }
+
+// DTH GARAGE16 API — same session / CSRF / timeout boundary as existing account calls.
+export async function loadAccountGarage() {
+  const generation = authGeneration;
+  const result = await request('/account/garage', {}, generation);
+  if (generation !== authGeneration) throw sessionChanged();
+  return result;
+}
+export async function updateAccountGarage(command) {
+  const generation = authGeneration;
+  const result = await request('/account/garage', { method: 'POST', body: JSON.stringify(command) }, generation);
+  if (generation !== authGeneration) throw sessionChanged();
+  return result;
+}
+// END DTH GARAGE16 API

@@ -1,3 +1,6 @@
+// DTH Loader 17.2 — deferred graphics startup, existing readiness preserved.
+import { StartupCoverContext } from './StartupRenderContext.jsx';
+import { nextLoaderCheckDelay } from './loaderSchedule.mjs';
 import { Component, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
@@ -102,7 +105,11 @@ export default function AppLoaderGate({ children }) {
       if (decision.exit) { exit(decision.reason, decision.reason === 'background' || decision.reason === 'navigation'); return; }
       setPhase(previous => previous === 'exit' || previous === 'complete'
         ? previous : decision.reason === 'waiting' ? 'waiting' : 'brand');
-      timer = setTimeout(inspect, 50);
+      timer = setTimeout(inspect, nextLoaderCheckDelay({
+        elapsed: now - (started.current ?? now),
+        brandElapsed: logoAt.current === null ? 0 : now - logoAt.current,
+        logoReady, reduced,
+      }));
     };
     inspect();
     return () => clearTimeout(timer);
@@ -146,7 +153,7 @@ export default function AppLoaderGate({ children }) {
     };
   }, [covered, complete, exit]);
 
-  return <AppReadinessContext.Provider value={report}>
+  return <StartupCoverContext.Provider value={covered}><AppReadinessContext.Provider value={report}>
     <div ref={shell} data-dth-app-shell data-dth-intro-state={phase}
       data-dth-intro-reason={reason.current} inert={covered}>
       {children}
@@ -156,5 +163,5 @@ export default function AppLoaderGate({ children }) {
         duration={exitDuration} logoReady={logoReady} onLogoReady={readyLogo}
         onLogoError={failLogo} onSkip={skip} />
     </OverlayBoundary>, document.body)}
-  </AppReadinessContext.Provider>;
+  </AppReadinessContext.Provider></StartupCoverContext.Provider>;
 }

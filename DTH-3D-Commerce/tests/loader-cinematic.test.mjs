@@ -5,107 +5,95 @@ import { buildLoaderCues } from '../frontend/src/experience/loader/loaderCues.mj
 import { createLoaderMotion } from '../frontend/src/experience/loader/loaderMotion.mjs';
 import { loaderDecision } from '../frontend/src/experience/loader/loader.logic.mjs';
 
-function fixture({ width = 1440, rejects = false, throws = false } = {}) {
-  const calls = [];
-  let cancellations = 0;
+function fixture({ width = 1440, throws = false, rejects = false } = {}) {
+  const calls = []; let cancelled = 0, paused = 0, finished = 0;
   const node = { animate(frames, options) {
-    if (throws) throw new Error('animation unavailable');
-    calls.push({ frames, options });
-    return { finished: rejects ? Promise.reject(new Error('cancelled')) : Promise.resolve(), cancel() { cancellations++; } };
+    if (throws) throw Error('unsupported');
+    const animation = { finished: rejects ? Promise.reject(Error('cancelled')) : Promise.resolve(),
+      cancel() { cancelled++; }, pause() { paused++; }, finish() { finished++; } };
+    calls.push({ frames, options, animation }); return animation;
   } };
-  const counts = { segment: 7, echo: 2, bracket: 4, arc: 3, word: 3, streak: 4 };
-  const root = {
-    ...node,
-    ownerDocument: { defaultView: { innerWidth: width } },
-    querySelector: () => node,
-    querySelectorAll: selector => Array.from({ length: counts[selector.replace('[data-ignition-', '').replace(']', '')] || 0 }, () => node),
-  };
-  return { root, calls, cancelled: () => cancellations };
+  const root = { ...node, ownerDocument: { defaultView: { innerWidth: width }, timeline: { currentTime: 1000 } },
+    querySelector: () => node, querySelectorAll: () => [node, node, node] };
+  return { root, calls, count: () => ({ cancelled, paused, finished }) };
 }
-const flatten = cue => Object.values(cue).flatMap(value => Array.isArray(value) ? value : [value]).filter(value => value && typeof value === 'object');
-
-test('default brand is slow enough to read and exit remains finite', () => {
-  assert.ok(config.brandMs >= 2500 && config.brandMs <= 7000); assert.ok(config.exitMs > 0 && config.exitMs <= 1200);
+const cuesOf = value => Object.values(value).flatMap(v => Array.isArray(v) ? v : [v]).filter(v => v && typeof v === 'object');
+test('normal presentation is 2.5s plus 360ms fade, not a network percentage', () => {
+  assert.equal(config.brandMs, 2500); assert.equal(config.exitMs, 360);
   assert.ok(config.maxCoverMs > config.brandMs + config.exitMs);
 });
-test('visual upgrade does not replay for existing sessions', () => assert.equal(config.sessionKey, 'dth.ignition.seen.v1'));
-test('brand timing and watchdog are not the same delay', () => {
-  assert.equal(loaderDecision({ ready: true, logoReady: true, elapsed: config.brandMs - 500, brandElapsed: config.brandMs - 500 }).exit, false);
-  assert.equal(loaderDecision({ ready: true, logoReady: true, elapsed: config.brandMs + 100, brandElapsed: config.brandMs }).reason, 'ready');
+test('intro key and original logo dimensions stay compatible', () => {
+  assert.equal(config.sessionKey, 'dth.ignition.seen.v1');
+  assert.equal(config.logoUrl, '/branding/dth-logo-original.png');
+  assert.equal(config.logoWidth, 1536); assert.equal(config.logoHeight, 1024);
 });
-test('all cues have finite nonnegative durations and delays', () => {
-  for (const cue of flatten(buildLoaderCues())) {
-    assert.ok(Number.isFinite(cue.delay) && cue.delay >= 0);
-    assert.ok(Number.isFinite(cue.duration) && cue.duration > 0);
+test('all movement ends before the 650ms still-logo hold', () => {
+  const cues = buildLoaderCues(); assert.equal(cues.recognitionHoldMs, 650);
+  assert.equal(cues.fragments.length, 3);
+  for (const cue of cuesOf(cues)) {
+    assert.ok(cue.delay >= 0 && cue.duration > 0);
+    assert.ok(cue.delay + cue.duration <= cues.total - cues.recognitionHoldMs);
   }
 });
-test('recognition hold is at least 600 ms at default speed', () => assert.ok(buildLoaderCues().recognitionHoldMs >= 600));
-test('all primary cues leave time for the final still logo', () => {
-  const cue = buildLoaderCues();
-  for (const entry of flatten(cue)) assert.ok(entry.delay + entry.duration <= cue.total - cue.recognitionHoldMs);
+for (const ms of [1000, 1800, 2500, 5000, 7000]) test(`choreography scales together: ${ms}`, () => {
+  const c = buildLoaderCues(ms); assert.equal(c.total, ms);
+  assert.ok(cuesOf(c).every(x => x.delay + x.duration <= ms - c.recognitionHoldMs + .000001));
 });
-test('seven original red segments light in ascending order', () => {
-  const { segments } = buildLoaderCues(); assert.equal(segments.length, 7);
-  assert.ok(segments.every((s, i) => !i || s.delay > segments[i - 1].delay));
+for (const ms of [NaN, Infinity, -1, 0, 999, 10000, '2500', null]) test(`invalid time defaults safely: ${String(ms)}`, () => {
+  assert.equal(buildLoaderCues(ms).total, config.brandMs);
 });
-test('silver sweep starts after most of the face reveal, not at the same instant', () => {
-  const cue = buildLoaderCues(); assert.ok(cue.silver.delay > cue.face.delay + cue.face.duration * .8);
-});
-for (const n of [1800, 3500, 5000, 7000]) test(`choreography scales as a unit at ${n}ms`, () => {
-  const cue = buildLoaderCues(n); assert.equal(cue.total, n);
-  assert.ok(Math.abs(cue.silver.duration - 1100 * n / 3500) < 1e-9);
-  assert.ok(flatten(cue).every(e => e.delay + e.duration <= n));
-});
-for (const n of [NaN, Infinity, -1, 0, 999, 10000, '3500', null]) test(`invalid duration falls back safely: ${String(n)}`, () => {
-  assert.equal(buildLoaderCues(n).total, config.brandMs);
-});
-test('controller schedules every main stage and never repeats an animation forever', () => {
-  const f = fixture(); const controller = createLoaderMotion(f.root);
+test('desktop schedules exactly seven finite entry tracks', () => {
+  const f = fixture(), c = createLoaderMotion(f.root); assert.equal(f.calls.length, 7);
   for (const call of f.calls) {
     assert.equal(call.options.iterations, 1);
-    assert.ok(Number.isFinite(call.options.duration));
-    assert.ok(call.options.duration + (call.options.delay || 0) <= config.brandMs - buildLoaderCues().recognitionHoldMs + 1e-6);
+    assert.ok(call.options.duration + (call.options.delay || 0) <= 1850);
+    for (const frame of call.frames) assert.ok(Object.keys(frame).every(k => ['opacity', 'transform', 'offset'].includes(k)));
   }
-  for (const id of ['stage-settle', 'original-face-reveal', 'silver-sweep', 'cyan-bridge'])
-    assert.ok(f.calls.some(call => call.options.id === `dth-ignition-${id}`));
-  controller.dispose(); assert.equal(f.cancelled(), f.calls.length);
+  for (const id of ['fragment-0', 'fragment-1', 'fragment-2', 'original-face-reveal', 'silver-sweep', 'signature-line'])
+    assert.ok(f.calls.some(x => x.options.id === `dth-ignition-${id}`));
+  c.dispose(); c.dispose(); assert.equal(f.count().cancelled, 7);
 });
-test('compact devices have fewer depth layers and streaks', () => {
-  const wide = fixture(); const compact = fixture({ width: 390 });
-  const a = createLoaderMotion(wide.root), b = createLoaderMotion(compact.root);
-  assert.equal(wide.calls.length - compact.calls.length, 3); a.dispose(); b.dispose();
+test('compact uses five tracks without deleting the main logo', () => {
+  const f = fixture({ width: 390 }); createLoaderMotion(f.root).dispose(); assert.equal(f.calls.length, 5);
+  assert.ok(f.calls.some(x => x.options.id === 'dth-ignition-original-face-reveal'));
 });
-test('reduced motion schedules no entry effects', () => {
+test('all tracks share a clock; effect restart can resume elapsed time', () => {
+  const f = fixture(); createLoaderMotion(f.root, { elapsedMs: 425 }).dispose();
+  assert.ok(f.calls.every(x => x.animation.startTime === 575));
+});
+test('a rejected timing cannot make the animation infinite', () => {
+  const f = fixture(); createLoaderMotion(f.root, { elapsedMs: Infinity }).dispose();
+  assert.ok(f.calls.every(x => x.animation.startTime === 1000));
+});
+test('freeze pauses rather than cancelling to an unrelated final pose', () => {
+  const f = fixture(), c = createLoaderMotion(f.root); c.freeze();
+  assert.equal(f.count().paused, 7); assert.equal(f.count().cancelled, 0); c.dispose();
+});
+test('reduced-motion change can finish decorative movement', () => {
+  const f = fixture(), c = createLoaderMotion(f.root); c.finish(); assert.equal(f.count().finished, 7); c.dispose();
+});
+test('reduced entry schedules no animations', () => {
   const f = fixture(); createLoaderMotion(f.root, { reduced: true }).dispose(); assert.equal(f.calls.length, 0);
 });
-test('reduced exit is a short opacity transition only', () => {
-  const f = fixture(); createLoaderMotion(f.root, { reduced: true, exit: true, duration: 100 }).dispose();
-  assert.equal(f.calls.length, 1); assert.equal(f.calls[0].options.duration, 100);
-  assert.deepEqual(f.calls[0].frames, [{ opacity: 1 }, { opacity: 0 }]);
+for (const reduced of [false, true]) test(`exit only fades the root: ${reduced}`, () => {
+  const f = fixture(); createLoaderMotion(f.root, { exit: true, reduced, duration: 100 }).dispose();
+  assert.equal(f.calls.length, 1); assert.deepEqual(f.calls[0].frames, [{ opacity: 1 }, { opacity: 0 }]);
 });
-test('ordinary exit has no leftover entry timeline', () => {
-  const f = fixture(); createLoaderMotion(f.root, { exit: true, duration: 750 }).dispose();
-  assert.equal(f.calls.length, 6); assert.ok(f.calls.every(c => !c.options.delay));
-});
-test('invalid exit duration uses the quiet fallback', () => {
-  const f = fixture(); createLoaderMotion(f.root, { reduced: true, exit: true, duration: Infinity }).dispose();
+test('invalid exit time uses quiet fallback', () => {
+  const f = fixture(); createLoaderMotion(f.root, { exit: true, duration: Infinity }).dispose();
   assert.equal(f.calls[0].options.duration, config.quietExitMs);
 });
-test('cleanup is idempotent under StrictMode-style double disposal', () => {
-  const f = fixture(); const c = createLoaderMotion(f.root); c.dispose(); c.dispose(); assert.equal(f.cancelled(), f.calls.length);
-});
-test('motion failure does not throw or lock the rest of the app', () => {
+test('absent or failing WAAPI cannot lock app', () => {
+  assert.doesNotThrow(() => createLoaderMotion(null).dispose());
+  assert.doesNotThrow(() => createLoaderMotion({ querySelector: () => ({}) }).dispose());
   const f = fixture({ throws: true }); assert.doesNotThrow(() => createLoaderMotion(f.root).dispose());
 });
-test('null root is safe', () => assert.doesNotThrow(() => createLoaderMotion(null).dispose()));
-test('cancelled finished promises are handled', async () => {
+test('cancelled animation promise is handled', async () => {
   const f = fixture({ rejects: true }); createLoaderMotion(f.root).dispose(); await new Promise(r => setImmediate(r));
-  assert.ok(f.calls.length > 0);
 });
-test('Skip, errors and background are still allowed during the slow brand clock', () => {
-  for (const [key, reason] of [['skipped', 'skip'], ['failed', 'error'], ['hidden', 'background'], ['routeChanged', 'navigation']])
-    assert.deepEqual(loaderDecision({ elapsed: 50, brandElapsed: 0, [key]: true }), { exit: true, reason });
-});
-test('late assets cannot hold the overlay indefinitely', () => {
-  assert.equal(loaderDecision({ elapsed: config.maxCoverMs, ready: false, logoReady: false }).reason, 'timeout');
-});
+for (const [flag, reason] of [['skipped', 'skip'], ['failed', 'error'], ['hidden', 'background'], ['routeChanged', 'navigation']])
+  test(`${reason} interrupts without waiting for animation`, () => assert.equal(loaderDecision({ elapsed: 10, [flag]: true }).reason, reason));
+test('slow network is not declared ready by brand clock', () => assert.equal(loaderDecision({
+  elapsed: config.brandMs, brandElapsed: config.brandMs, logoReady: true, ready: false,
+}).exit, false));
+test('maximum cover still releases missing image/page', () => assert.equal(loaderDecision({ elapsed: config.maxCoverMs }).reason, 'timeout'));

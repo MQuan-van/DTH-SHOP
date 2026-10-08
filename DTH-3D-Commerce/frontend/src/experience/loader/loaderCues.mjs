@@ -1,24 +1,7 @@
 import { LOADER_CONFIG } from './loader.config.mjs';
-
-export const CUE_REFERENCE_MS = 3500;
-/** Each cue finishes before 2850ms; the remaining 650ms is deliberately still. */
-const windows = Object.freeze({
-  grid: [0, 1300],
-  brackets: [100, 900],
-  rings: [300, 1900],
-  stage: [250, 1550],
-  face: [470, 1330],
-  echo: [300, 1550],
-  silver: [1640, 1100],
-  glint: [2290, 410],
-  cyan: [2170, 630],
-  tagline: [2170, 650],
-  underglow: [360, 2450],
-});
-export const RED_SEGMENT_COUNT = 7;
-export const STREAK_COUNT = 4;
-
-/** Invalid custom timings cannot create infinite or negative animation durations. */
+export const CUE_REFERENCE_MS = 2500;
+export const FRAGMENT_COUNT = 3;
+/** Static clipped regions; only opacity/transform are animated. */
 export function buildLoaderCues(brandMs = LOADER_CONFIG.brandMs) {
   const total = Number.isFinite(brandMs) && brandMs >= 1000 && brandMs <= 7000
     ? brandMs : LOADER_CONFIG.brandMs;
@@ -26,9 +9,11 @@ export function buildLoaderCues(brandMs = LOADER_CONFIG.brandMs) {
   const cue = (delay, duration) => Object.freeze({ delay: delay * scale, duration: duration * scale });
   return Object.freeze({
     total,
-    ...Object.fromEntries(Object.entries(windows).map(([key, value]) => [key, cue(...value)])),
-    segments: Object.freeze(Array.from({ length: RED_SEGMENT_COUNT }, (_, i) => cue(100 + i * 125, 1400 - i * 75))),
-    streaks: Object.freeze(Array.from({ length: STREAK_COUNT }, (_, i) => cue(600 + i * 240, 780))),
+    fragments: Object.freeze([cue(100, 1050), cue(240, 1190), cue(370, 1240)]),
+    face: cue(640, 980),
+    silver: cue(1260, 580),
+    aura: cue(250, 1400),
+    underline: cue(940, 850),
     recognitionHoldMs: 650 * scale,
   });
 }

@@ -1,3 +1,6 @@
+// DTH Loader 17.2 — deferred graphics startup, existing readiness preserved.
+import { useStartupWebGL } from '../../experience/loader/StartupRenderContext.jsx';
+// DTH Shop Product UX17 — scoped presentation integration.
 import { Component, Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
 import ProductImage from '../catalog/components/ProductImage';
 import { hasWebGL } from '../../experience/interaction/useExperiencePolicy';
@@ -8,6 +11,7 @@ import studyStyles from './advanced/StudyControls.module.css';
 import { permittedMode } from './advanced/study.logic.mjs';
 import { useProduct3DProfile } from './3d/useProduct3DProfile';
 import AssetProfileDetails from './3d/AssetProfileDetails';
+import Disclosure from '../ux17/Disclosure';
 const Scene = lazy(() => import('./ProductDecisionScene'));
 class Boundary extends Component {
   state = { failed: false };
@@ -27,7 +31,7 @@ export default function ProductMedia({ product, motion, policy }) {
   const learned=useCallback(value=>{setCapabilities(value);setMode(current=>permittedMode(current,value)?current:'explore');},[]);
   const progressChanged=useCallback(value=>setProgress(value),[]);
   const { active, blocked } = useProductActivity(ref);
-  const [capable] = useState(hasWebGL);
+  const { capable, allow3D } = useStartupWebGL(hasWebGL);
   const [request, setRequest] = useState(!policy.saveData);
   const [image, setImage] = useState(false), [ready, setReady] = useState(false), [failed, setFailed] = useState(false);
   const [inspect, setInspect] = useState(false), [spin, setSpin] = useState(!policy.compact && !policy.reduced && !policy.saveData);
@@ -35,8 +39,8 @@ export default function ProductMedia({ product, motion, policy }) {
   const manual = useCallback(() => { setSpin(false); setView('custom'); setSelected(''); }, []);
   const loaded = useCallback(() => { setReady(true); }, []);
   const failure = useCallback(reason => { setAssetError(typeof reason === 'string' ? reason : ''); setAssetReport(null); setFailed(true); setReady(false); setSpin(false); setInspect(false); setMode('explore');setSelected(''); }, []);
-  const supported = capable && validModelUrl(product.modelUrl);
-  const show = request && supported && !image && !failed;
+  const supported = capable !== false && validModelUrl(product.modelUrl);
+  const show = allow3D && request && supported && !image && !failed;
   const live = show && ready;
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   useEffect(() => {
@@ -92,18 +96,13 @@ export default function ProductMedia({ product, motion, policy }) {
   return <section ref={ref} className={styles.media} aria-label={`${product.name}: product viewer`} data-product-media
     data-media-state={live ? 'ready' : failed || !supported ? 'fallback' : image || !request ? 'image' : 'loading'}
     data-motion={motion ? 'on' : 'off'} data-study-mode={mode} data-study-progress={progress.toFixed(3)}>
-    <header className={styles.mediaHeader}><span>01 / PRODUCT STUDY</span>
+    <header className={styles.mediaHeader} data-ux17-mediaheader>
       <div role="group" aria-label="Product media"><button type="button" disabled={!supported || (show && !failed)} aria-pressed={show} onClick={threeMode}>3D view</button>
         <button type="button" aria-pressed={image || !supported} onClick={imageMode}>Image</button></div>
     </header>
-    <div className={studyStyles.modes} role="group" aria-label="3D study mode">
-      {['explore','surface','technical','hotspots'].map(id=><button key={id} type="button"
-        disabled={!live || blocked || !permittedMode(id,capabilities)} aria-pressed={mode===id} onClick={()=>chooseMode(id)}>
-        {id[0].toUpperCase()+id.slice(1)}
-      </button>)}
-    </div>
-    <div className={styles.stage} tabIndex={0} onKeyDown={keyboard} role="group" aria-label="Product view. Arrow keys rotate; plus and minus zoom; Home resets.">
-      <div className={styles.stageGrid} aria-hidden="true"/><div className={styles.stageRing} aria-hidden="true"/><div className={styles.stageShadow} aria-hidden="true"/>
+    {/* UX17: advanced modes are below the basic view controls. */}
+    <div className={styles.stage} data-ux17-stage tabIndex={0} onKeyDown={keyboard} role="group" aria-label="Product view. Arrow keys rotate; plus and minus zoom; Home resets.">
+      <div className={styles.stageGrid} data-ux17-decoration aria-hidden="true"/><div className={styles.stageRing} aria-hidden="true"/><div className={styles.stageShadow} aria-hidden="true"/>
       <div className={styles.poster} aria-hidden={live} data-hidden={live}><ProductImage product={product} eager className={styles.posterImage}/></div>
       {show && <div className={styles.canvas} data-ready={ready} data-inspect={inspect} aria-hidden="true">
         <Boundary key={attempt} onFailure={failure}><Suspense fallback={null}>
@@ -119,12 +118,28 @@ export default function ProductMedia({ product, motion, policy }) {
           className={studyStyles.pin} disabled={blocked} aria-label={`Focus ${h.label}`} aria-pressed={selected===h.id}
           onClick={()=>focusHotspot(h.id)}>{String(i+1).padStart(2,'0')}</button>)}
       </div>}
-      <span className={styles.stageStamp} aria-hidden="true">DTH / PERSPECTIVE</span>
+      {/* UX17: the model remains the visual focus. */}
       {live && <div className={styles.stageAction}><button type="button" aria-pressed={inspect} onClick={() => { setSpin(false); setInspect(value => !value); }}>
         {inspect ? 'Done inspecting' : 'Drag to inspect'} <span aria-hidden="true">↗</span></button></div>}
     </div>
     <div className={styles.viewStatus}><span role="status">{message}</span>
       {supported && (failed || !request) && <button type="button" disabled={retrying} onClick={failed ? retry : threeMode}>{retrying ? 'Preparing…' : failed ? 'Retry 3D' : 'Load 3D'}</button>}
+    </div>
+    {/* UX17: study tools are grouped in the disclosure below. */}
+    <div className={styles.controlRow} data-ux17-controls role="group" aria-label="3D view controls">
+      {[['left','↶','Rotate left'],['right','↷','Rotate right'],['in','+','Zoom in'],['out','−','Zoom out'],['reset','Reset','Reset view']].map(([id,label,title]) =>
+        <button type="button" key={id} aria-label={title} title={title} disabled={!live || blocked} onClick={() => command(id)}>{label}</button>)}
+      <button type="button" className={styles.rotationButton} disabled={!live || !motion || blocked || mode!=='explore'} aria-pressed={live && spin && !inspect && motion && mode==='explore'}
+        onClick={() => { setInspect(false); setSpin(value => !value); setView('custom'); }}>{live && spin && !inspect && motion ? 'Pause rotation' : 'Auto rotate'}</button>
+    </div>
+    <p className={styles.mediaHelp}>{inspect ? 'Drag to orbit. Use + / − to zoom. Done inspecting restores touch scrolling.' : 'Scroll to browse. Choose Inspect to rotate with your pointer.'}</p>
+    <Disclosure id="dth-product-tools" title="3D tools" motion={motion}
+      onOpenChange={open => { if (!open) { setMode('explore'); setSelected(''); setEffectCommand(null); setLightAngle(0); } }}>
+    <div className={studyStyles.modes} role="group" aria-label="3D study mode">
+      {['explore','surface','technical','hotspots'].map(id=><button key={id} type="button"
+        disabled={!live || blocked || !permittedMode(id,capabilities)} aria-pressed={mode===id} onClick={()=>chooseMode(id)}>
+        {id[0].toUpperCase()+id.slice(1)}
+      </button>)}
     </div>
     <AssetProfileDetails report={assetReport} request={profileSelection} failed={failed} image={image || !request || !supported}/>
     {live && <div className={studyStyles.workspace}>
@@ -160,13 +175,7 @@ export default function ProductMedia({ product, motion, policy }) {
       {['front','side','rear','detail'].map(name => <button key={name} type="button" disabled={!live || blocked} aria-pressed={view === name}
         onClick={() => command(name)}>{name[0].toUpperCase() + name.slice(1)}</button>)}
     </div>
-    <div className={styles.controlRow} role="group" aria-label="3D view controls">
-      {[['left','↶','Rotate left'],['right','↷','Rotate right'],['in','+','Zoom in'],['out','−','Zoom out'],['reset','Reset','Reset view']].map(([id,label,title]) =>
-        <button type="button" key={id} aria-label={title} title={title} disabled={!live || blocked} onClick={() => command(id)}>{label}</button>)}
-      <button type="button" className={styles.rotationButton} disabled={!live || !motion || blocked || mode!=='explore'} aria-pressed={live && spin && !inspect && motion && mode==='explore'}
-        onClick={() => { setInspect(false); setSpin(value => !value); setView('custom'); }}>{live && spin && !inspect && motion ? 'Pause rotation' : 'Auto rotate'}</button>
-    </div>
-    <p className={styles.mediaHelp}>{inspect ? 'Drag to orbit. Use + / − to zoom. Done inspecting restores touch scrolling.' : 'Scroll to browse. Choose Inspect to rotate with your pointer.'}</p>
+    </Disclosure>
     <p className={styles.mediaFine}>Illustrative model · Not a measurement or fitment test.</p>
   </section>;
 }

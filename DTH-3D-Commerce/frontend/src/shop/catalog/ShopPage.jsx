@@ -1,3 +1,4 @@
+// DTH Shop Product UX17 — scoped presentation integration.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext, useSearchParams } from 'react-router-dom';
 import { formatMoney } from '../../../../shared/domain.mjs';
@@ -7,13 +8,15 @@ import { getPriceCeiling, paginateProducts, patchShopQuery, readShopQuery, reset
 import { useGridMotion, useShopMotion } from './hooks/useShopMotion';
 import ShopIcon from './components/ShopIcon';
 import FilterPanel from './components/FilterPanel';
-import ShopProductCard from './components/ShopProductCard';
+import ShopProductCard from '../ux17/ShopProductCard';
 import QuickView from './components/QuickView';
 import ShopDialog from './components/ShopDialog';
-import VehicleFitmentStrip from './fitment/VehicleFitmentStrip';
+import VehicleFitmentStrip from '../ux17/VehicleBar';
+import CategoryRail from '../ux17/CategoryRail';
 import { matchingQuery } from './fitment/fitment.logic.mjs';
 import SearchDiscovery from './search/SearchDiscovery';
 import styles from './ShopPage.module.css';
+import '../ux17/commerce17.css';
 
 export default function ShopPage() {
   const { data, vehicleId, setVehicle } = useStore();
@@ -62,12 +65,12 @@ export default function ShopPage() {
   const filterProps = { query, counts, ceiling, vehicle, vehicleId, onPatch: update, onChooseVehicle: openVehicle, onReset: reset };
   const selectedFilterCount = query.categories.length + Number(Boolean(query.search)) + Number(query.maxPrice < ceiling);
   const allProductsCount = data.products.filter(item => item.active !== false).length;
-  return <section className={styles.page} data-motion={motion ? 'on' : 'off'} style={{ '--shop-hover-scale': SHOP_CONFIG.motion.hoverScale, '--shop-hover-duration': `${SHOP_CONFIG.motion.hoverDurationMs}ms` }}>
-    <div className={styles.container}>
+  return <section className={styles.page} data-shop-ux="17" data-motion={motion ? 'on' : 'off'} style={{ '--shop-hover-scale': SHOP_CONFIG.motion.hoverScale, '--shop-hover-duration': `${SHOP_CONFIG.motion.hoverDurationMs}ms` }}>
+    <div className={styles.container} data-ux17-container>
       <nav className={styles.breadcrumb} aria-label="Breadcrumb"><Link to="/">Studio</Link><span aria-hidden="true">/</span><span aria-current="page">Shop parts</span></nav>
-      <header className={styles.heading}>
-        <div><p className={styles.eyebrow}><span />DTH / THE PARTS COLLECTION</p><h1>{SHOP_CONFIG.title}</h1><p className={styles.intro}>{SHOP_CONFIG.description}</p></div>
-        <div className={styles.headingSide}><span><ShopIcon name="cube" />{allProductsCount} demo parts. Every angle.</span><button type="button" className={styles.motionButton} disabled={reduced || !SHOP_CONFIG.motion.enabled} aria-pressed={motion} onClick={() => setPaused(!paused)}>{motion ? 'Ⅱ Motion on' : '▷ Motion off'}{reduced && ' · system'}</button></div>
+      <header className={styles.heading} data-ux17-heading>
+        <div><h1>Shop parts</h1></div>
+        <div className={styles.headingSide}><span>{allProductsCount} parts</span><button type="button" className={styles.motionButton} disabled={reduced || !SHOP_CONFIG.motion.enabled} aria-pressed={motion} onClick={() => setPaused(!paused)}>{motion ? 'Ⅱ Motion on' : '▷ Motion off'}{reduced && ' · system'}</button></div>
       </header>
       <SearchDiscovery
         products={data.products} vehicles={data.vehicles} vehicleId={vehicleId}
@@ -81,10 +84,10 @@ export default function ShopPage() {
         query={query} motion={motion} onPatch={update} onChooseVehicle={openVehicle}
         onClearVehicle={() => { setVehicle(''); update({ page: 1 }); }}
       />
-      <div className={styles.catalogLayout}>
-        <aside className={styles.sidebar} aria-label="Catalog filters"><FilterPanel {...filterProps} /></aside>
+      <div className={styles.catalogLayout} data-ux17-layout>
+        <CategoryRail categories={SHOP_CONFIG.categories} selected={query.categories} counts={counts} onPatch={update} />
         <div className={styles.results}>
-          <div className={styles.toolbar}><h2 ref={resultHeading} tabIndex="-1"><strong>{visible.length}</strong> parts<span> / {pagination.from}–{pagination.to} in view</span></h2><div className={styles.toolbarActions}><button ref={filterTrigger} type="button" className={`${styles.outlineButton} ${styles.mobileFilterButton}`} onClick={() => setMobileFilters(true)}><ShopIcon name="filter" />Filters{selectedFilterCount > 0 && <b>{selectedFilterCount}</b>}</button><label className={styles.sortLabel}>Sort by<select value={query.sort} aria-label="Sort parts" onChange={e => update({ sort: e.target.value })}><option value="featured">Featured</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="name">Name: A–Z</option></select></label></div></div>
+          <div className={styles.toolbar} data-ux17-toolbar><h2 ref={resultHeading} tabIndex="-1"><strong>{visible.length}</strong> parts</h2><div className={styles.toolbarActions}><button ref={filterTrigger} data-ux17-filter-button aria-haspopup="dialog" type="button" className={`${styles.outlineButton} ${styles.mobileFilterButton}`} onClick={() => setMobileFilters(true)}><ShopIcon name="filter" />Filters{selectedFilterCount > 0 && <b>{selectedFilterCount}</b>}</button><label className={styles.sortLabel}>Sort by<select value={query.sort} aria-label="Sort parts" onChange={e => update({ sort: e.target.value })}><option value="featured">Featured</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="name">Name: A–Z</option></select></label></div></div>
           <p className={styles.srOnly} role="status" aria-live="polite">{visible.length} products found. Page {pagination.page} of {pagination.pages}.</p>
           {selectedFilterCount > 0 && <div className={styles.chips} aria-label="Active product filters">
             {query.search && <button type="button" className={styles.chip} aria-label={`Remove search ${query.search}`} onClick={() => update({ q: '' })}>“{query.search}”<ShopIcon name="close" /></button>}
@@ -92,10 +95,10 @@ export default function ShopPage() {
             {query.maxPrice < ceiling && <button type="button" className={styles.chip} onClick={() => update({ max: '' })}>Up to {formatMoney(query.maxPrice)}<ShopIcon name="close" /></button>}
             <button type="button" className={styles.textButton} onClick={reset}>Clear filters</button>
           </div>}
-          {visible.length ? <><ul ref={gridRef} className={styles.grid} aria-label="Products">
+          {visible.length ? <><ul ref={gridRef} className={styles.grid} aria-label="Products" data-ux17-grid>
             {pagination.items.map((item, index) => <li data-shop-id={item.id} key={item.id}><ShopProductCard product={item} vehicleId={vehicleId} vehicles={data.vehicles} motion={motion} eager={index < 3} onQuickView={(id, trigger) => setQuick({ id, trigger })} /></li>)}
-          </ul><nav className={styles.pagination} aria-label="Catalog pagination"><span>{pagination.from}–{pagination.to} of {pagination.total} parts</span><div><button type="button" className={styles.pageButton} disabled={pagination.page === 1} onClick={() => pageChange(pagination.page - 1)} aria-label="Previous page">←</button>{Array.from({ length: pagination.pages }, (_, index) => index + 1).map(page => <button type="button" key={page} className={styles.pageButton} aria-current={page === pagination.page ? 'page' : undefined} aria-label={`Page ${page}`} onClick={() => pageChange(page)}>{page}</button>)}<button type="button" className={styles.pageButton} disabled={pagination.page === pagination.pages} onClick={() => pageChange(pagination.page + 1)} aria-label="Next page">→</button></div></nav></> : <div className={styles.empty}><span><ShopIcon name="search" /></span><h3>No matching parts.</h3><p>Try a broader search, a different price limit or another demo vehicle. Your selected vehicle will not be cleared automatically.</p><div><button className={styles.primaryButton} type="button" onClick={reset}>Reset product filters</button><button className={styles.outlineButton} type="button" onClick={openVehicle}>Change vehicle</button>{vehicleId && query.fit === 'match' && <button className={styles.textButton} type="button" onClick={() => update({ fit: 'all' })}>Show all parts</button>}</div></div>}
-          <p className={styles.catalogNote}><ShopIcon name="info" />Illustrative products and prices. Compatibility is based on synthetic demo data. No real transactions.</p>
+          </ul><nav className={styles.pagination} aria-label="Catalog pagination"><span>{pagination.from}–{pagination.to} of {pagination.total} parts</span><div><button type="button" className={styles.pageButton} disabled={pagination.page === 1} onClick={() => pageChange(pagination.page - 1)} aria-label="Previous page">←</button>{Array.from({ length: pagination.pages }, (_, index) => index + 1).map(page => <button type="button" key={page} className={styles.pageButton} aria-current={page === pagination.page ? 'page' : undefined} aria-label={`Page ${page}`} onClick={() => pageChange(page)}>{page}</button>)}<button type="button" className={styles.pageButton} disabled={pagination.page === pagination.pages} onClick={() => pageChange(pagination.page + 1)} aria-label="Next page">→</button></div></nav></> : <div className={styles.empty}><span><ShopIcon name="search" /></span><h3>No matching parts.</h3><p>Try another category or price range. Your NVX selection is kept.</p><div><button className={styles.primaryButton} type="button" onClick={reset}>Reset product filters</button><button className={styles.outlineButton} type="button" onClick={openVehicle}>Change vehicle</button>{vehicleId && query.fit === 'match' && <button className={styles.textButton} type="button" onClick={() => update({ fit: 'all' })}>Show all parts</button>}</div></div>}
+          <p className={styles.catalogNote} data-ux17-note><ShopIcon name="info" />Demo prices and fitment. No real payment or shipment.</p>
         </div>
       </div>
     </div>

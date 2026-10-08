@@ -1,3 +1,5 @@
+// DTH Loader 17.2 — deferred graphics startup, existing readiness preserved.
+import { useStartupWebGL } from '../loader/StartupRenderContext.jsx';
 import { Component, Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
@@ -49,10 +51,10 @@ export function StoryHero({ product }) {
   const policy = useExperiencePolicy();
   const active = useStageActivity(frame);
   useSceneInputGate(signal);
-  const [capable] = useState(hasWebGL);
+  const { capable, allow3D } = useStartupWebGL(hasWebGL);
   const [motion, setMotion] = useState(true);
   const [attempt, setAttempt] = useState(0);
-  const [status, setStatus] = useState(capable && product.modelUrl ? 'loading' : 'fallback');
+  const [status, setStatus] = useState(product.modelUrl ? 'loading' : 'fallback');
   const animated = motion && !policy.reduced;
   const ready = useCallback(() => setStatus('ready'), []);
   const fail = useCallback(() => setStatus('fallback'), []);
@@ -62,10 +64,11 @@ export function StoryHero({ product }) {
   }, [signal, animated, active]);
 
   useEffect(() => {
-    if (status !== 'loading') return;
+    if (!allow3D || status !== 'loading') return;
     const timeout = setTimeout(fail, STORY_HERO.loadTimeoutMs);
     return () => clearTimeout(timeout);
-  }, [status, attempt, fail]);
+  }, [status, attempt, fail, allow3D]);
+  useEffect(() => { if (capable === false) fail(); }, [capable, fail]);
 
   useLayoutEffect(() => {
     if (!animated) { playedEntrance.current = true; return; }
@@ -131,7 +134,7 @@ export function StoryHero({ product }) {
         <div className={styles.visual} data-story-visual>
           <div ref={frame} className={styles.sceneFrame} data-story-scene={status} aria-busy={status === 'loading'}>
             <div className={styles.canvas} aria-hidden="true">
-              {status !== 'fallback' && <SceneBoundary key={attempt} onFailure={fail}>
+              {allow3D && status !== 'fallback' && <SceneBoundary key={attempt} onFailure={fail}>
                 <Suspense fallback={null}>
                   <StoryHeroScene product={product} signal={signal} surface={surface} frameRef={frame} compact={policy.compact} onReady={ready} onFailure={fail} />
                 </Suspense>

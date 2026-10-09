@@ -31,7 +31,8 @@ export function accessDestination({ pathname = '/', search = '', user } = {}) {
     const direct = safeAccessReturn(pathname + search, role);
     if (direct) return direct;
   }
-  return role === 'admin' ? '/admin' : '/shop';
+  // return role === 'admin' ? '/admin' : '/shop';
+  return role === 'admin' ? '/admin' : '/story?intro=1';
 }
 export function accessDecision({ pathname = '/', user = null, authLoading = false, authError = '', mode = 'api' } = {}) {
   if (!guardsAccess(pathname)) return 'pass';

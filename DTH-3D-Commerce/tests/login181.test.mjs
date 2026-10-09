@@ -16,14 +16,14 @@ test('API errors never produce fake login',()=>assert.equal(accessDecision({auth
 test('Preview entry explains configuration',()=>assert.equal(accessDecision({mode:'preview'}),'configure'));
 test('Preview catalog still has read-only access',()=>assert.equal(accessDecision({mode:'preview',pathname:'/shop'}),'pass'));
 test('Flow mode is explicit and usable',()=>assert.equal(accessDecision({mode:'flow'}),'login'));
-test('Normal entry now goes to Shop, not Story',()=>assert.equal(accessDestination({user:customer}),'/shop'));
+test('Normal entry now goes to Shop, not Story',()=>assert.equal(accessDestination({user:customer}),'/story?intro=1'));
 test('Normal staff entry goes to Admin',()=>assert.equal(accessDestination({user:admin}),'/admin'));
-test('Plain Account login goes to Shop',()=>assert.equal(accessDestination({pathname:'/account',user:customer}),'/shop'));
+test('Plain Account login goes to Shop',()=>assert.equal(accessDestination({pathname:'/account',user:customer}),'/story?intro=1'));
 test('Direct checkout intent wins',()=>assert.equal(accessDestination({pathname:'/checkout',user:customer}),'/checkout'));
 test('Purchase return wins over role default',()=>assert.equal(accessDestination({search:'?return=%2Fbag',user:admin}),'/bag'));
 test('Shop query survives login',()=>assert.equal(accessDestination({pathname:'/shop',search:'?mode=build&q=brake%20set&category=brakes',user:customer}),'/shop?mode=build&q=brake+set&category=brakes'));
 test('Explicit Garage view survives login',()=>assert.equal(accessDestination({pathname:'/account',search:'?view=vehicle',user:customer}),'/account?view=vehicle'));
-test('Customer cannot select an Admin redirect',()=>assert.equal(accessDestination({pathname:'/login',search:'?return=%2Fadmin',user:customer}),'/shop'));
+test('Customer cannot select an Admin redirect',()=>assert.equal(accessDestination({pathname:'/login',search:'?return=%2Fadmin',user:customer}),'/story?intro=1'));
 for (const value of ['https://bad.test','//bad.test','/\\bad.test','javascript:alert(1)','/login','/','/login?return=/login','/shop#x','/products/%2e%2e/admin','/shop\u0000','/shop?return=//evil\n',null,{},'/admin/products']) {
   test(`Reject unsafe return: ${JSON.stringify(value)}`,()=>assert.equal(safeAccessReturn(value),''));
 }

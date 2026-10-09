@@ -10,8 +10,16 @@ import { entranceDecision, storyVisited } from './journey.logic.mjs';
 /** Only the / entrance changes. Product, checkout, account and admin URLs remain intact. */
 export default function StudioEntry() {
   const store = useStore(), navigate = useNavigate(), covered = useIntroCover();
-  const decision = entranceDecision({ loading: store.authLoading, error: store.authError,
-    user: store.user, mode: MODE, visited: true /* Step18.1: Story is optional; new sign-in goes to Shop. */ });
+
+  // const decision = entranceDecision({ loading: store.authLoading, error: store.authError,
+  //   user: store.user, mode: MODE, visited: true /* Step18.1: Story is optional; new sign-in goes to Shop. */ });
+  const decision = entranceDecision({
+    loading: store.authLoading,
+    error: store.authError,
+    user: store.user,
+    mode: MODE,
+    visited: storyVisited(MODE, store.user?.id),
+  });
   useEffect(() => {
     if (!covered && decision === 'story') navigate('/story?intro=1', { replace: true });
   }, [covered, decision, navigate]);

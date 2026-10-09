@@ -121,3 +121,27 @@
 @media(max-width:760px){ .memberLayout .sidebar{gap:10px;}.memberLayout .identity{max-width:calc(100% - 100px);order:0;} .memberLayout .logout{order:1;margin-left:auto;} .memberLayout .sidebar nav{width:100%;margin:6px 0 0;justify-content:space-between;order:2;} .memberLayout .sidebar nav svg{display:none;} .memberLayout .sidebar nav a{font-size:12px;padding:9px 13px;justify-content:center;} .memberLayout .memberContent{padding-top:24px;} .memberLayout .overviewCards{grid-template-columns:1fr;} .memberLayout .panel{padding:20px;} }
 @media(prefers-reduced-motion:reduce){.memberLayout *{animation:none!important;transition:none!important;}}
 /* END DTH GARAGE16 MEMBER AREA */
+
+/* DTH CINEMATIC CORE 17.3A — login only; member/account pages remain unchanged. */
+.authLayout[data-cinematic-auth]{--auth-pointer-x:0;--auth-pointer-y:0;--auth-light-x:50%;--auth-light-y:50%;--auth-accent:#00bbee;position:relative;isolation:isolate;perspective:1200px;border-color:#183a4f;background:#07111a;box-shadow:0 34px 100px #07111a30;}
+.authLayout[data-cinematic-auth]::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(circle at var(--auth-light-x) var(--auth-light-y),#00bbee12,transparent 34%);}
+.authLayout[data-cinematic-auth][data-auth-phase=error]{--auth-accent:#e53b49}.authLayout[data-cinematic-auth][data-auth-phase=working]{--auth-accent:#68d7ff}
+.authLayout[data-cinematic-auth] .brandPanel{position:relative;z-index:1;color:#f4f8fb;background:radial-gradient(circle at calc(50% + var(--auth-pointer-x)*12%) calc(48% + var(--auth-pointer-y)*9%),#153b50 0,#081620 43%,#040a10 100%);transform-style:preserve-3d;}
+.authLayout[data-cinematic-auth] .brand{position:relative;z-index:4;color:#fff}.authLayout[data-cinematic-auth] .brand>span{color:#9eb6c7}
+.authLayout[data-cinematic-auth] .brandFoot{position:relative;z-index:4;color:#b6ccda}.authLayout[data-cinematic-auth] .brandFoot svg{color:var(--auth-accent)}
+.authLayout[data-cinematic-auth] .visual{z-index:3;transform:translate3d(calc(var(--auth-pointer-x)*8px),calc(var(--auth-pointer-y)*6px),24px);transition:transform .75s cubic-bezier(.16,1,.3,1)}
+.authLayout[data-cinematic-auth] .visualShadow{background:#00a9e633;filter:blur(14px)}
+.authLayout[data-cinematic-auth] .authPanel{position:relative;z-index:2;background:linear-gradient(145deg,#fff,#f8fbfd);}
+.authLayout[data-cinematic-auth] .authBody{animation:account-cinematic-enter .65s cubic-bezier(.16,1,.3,1) both}
+.authLayout[data-cinematic-auth] .field input{border-width:0 0 1px;border-radius:0;padding-inline:2px;background:transparent;box-shadow:none;transition:border-color .25s ease,transform .25s cubic-bezier(.16,1,.3,1)}
+.authLayout[data-cinematic-auth] .field input:focus{box-shadow:none;border-color:var(--auth-accent);transform:translateY(-1px)}
+.authLayout[data-cinematic-auth] .password>button{right:0;top:4px}
+.authLayout[data-cinematic-auth] .primary{border-radius:0;min-height:54px;position:relative;overflow:hidden;background:#0b67cf;border-color:#0b67cf;transition:transform .25s cubic-bezier(.16,1,.3,1),background .2s ease}
+.authLayout[data-cinematic-auth] .primary::after{content:"";position:absolute;inset:0;transform:translateX(-110%);background:linear-gradient(100deg,transparent,#fff2,transparent);transition:transform .55s cubic-bezier(.16,1,.3,1)}
+.authLayout[data-cinematic-auth] .primary:hover::after{transform:translateX(110%)}.authLayout[data-cinematic-auth] .primary:active{transform:scale(.985)}
+.authLayout[data-cinematic-auth][data-auth-phase=working] .visual{transform:translate3d(0,0,42px) scale(1.025)}
+.authLayout[data-cinematic-auth][data-auth-phase=error]{animation:account-error-pulse .34s ease both}
+@keyframes account-cinematic-enter{from{opacity:0;transform:translate3d(0,18px,-18px)}to{opacity:1;transform:none}}
+@keyframes account-error-pulse{0%,100%{box-shadow:0 34px 100px #07111a30}50%{box-shadow:0 34px 100px #e53b4926}}
+@media(max-width:760px){.authLayout[data-cinematic-auth]{border-radius:16px;background:#fff}.authLayout[data-cinematic-auth] .brandPanel{display:none}.authLayout[data-cinematic-auth] .authPanel{background:#fff}}
+@media(prefers-reduced-motion:reduce){.authLayout[data-cinematic-auth],.authLayout[data-cinematic-auth] *{animation:none!important;transition:none!important}.authLayout[data-cinematic-auth] .visual{transform:none}}

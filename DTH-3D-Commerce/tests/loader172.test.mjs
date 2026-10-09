@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { nextLoaderCheckDelay } from '../frontend/src/experience/loader/loaderSchedule.mjs';
 import { scheduleSceneRelease, SCENE_RELEASE_MS } from '../frontend/src/experience/loader/startup.logic.mjs';
 import { loaderDecision, shouldShowIntro, readSeen, writeSeen } from '../frontend/src/experience/loader/loader.logic.mjs';
+import { LOADER_CONFIG as config } from '../frontend/src/experience/loader/loader.config.mjs';
 
 function clock({ raf = true, hidden = false } = {}) {
   let now = 0, id = 0; const jobs = new Map(), listeners = new Set();
@@ -21,10 +22,10 @@ function clock({ raf = true, hidden = false } = {}) {
   }, show() { doc.hidden = false; for (const f of [...listeners]) f(); } };
 }
 test('first check sleeps until real waiting deadline when logo is pending', () => assert.equal(nextLoaderCheckDelay(), 4800));
-test('decoded logo wakes at brand completion', () => assert.equal(nextLoaderCheckDelay({ elapsed: 120, brandElapsed: 20, logoReady: true }), 2480));
+test('decoded logo wakes at brand completion', () => assert.equal(nextLoaderCheckDelay({ elapsed: 120, brandElapsed: 20, logoReady: true }), config.brandMs - 20));
 test('ready-but-incomplete page sleeps until waiting/max milestones', () => {
-  assert.equal(nextLoaderCheckDelay({ elapsed: 2500, brandElapsed: 2500, logoReady: true }), 2300);
-  assert.equal(nextLoaderCheckDelay({ elapsed: 4800, logoReady: true, brandElapsed: 4800 }), 1700);
+  assert.equal(nextLoaderCheckDelay({ elapsed: 2500, brandElapsed: 2500, logoReady: true }), Math.min(config.brandMs - 2500, config.waitingLabelMs - 2500));
+  assert.equal(nextLoaderCheckDelay({ elapsed: config.waitingLabelMs, logoReady: true, brandElapsed: config.waitingLabelMs }), config.maxCoverMs - config.waitingLabelMs);
 });
 test('max cover takes precedence for late image', () => assert.equal(nextLoaderCheckDelay({ elapsed: 6300, logoReady: true }), 200));
 test('reduced mode never waits for presentation when ready', () => {

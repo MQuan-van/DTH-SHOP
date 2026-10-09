@@ -3,7 +3,7 @@ import { LOADER_CONFIG } from './loader.config.mjs';
 import { createLoaderMotion } from './loaderMotion.mjs';
 import styles from './AppLoader.module.css';
 
-// The regions stay fixed: no animated clip-path, no resampled video, no generated logo.
+// Fixed logo regions: depth comes from transform only, never animated clipping or video.
 const REGIONS = ['inset(36% 6% 53% 7%)', 'inset(47% 6% 45% 7%)', 'inset(55% 6% 35% 7%)'];
 export default function AppLoader({ rootRef, phase, reduced, duration, logoReady, onLogoReady, onLogoError, onSkip }) {
   const image = useRef(null), entrance = useRef(null), origin = useRef(null);
@@ -32,20 +32,19 @@ export default function AppLoader({ rootRef, phase, reduced, duration, logoReady
     entrance.current = controller;
     return () => { controller.dispose(); if (entrance.current === controller) entrance.current = null; };
   }, [rootRef, logoReady]);
-  useLayoutEffect(() => {
-    if (reduced && !exiting) entrance.current?.finish();
-  }, [reduced, exiting, logoReady]);
+  useLayoutEffect(() => { if (reduced && !exiting) entrance.current?.finish(); }, [reduced, exiting, logoReady]);
   useLayoutEffect(() => {
     if (!exiting || !rootRef.current) return undefined;
-    // Keep the current logo pose during Skip/error exit; do not flash the finished face.
     entrance.current?.freeze();
     const controller = createLoaderMotion(rootRef.current, { exit: true, reduced, duration });
     return () => controller.dispose();
   }, [rootRef, exiting, reduced, duration]);
   return <div ref={rootRef} className={styles.loader} data-dth-ignition="true"
-    data-ignition-version="17.2-performance" data-phase={phase} data-logo-ready={logoReady}
+    data-ignition-version="17.3a-cinematic" data-phase={phase} data-logo-ready={logoReady}
     data-reduced={reduced && !exiting} role="dialog" aria-modal="true" aria-label="DTH welcome intro">
-    <div className={styles.frame} style={{ '--dth-logo-image': `url("${LOADER_CONFIG.logoUrl}")` }}>
+    <div className={styles.frame} data-ignition-frame style={{ '--dth-logo-image': `url("${LOADER_CONFIG.logoUrl}")` }}>
+      <i className={styles.depthPlate} data-ignition-depth aria-hidden="true" />
+      <i className={styles.portal} data-ignition-portal aria-hidden="true" />
       <i className={styles.aura} data-ignition-aura aria-hidden="true" />
       <div className={styles.fragments} aria-hidden="true">{REGIONS.map((clipPath, i) =>
         <i key={i} className={styles.fragment} style={{ clipPath }} data-ignition-fragment />)}</div>

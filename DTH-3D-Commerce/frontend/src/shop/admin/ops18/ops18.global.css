@@ -1,0 +1,15 @@
+/* Admin-only chrome. Leaves storefront, account, Shop, Story and checkout unchanged. */
+.dth-admin[data-ops18="true"]{--a-line:#dce8ef;--a-ink:#163247;gap:28px;width:min(1720px,calc(100% - 64px))}
+.dth-admin[data-ops18="true"] .dth-admin-sidebar{position:sticky;top:92px;align-self:start;border-right:0;padding:23px 13px 16px;min-width:0;background:linear-gradient(165deg,#f5fafe,#ebf5fb);border:1px solid #deebf2;border-radius:16px}
+.dth-admin[data-ops18="true"] .dth-admin-logo{font-size:30px;margin:0 13px 22px;letter-spacing:-.075em;color:#123b56!important}
+.dth-admin[data-ops18="true"] .dth-admin-logo span{font-size:8px;margin-top:3px}
+.dth-admin[data-ops18="true"] .dth-admin-sidebar nav{gap:4px}
+.dth-admin[data-ops18="true"] .dth-admin-sidebar nav a{min-height:46px;border:1px solid transparent;border-radius:10px;padding:9px 12px;font-size:12px;font-weight:550;transition:transform .22s ease,background .22s ease,border-color .22s ease}
+.dth-admin[data-ops18="true"] .dth-admin-sidebar nav a>span{font-size:20px;min-width:24px;display:inline-flex;justify-content:center}
+.dth-admin[data-ops18="true"] .dth-admin-sidebar nav a[aria-current=page]{background:#fff;color:#0066c9;border-color:#cee4f3;box-shadow:0 5px 14px #0a5f8a0b}
+.dth-admin[data-ops18="true"] .dth-admin-sidebar nav a:hover{transform:translateX(3px);background:#fff}
+.dth-admin[data-ops18="true"] .dth-admin-operator{margin-top:34px;border-top:1px solid #d7e6f0;padding:20px 13px 5px}
+.dth-admin[data-ops18="true"] .dth-admin-main{min-width:0}
+@media(max-width:950px){.dth-admin[data-ops18="true"]{width:calc(100% - 40px)}.dth-admin[data-ops18="true"] .dth-admin-sidebar{position:static;background:transparent;border:0;border-bottom:1px solid #dce8ef;border-radius:0;padding:0 0 16px;margin:0 0 20px}.dth-admin[data-ops18="true"] .dth-admin-sidebar nav{display:flex;overflow-x:auto}.dth-admin[data-ops18="true"] .dth-admin-sidebar nav a{white-space:nowrap;min-height:41px;min-width:unset;padding:8px 13px}}
+@media(max-width:650px){.dth-admin[data-ops18="true"]{width:calc(100% - 24px);margin-top:18px}.dth-admin[data-ops18="true"] .dth-admin-sidebar nav a{font-size:11px}.dth-admin[data-ops18="true"] .dth-admin-sidebar nav a>span{font-size:16px}}
+@media(prefers-reduced-motion:reduce){.dth-admin[data-ops18="true"] .dth-admin-sidebar nav a{transition:none}.dth-admin[data-ops18="true"] .dth-admin-sidebar nav a:hover{transform:none}}

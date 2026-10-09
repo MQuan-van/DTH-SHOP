@@ -10,7 +10,7 @@ function ImageViewer({src,onClose}) {
   useEffect(()=>{const el=ref.current,previous=document.activeElement;el.showModal();return()=>{if(el.open)el.close();previous?.isConnected&&previous.focus();};},[]);
   return <dialog className="dth-chat-lightbox" ref={ref} aria-label="Support image" onCancel={e=>{e.preventDefault();onClose();}} onClick={e=>{if(e.target===ref.current)onClose();}}><button type="button" onClick={onClose} autoFocus>Close image ×</button><img src={src} alt="Image shared in this support conversation"/></dialog>;
 }
-export default function ChatThread({conversationId,onMeta}) {
+export default function ChatThread({conversationId,onMeta,composerTools=null}) {
   const store=useStore(),support=useSupport();
   const [messages,setMessages]=useState([]),[meta,setMeta]=useState(null),[loading,setLoading]=useState(true),[error,setError]=useState('');
   const [text,setText]=useState(''),[file,setFile]=useState(null),[preview,setPreview]=useState(''),[pending,setPending]=useState(null),[sending,setSending]=useState(false);
@@ -99,6 +99,8 @@ export default function ChatThread({conversationId,onMeta}) {
     <div className="dth-chat-typing" role="status">{typing?<><span>•••</span> {role==='admin'?'Customer':'Support'} is typing…</>:null}</div>
     {error&&<p className="dth-chat-error" role="alert">{error} {loading===false&&!messages.length&&<button onClick={reload}>Try again</button>}</p>}
     <form className="dth-chat-composer" onSubmit={e=>{e.preventDefault();void send();}}>
+      {/* Admin Pro 18.0B: templates only edit the draft; send/auth/retry stay unchanged. */}
+      {typeof composerTools==='function' && composerTools({draft:text,disabled:sending||!!pending,onInsert:value=>{if(!sending&&!pending&&typeof value==='string'&&value.length<=3000)type(value);}})}
       {preview&&<div className="dth-chat-attachment"><img src={preview} alt="Selected image preview"/><span>Image ready to send</span><button type="button" aria-label="Remove selected image" disabled={sending||!!pending} onClick={()=>{setFile(null);input.current.value='';}}>×</button></div>}
       <label className="dth-chat-sr" htmlFor={`message-${conversationId}`}>Message</label><textarea id={`message-${conversationId}`} placeholder="Write a message…" value={text} maxLength={3000} disabled={sending||!!pending} onChange={e=>type(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.nativeEvent.isComposing){e.preventDefault();void send();}}}/>
       <div className="dth-chat-actions"><input ref={input} className="dth-chat-file" type="file" accept="image/png,image/jpeg,image/webp" aria-label="Attach image" onChange={e=>pick(e.target.files?.[0])} disabled={sending||!!pending}/><button type="button" className="dth-chat-attach" onClick={()=>input.current.click()} disabled={sending||!!pending}>＋ Image</button><small>JPEG · PNG · WebP · 5 MiB</small><button className="dth-chat-send" type="submit" disabled={sending||!!pending||(!text.trim()&&!file)}>{sending?'Sending…':'Send'} ↗</button></div>

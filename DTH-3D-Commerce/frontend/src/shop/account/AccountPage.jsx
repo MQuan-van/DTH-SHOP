@@ -1,3 +1,7 @@
+import { MODE } from '../api';
+import { signInDestination } from '../../experience/journey/journey.logic.mjs';
+import useLoginCinematic from './login/useLoginCinematic';
+import LoginAtmosphere from './login/LoginAtmosphere';
 import { vehicleLabel as nvxVehicleLabel } from '../../../../shared/nvx.mjs';
 import GarageWorkspace from './member/GarageWorkspace';
 import GarageSummary from './member/GarageSummary';
@@ -30,12 +34,12 @@ function Notice({ children, error = false }) {
 function Busy({ label = 'Loading…' }) {
   return <div className={s.loading} role="status"><span className={s.spinner} aria-hidden="true" />{label}</div>;
 }
-function PasswordField({ label = 'Password', value, onChange, autoComplete, hint, disabled }) {
+function PasswordField({ label = 'Password', value, onChange, autoComplete, hint, disabled, events = {} }) {
   const [visible, setVisible] = useState(false), id = useId();
   return <div className={s.field}><label htmlFor={id}>{label}</label>
     <span className={s.password}>
       <input id={id} type={visible ? 'text' : 'password'} value={value} onChange={onChange} disabled={disabled}
-        required minLength={12} maxLength={128} autoComplete={autoComplete} aria-describedby={hint ? `${id}-hint` : undefined} />
+        required minLength={12} maxLength={128} autoComplete={autoComplete} aria-describedby={hint ? `${id}-hint` : undefined} {...events} />
       <button type="button" aria-label={visible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
         aria-pressed={visible} disabled={disabled} onClick={() => setVisible(v => !v)}>{visible ? 'Hide' : 'Show'}</button>
     </span>
@@ -49,6 +53,7 @@ function AuthForm() {
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const lock = useRef(false), live = useLive(), errorBox = useRef(null), title = useRef(null);
   const registering = mode === 'register';
+  const cinematic = useLoginCinematic({ registering, busy, error });
   useEffect(() => { title.current?.focus({ preventScroll: true }); }, [mode]);
   useEffect(() => { if (error) errorBox.current?.focus(); }, [error]);
   async function submit(event) {
@@ -64,15 +69,17 @@ function AuthForm() {
       store.setUser(user);
       setPassword(''); setConfirm('');
       store.setNotice(registering ? 'Account created.' : 'Signed in.');
-      navigate(accountReturnPath(params.get('return')), { replace: true });
+      navigate(signInDestination(params.get('return'), MODE, user), { replace: true });
     } catch (e) { if (live.current) setError(e.message); }
     finally { lock.current = false; if (live.current) setBusy(false); }
   }
   function switchMode() { setMode(registering ? 'login' : 'register'); setPassword(''); setConfirm(''); setError(''); }
-  return <div className={s.authLayout}>
+  return <div ref={cinematic.ref} className={s.authLayout} data-cinematic-auth data-auth-phase={cinematic.phase}
+    onPointerMove={cinematic.pointer} onPointerLeave={cinematic.leave}>
     <aside className={s.brandPanel} aria-label="DTH Parts Studio">
+      <LoginAtmosphere phase={cinematic.phase} />
       <span className={s.brand}>DTH<span>PARTS STUDIO</span></span>
-      <AccountVisual phase={busy ? 'working' : registering ? 'register' : undefined} />
+      <AccountVisual phase={cinematic.phase} />
       <div className={s.brandFoot}><span>Built around you.</span><Icon name="arrow" /></div>
     </aside>
     <div className={s.authPanel}>
@@ -80,9 +87,9 @@ function AuthForm() {
       <div className={s.authBody} key={mode}>
         <h1 ref={title} tabIndex={-1}>{registering ? 'Create account.' : 'Welcome back.'}</h1>
         <form onSubmit={submit} aria-busy={busy}>
-          <label className={s.field}>Email<input type="email" required maxLength={254} autoComplete="email" value={email} disabled={busy} onChange={e => setEmail(e.target.value)} /></label>
-          <PasswordField value={password} onChange={e => setPassword(e.target.value)} autoComplete={registering ? 'new-password' : 'current-password'} disabled={busy} hint={registering ? '12–128 characters. Use a password unique to this demo.' : undefined} />
-          {registering && <PasswordField label="Confirm password" value={confirm} onChange={e => setConfirm(e.target.value)} autoComplete="new-password" disabled={busy} />}
+          <label className={s.field}>Email<input type="email" required maxLength={254} autoComplete="email" value={email} disabled={busy} onChange={e => setEmail(e.target.value)} {...cinematic.field('email')} /></label>
+          <PasswordField value={password} onChange={e => setPassword(e.target.value)} autoComplete={registering ? 'new-password' : 'current-password'} disabled={busy} hint={registering ? '12–128 characters. Use a password unique to this demo.' : undefined} events={cinematic.field('password')} />
+          {registering && <PasswordField label="Confirm password" value={confirm} onChange={e => setConfirm(e.target.value)} autoComplete="new-password" disabled={busy} events={cinematic.field('confirm')} />}
           {error && <p ref={errorBox} className={s.error} tabIndex={-1} role="alert">{error}</p>}
           <button className={s.primary} disabled={busy} type="submit">{busy ? <><span className={s.spinner} aria-hidden="true" />Please wait…</> : <>{registering ? 'Create account' : 'Sign in'}<Icon name="arrow" /></>}</button>
         </form>

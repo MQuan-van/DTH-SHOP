@@ -1,3 +1,7 @@
+// DTH ACCESS181 — login gate before storefront catalog rendering.
+import AccessBoundary181 from '../experience/access181/AccessBoundary181';
+import TransitionRoutes from '../experience/journey/TransitionRoutes';
+import StudioEntry from '../experience/journey/StudioEntry';
 import { vehicleLabel as nvxVehicleLabel } from '../../../shared/nvx.mjs';
 import NVXPicker from './garage/NVXPicker';
 import AccountPage from './account/AccountPage';
@@ -14,7 +18,7 @@ import './store.css';
 import Icon from './components/StoreIcon.jsx';
 import ProductCard from './components/ProductCard.jsx';
 import HomePage from './home/HomePage.jsx';
-import ShopPage from './catalog/ShopPage';
+import ShopPage from './discovery174/DiscoveryPage';
 import ProductImage from './catalog/components/ProductImage';
 import ProductDecisionPage from './product/ProductDecisionPage';
 const StoryPage = lazy(() => import('../experience/story/StoryPage'));
@@ -1330,10 +1334,10 @@ function Admin() {
 }
 function NotFound() { return <div className="dth-empty"><p className="dth-eyebrow">404 / OFF THE GRID</p><h1>This part of the studio is empty.</h1><Link className="dth-button dth-primary" to="/shop">Back to the collection</Link></div>; }
 export default function StoreApp() {
-  return <StoreProvider>
-      <Routes>
+  return <StoreProvider><AccessBoundary181>
+      <TransitionRoutes>
         <Route element={<Shell />}>
-          <Route index element={<HomePage />} />
+          <Route index element={<StudioEntry />} />
           <Route
             path="story"
             element={
@@ -1355,6 +1359,6 @@ export default function StoreApp() {
           <Route path="admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Route>
-    </Routes>
-  </StoreProvider>;
+    </TransitionRoutes>
+  </AccessBoundary181></StoreProvider>;
 }

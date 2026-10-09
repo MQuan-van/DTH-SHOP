@@ -2,11 +2,12 @@
 CI defaults to actual HTTP at DTH_APP_URL; DTH_REQUIRE_WEBGL=1 requires real model rendering.
 No API, real user, payment or production database is written by this Flow test.
 """
-import json, mimetypes, os, time
+import json, mimetypes, os, time, re
 from pathlib import Path
 from urllib.parse import urlparse, unquote
 from playwright.sync_api import sync_playwright, expect
 from cart_helpers import close_added_cart
+from flow_auth import login_flow
 BASE = os.environ.get('DTH_APP_URL', 'http://127.0.0.1:4173')
 OUT = Path(os.environ.get('DTH_EVIDENCE', 'test-results/product-decision')); OUT.mkdir(parents=True, exist_ok=True)
 STATIC = os.environ.get('DTH_STATIC_DIR')
@@ -37,38 +38,48 @@ with sync_playwright() as p:
     page=context.new_page(); page.on('pageerror',lambda e:errors.append(str(e)))
     webgl=False
     try:
+        login_flow(page, BASE, '/products/apex-suspension')
         page.goto(BASE+'/products/apex-suspension')
         expect(page.locator('[data-product-detail]')).to_be_visible()
         expect(page.get_by_role('heading',name='Apex Coilover',exact=True)).to_be_visible(); ok('product route mounts new detail page')
-        expect(page.get_by_role('heading',name='Specifications',exact=True)).to_be_visible(); ok('specifications retained')
+        # expect(page.locator('#dth-product-specs > summary')).to_have_text('Specifications'); ok('specifications retained')
+        expect(page.locator('#dth-product-specs > summary > span').first).to_have_text('Specifications')
+        ok('specifications retained')
         expect(page.get_by_role('button',name='Choose matching vehicle',exact=True)).to_be_visible(); ok('unselected cannot add')
         page.get_by_role('button',name='Choose matching vehicle',exact=True).click()
         dialog=page.locator('dialog[open]')
-        dialog.locator('select').nth(0).select_option('Demo Moto')
-        dialog.locator('select').nth(1).select_option('Street 155')
-        dialog.locator('select').nth(2).select_option('2022')
-        dialog.get_by_role('button',name='Show matching parts',exact=True).click()
+        expect(dialog).to_have_attribute('aria-labelledby',re.compile('.+'))
+        dialog.get_by_role('radio',name='NVX V1',exact=True).check()
+        dialog.get_by_role('button',name='Use NVX V1',exact=True).click()
         expect(page.locator('[data-product-detail] [data-fitment-status]')).to_have_attribute('data-fitment-status','compatible');ok('vehicle picker uses existing store / correct mapping')
         page.get_by_label('Quantity',exact=True).select_option('2')
         page.get_by_role('button',name='Add to bag',exact=True).click(); close_added_cart(page)
         expect(page.get_by_text('2 × Apex Coilover',exact=True)).to_be_visible()
         expect(page.get_by_role('link',name='Shopping bag, 2 items')).to_be_visible();ok('two items added only after store accepted')
         bag=page.evaluate("JSON.parse(localStorage.getItem('dth.flow.bag.v1'))")
-        assert bag[0]['vehicleId']=='street155-2022' and bag[0]['quantity']==2;ok('bag records selected vehicle per line')
+        assert bag[0]['vehicleId']=='yamaha-nvx-v1' and bag[0]['quantity']==2;ok('bag records selected vehicle per line')
         media=page.locator('[data-product-media]')
         for _ in range(25):
             if media.get_attribute('data-media-state') in ['ready','fallback']: break
             page.wait_for_timeout(800)
         webgl=media.get_attribute('data-media-state')=='ready'
         if webgl:
+            page.locator('#dth-product-tools > summary').click()
             page.get_by_role('button',name='Side',exact=True).click();page.wait_for_timeout(600)
             page.get_by_role('button',name='Rear',exact=True).click();page.get_by_role('button',name='Reset view',exact=True).click()
             ok('WebGL real frame rendered and camera controls called')
         elif os.environ.get('DTH_REQUIRE_WEBGL')=='1': raise AssertionError('WebGL required but actual model did not render')
         else:
             expect(page.get_by_text('3D unavailable. Image preview.',exact=True)).to_be_visible();ok('no-WebGL fallback keeps commerce available')
-        page.get_by_role('button',name='Change vehicle',exact=True).click()
-        dialog=page.locator('dialog[open]');dialog.locator('select').nth(1).select_option('Road 300');dialog.locator('select').nth(2).select_option('2024');dialog.get_by_role('button',name='Show matching parts',exact=True).click()
+        # page.get_by_role('button',name='Change vehicle',exact=True).click()
+        page.locator(
+            '[data-product-detail] [data-fitment-status]'
+        ).get_by_role(
+            'button',
+            name='Change vehicle',
+            exact=True
+        ).click()
+        dialog=page.get_by_role('dialog',name='Choose your Yamaha NVX');dialog.get_by_role('radio',name='NVX V2',exact=True).check();dialog.get_by_role('button',name='Use NVX V2',exact=True).click()
         expect(page.locator('[data-product-detail] [data-fitment-status]')).to_have_attribute('data-fitment-status','incompatible')
         assert page.evaluate("JSON.parse(localStorage.getItem('dth.flow.bag.v1'))")==bag;ok('global vehicle change never reassigns bag lines')
         expect(page.get_by_role('button',name='Choose matching vehicle',exact=True)).to_be_visible();ok('mismatch routes to choose vehicle instead of adding')
@@ -84,7 +95,7 @@ with sync_playwright() as p:
         page.emulate_media(reduced_motion='reduce')
         expect(page.get_by_role('button',name='Reduced motion',exact=True)).to_be_disabled();ok('system reduced motion honored')
         page.emulate_media(reduced_motion='no-preference')
-        page.evaluate("localStorage.setItem('dth.flow.vehicle.v1',JSON.stringify('street155-2022'))")
+        page.evaluate("localStorage.setItem('dth.flow.vehicle.v1',JSON.stringify('yamaha-nvx-v1'))")
         page.reload();expect(page.locator('[data-product-detail] [data-fitment-status]')).to_have_attribute('data-fitment-status','compatible')
         page.wait_for_timeout(700)
         for w,h in [(320,740),(390,844),(768,1024),(1024,900),(1280,900),(1440,1100),(1920,1080),(2560,1440)]:
@@ -96,7 +107,7 @@ with sync_playwright() as p:
             ok(f'no horizontal overflow at {w}x{h}')
             if w in [390,1440]: page.screenshot(path=str(OUT/f'detail-{w}.png'),full_page=True)
         # Per-line maximum remains enforced after reload, not interpreted as stock.
-        page.evaluate("localStorage.setItem('dth.flow.bag.v1',JSON.stringify([{productId:'apex-suspension',vehicleId:'street155-2022',quantity:10}]))")
+        page.evaluate("localStorage.setItem('dth.flow.bag.v1',JSON.stringify([{productId:'apex-suspension',vehicleId:'yamaha-nvx-v1',quantity:10}]))")
         page.reload();expect(page.get_by_role('button',name='Demo limit reached',exact=True)).to_be_disabled();ok('ten-item demo limit enforced')
         page.goto(BASE+'/products/does-not-exist');expect(page.get_by_role('heading',name='This part of the studio is empty.')).to_be_visible();ok('unknown product still returns existing not-found view')
         page.goto(BASE+'/products/apex-suspension');expect(page.locator('[data-product-detail]')).to_be_visible();ok('unmount/remount does not lose route')

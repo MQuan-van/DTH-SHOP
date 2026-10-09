@@ -45,8 +45,9 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Actual compiled Flow loader, session and navigation checks
         run: |
-          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/dth-loader-preview.log 2>&1 &
-          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
+          npm run preview --workspace frontend -- --host 127.0.0.1 --port 4173 --strictPort > /tmp/dth-loader-preview.log 2>&1 &
+          for i in $(seq 1 40); do if curl -fsS http://127.0.0.1:4173/ >/dev/null; then break; fi; sleep 1; done
+          curl -fsS http://127.0.0.1:4173/ >/dev/null || { cat /tmp/dth-loader-preview.log; exit 1; }
           python tests/browser/app_loader.py --url http://127.0.0.1:4173
       - uses: actions/upload-artifact@v4
         if: always()

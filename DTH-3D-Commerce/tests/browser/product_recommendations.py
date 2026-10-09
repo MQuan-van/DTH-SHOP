@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
 from cart_helpers import close_added_cart
+from flow_auth import login_flow
 
 BASE = os.environ.get('DTH_APP_URL', 'http://127.0.0.1:4173').rstrip('/')
 OUT = Path('test-results/product-recommendations')
@@ -17,10 +18,11 @@ with sync_playwright() as p:
     browser = p.chromium.launch(headless=True, args=['--no-sandbox'])
     context = browser.new_context(viewport={'width': 1440, 'height': 1100})
     context.add_init_script("""sessionStorage.setItem('dth.ignition.seen.v1','1');
-localStorage.setItem('dth.flow.vehicle.v1',JSON.stringify('street155-2022'));""")
+localStorage.setItem('dth.flow.vehicle.v1',JSON.stringify('yamaha-nvx-v1'));""")
     page = context.new_page()
     page.on('pageerror', lambda error: errors.append(str(error)))
     try:
+        login_flow(page, BASE, '/products/apex-suspension')
         page.goto(BASE + '/products/apex-suspension')
         rec = page.locator('[data-product-recommendations]')
         expect(rec).to_have_attribute('data-rec-mode', 'build', timeout=20000)
@@ -36,7 +38,7 @@ localStorage.setItem('dth.flow.vehicle.v1',JSON.stringify('street155-2022'));"""
         page.get_by_role('button', name='Add to bag', exact=True).click(); close_added_cart(page)
         expect(page.locator('[data-product-detail]')).to_contain_text('2 × Apex Coilover')
         bag = page.evaluate("localStorage.getItem('dth.flow.bag.v1')")
-        assert json.loads(bag)[0]['vehicleId'] == 'street155-2022'
+        assert json.loads(bag)[0]['vehicleId'] == 'yamaha-nvx-v1'
         checks.append('existing add operation stores quantity and per-line vehicle')
         rec.scroll_into_view_if_needed()
         rec.get_by_role('link', name='View Apex Alloy wheel product details').focus()
@@ -49,13 +51,28 @@ localStorage.setItem('dth.flow.vehicle.v1',JSON.stringify('street155-2022'));"""
         checks.append('keyboard product navigation and actual browser Back preserve bag')
         rec.get_by_role('button', name='Change vehicle', exact=True).click()
         dialog = page.locator('dialog[open]')
-        dialog.get_by_label('Make', exact=True).select_option(label='Demo Moto')
-        dialog.get_by_label('Model', exact=True).select_option(label='Road 300')
-        dialog.get_by_label('Year', exact=True).select_option(label='2024')
-        dialog.get_by_role('button', name='Show matching parts', exact=True).click()
+        dialog.get_by_role('radio', name='NVX V2', exact=True).check()
+        dialog.get_by_role('button', name='Use NVX V2', exact=True).click()
+        # expect(rec).to_have_attribute('data-rec-mode', 'alternatives')
+        # expect(rec.locator('[data-rec-id]')).to_have_count(1)
+        # expect(rec.locator('[data-rec-id]')).to_have_attribute('data-rec-id', 'vector-suspension')
         expect(rec).to_have_attribute('data-rec-mode', 'alternatives')
-        expect(rec.locator('[data-rec-id]')).to_have_count(1)
-        expect(rec.locator('[data-rec-id]')).to_have_attribute('data-rec-id', 'vector-suspension')
+
+        cards = rec.locator('[data-rec-id]')
+        expect(cards).to_have_count(2)
+
+        actual_ids = cards.evaluate_all(
+            "(nodes) => nodes.map(node => node.dataset.recId)"
+        )
+
+        expected_ids = {
+            'vector-suspension',
+            'studio-suspension'
+        }
+
+        assert len(actual_ids) == 2
+        assert set(actual_ids) == expected_ids, actual_ids
+
         assert page.evaluate("localStorage.getItem('dth.flow.bag.v1')") == bag
         checks.append('actual vehicle picker updates alternatives without editing earlier cart lines')
         rec.scroll_into_view_if_needed()

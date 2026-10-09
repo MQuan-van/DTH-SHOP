@@ -4,6 +4,7 @@ A chapter state assertion alone cannot establish that the stage stays onscreen.
 import json, os
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
+from flow_auth import login_flow
 out=Path('test-results/cinematic');out.mkdir(parents=True,exist_ok=True)
 base=os.environ.get('DTH_CINEMATIC_URL','http://127.0.0.1:4173')
 checks,errors=[],[]
@@ -30,13 +31,15 @@ with sync_playwright() as p:
  context=browser.new_context(viewport={'width':1440,'height':1000},device_scale_factor=1)
  page=context.new_page();page.set_default_timeout(25000);page.on('pageerror',lambda error:errors.append(str(error)))
  try:
+  login_flow(page,base,'/story')  # Real Story mount records the per-user visit.
+  expect(page.locator('[data-story-editorial]')).to_be_visible()
   page.goto(base+'/');expect(page.locator('[data-scene]')).to_have_attribute('data-scene','ready')
   expect(page.locator('[data-cinematic]')).to_have_attribute('data-cinematic','false')
   page.wait_for_timeout(1500);assert_stage(page);shot(page,'01-home');ok('Real GLB loads in a taller, single normal-flow showroom')
   for name,amount,chapter in [('02-surface',.29,'surface'),('03-assembly',.61,'assembly'),('04-reassembled',1,'build')]:
    select_chapter(page,amount);expect(page.locator('[data-chapter]')).to_have_attribute('data-chapter',chapter);shot(page,name)
   ok('Chapter buttons change the scene without scrolling the document')
-  page.get_by_role('button',name='Find my fit',exact=False).click();expect(page.get_by_role('dialog',name='Find your fit.')).to_be_visible();page.get_by_role('button',name='Close dialog',exact=True).click();ok('Home uses the existing vehicle selector instead of a disconnected form')
+  page.get_by_role('button',name='Find my fit',exact=False).click();expect(page.get_by_role('dialog',name='Choose your Yamaha NVX')).to_be_visible();page.get_by_role('button',name='Close dialog',exact=True).click();ok('Home uses the existing vehicle selector instead of a disconnected form')
   select_chapter(page,0);expect(page.locator('[data-chapter]')).to_have_attribute('data-chapter','form');ok('Chapter transitions are reversible')
   page.get_by_role('button',name='Inspect in 3D',exact=False).click();expect(page.locator('[data-inspect]')).to_have_attribute('data-inspect','true')
   slider=page.get_by_role('slider',name='Assembly separation');slider.focus();slider.press('End');expect(slider).to_have_value('1');page.wait_for_timeout(1800);shot(page,'05-inspect-exploded')

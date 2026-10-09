@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from urllib.parse import urlsplit, parse_qs
 from playwright.sync_api import sync_playwright, expect
+from flow_auth import login_flow
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--url', default='http://127.0.0.1:4173')
@@ -28,7 +29,16 @@ def run():
         browser = p.chromium.launch(**opts)
         context = browser.new_context(viewport={'width':1440,'height':1000}, device_scale_factor=1)
         page = context.new_page()
-        page.on('pageerror', lambda e: errors.append(str(e)))
+        # page.on('pageerror', lambda e: errors.append(str(e)))
+        page.on(
+    'pageerror',
+        lambda e: errors.append(
+            f"URL: {page.url}\n"
+            f"{getattr(e, 'stack', None) or str(e)}"
+        )
+    )
+        if not args.harness:
+            login_flow(page, args.url, '/shop')
         def current():
             if args.harness:
                 return page.evaluate("window.__shopHarness.location.pathname + window.__shopHarness.location.search")

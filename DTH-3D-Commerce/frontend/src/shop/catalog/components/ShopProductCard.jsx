@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom';
 import { formatMoney } from '../../../../../shared/domain.mjs';
-import { describeFit } from '../catalog.logic.mjs';
+import FitmentStatus from '../fitment/FitmentStatus';
 import { SHOP_CONFIG } from '../catalog.config.mjs';
 import ShopIcon from './ShopIcon';
 import ProductImage from './ProductImage';
 import styles from '../ShopPage.module.css';
 
-export default function ShopProductCard({ product, vehicleId, vehicles, onQuickView, eager }) {
-  const match = describeFit(product, vehicleId, vehicles);
+export default function ShopProductCard({ product, vehicleId, vehicles, onQuickView, eager, motion = false }) {
+
   const category = SHOP_CONFIG.categories.find(item => item.id === product.category)?.label || product.category;
   const accent = /^#[0-9a-f]{6}$/i.test(product.accent || '') ? product.accent : '#526472';
   function openProduct(event) {
@@ -28,10 +28,13 @@ export default function ShopProductCard({ product, vehicleId, vehicles, onQuickV
   return <article className={styles.card} aria-label={product.name}>
     <button type="button" className={styles.mediaButton} onClick={event => onQuickView(product.id, event.currentTarget)} aria-label={`Quick view ${product.name}`}>
       <span className={styles.mediaGrid} aria-hidden="true" />
-      <span className={styles.mediaLabel}><ShopIcon name="cube" />3D on product page</span>
-      <ProductImage product={product} eager={eager} className={styles.cardImage} />
-      <span className={styles.mediaBase} aria-hidden="true" />
-      <span className={styles.quickBadge}><ShopIcon name="search" /><span>Quick view</span></span>
+        {/* <span className={styles.mediaLabel}><ShopIcon name="cube" />3D on product page</span> */}
+        <ProductImage product={product} eager={eager} className={styles.cardImage} />
+        {/* <span className={styles.mediaBase} aria-hidden="true" /> */}
+        <span className={styles.quickBadge}>
+          <ShopIcon name="search" />
+        {/* <span>Quick view</span> */}
+      </span>
     </button>
     <div className={styles.cardBody}>
       <span 
@@ -45,8 +48,11 @@ export default function ShopProductCard({ product, vehicleId, vehicles, onQuickV
       </h3>
       
       <p className={styles.finish}><span style={{ backgroundColor: accent }} aria-hidden="true" />{product.finish}</p>
-      <div className={styles.priceRow}><strong>{formatMoney(product.price)}</strong><small>Demo price</small></div>
-      <p className={styles.fitBadge} data-status={match.status}><ShopIcon name={match.status === 'compatible' ? 'check' : match.status === 'incompatible' ? 'close' : 'vehicle'} />{match.label}</p>
+      <div className={styles.priceRow}>
+        <strong>{formatMoney(product.price)}</strong>
+        {/* <small>Demo price</small> */}
+      </div>
+      <FitmentStatus product={product} vehicleId={vehicleId} vehicles={vehicles} compact motion={motion} />
       <Link
         className={styles.cardLink}
         to={`/products/${product.slug}`}

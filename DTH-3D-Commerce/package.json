@@ -20,6 +20,8 @@
     "test:admin": "node --test tests/support.test.mjs",
     "test:cinematic": "node --test tests/cinematic.test.mjs",
     "admin:grant": "node backend/commerce/admin/grant.mjs",
-    "test:experience": "node --test tests/experience.test.mjs tests/cinematic.test.mjs tests/orbitTransition.test.mjs tests/inspectionCommands.test.mjs"
+    "test:experience": "node --test tests/experience.test.mjs tests/cinematic.test.mjs tests/orbitTransition.test.mjs tests/inspectionCommands.test.mjs",
+    "test:cart-quote": "node --test tests/cart-drawer.test.mjs tests/full-cart.test.mjs tests/cart-quote.test.mjs tests/cart-quote.route.test.mjs tests/cart-quote.order.test.mjs tests/cart-quote-adapters.test.mjs tests/cart-review.test.mjs",
+    "test:checkout": "node --test tests/checkout.test.mjs"
   }
 }

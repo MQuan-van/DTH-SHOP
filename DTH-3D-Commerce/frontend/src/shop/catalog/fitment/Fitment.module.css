@@ -1,0 +1,64 @@
+/* Shop/Quick View only. No global layout, model or camera rules. */
+.strip,.status { --fit-blue:#0066cc;--fit-ink:#14232f;--fit-muted:#526472;--fit-line:#c8dbe5;--fit-signal:var(--fit-blue);box-sizing:border-box; }
+.strip *,.status * { box-sizing:border-box; }
+.strip { position:relative;isolation:isolate;border-block:1px solid var(--fit-line);background:linear-gradient(105deg,#e8f6fb,#f6fafc 75%);padding:25px 24px 0;margin-top:22px;overflow:hidden; }
+.vehicleRow { display:flex;gap:24px;align-items:center;padding-bottom:24px; }
+.depthMark { position:relative;display:block;flex:0 0 74px;width:74px;height:74px;perspective:420px;color:var(--fit-blue); }
+.plate { position:absolute;inset:12px;border:1px solid #7ba9bf;background:#effaff99;transform:rotateX(42deg) rotateZ(-32deg) translateZ(-10px);transform-origin:50% 50%;transition:transform 420ms cubic-bezier(.2,.75,.2,1); }
+.plate:nth-child(2) { transform:rotateX(42deg) rotateZ(-32deg) translateZ(2px);border-color:#60bdd7; }
+.plate:nth-child(3) { display:grid;place-items:center;transform:rotateX(42deg) rotateZ(-32deg) translateZ(15px);border-color:#0066cc;background:#fcfeff; }
+.plate svg { width:29px!important;height:29px!important; }
+@media(hover:hover) and (pointer:fine) {
+ .strip[data-fitment-motion="on"]:hover .plate:first-child { transform:rotateX(25deg) rotateZ(-18deg) translateZ(-14px); }
+ .strip[data-fitment-motion="on"]:hover .plate:nth-child(2) { transform:rotateX(25deg) rotateZ(-18deg) translateZ(4px); }
+ .strip[data-fitment-motion="on"]:hover .plate:nth-child(3) { transform:rotateX(25deg) rotateZ(-18deg) translateZ(25px); }
+}
+.vehicleCopy { flex:1;min-width:0; }
+.kicker { display:block;color:#416575;font:10px/1.6 Consolas,monospace;letter-spacing:.13em; }
+.strip .vehicleCopy h2 { margin:5px 0 7px;font-size:clamp(20px,1.9vw,28px);font-weight:650;line-height:1.18;letter-spacing:-.04em;overflow-wrap:anywhere; }
+.strip .vehicleCopy p { margin:0;color:var(--fit-muted);font-size:12px;line-height:1.65;max-width:52ch; }
+.vehicleActions { display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:flex-end; }
+.strip button,.status button { appearance:none;cursor:pointer;touch-action:manipulation; }
+.strip .choose,.strip .clear,.status .actions button { display:inline-flex;align-items:center;justify-content:space-between;gap:16px;min-height:44px;padding:6px 0;font-size:12px;font-weight:600;color:var(--fit-blue);background:none;border:0;border-bottom:1px solid var(--fit-line);border-radius:0;box-shadow:none; }
+.strip .choose span,.status .actions button span { font-size:21px;transition:transform 240ms ease; }
+.strip .choose:hover span,.status .actions button:hover span { transform:translate(3px,-2px); }
+.strip .clear { color:var(--fit-muted);border:0; }
+.strip .filterRow { display:flex;align-items:center;justify-content:space-between;gap:18px;border-top:1px solid var(--fit-line);padding:12px 0 14px; }
+.fitModes { display:flex;gap:22px;flex-wrap:wrap; }
+.strip .fitModes button { position:relative;display:inline-flex;align-items:center;gap:10px;min-height:44px;border:0;background:none;padding:7px 0 10px;border-radius:0;color:var(--fit-muted);font-size:12px; }
+.fitModes button::after { content:"";position:absolute;inset:auto 0 0;height:2px;background:var(--fit-blue);transform:scaleX(0);transform-origin:0 50%;transition:transform 320ms ease; }
+.strip .fitModes button[aria-pressed="true"] { color:var(--fit-blue);font-weight:650; }
+.fitModes button[aria-pressed="true"]::after { transform:scaleX(1); }
+.fitModes b { font:12px/1 Consolas,monospace;font-variant-numeric:tabular-nums;color:var(--fit-ink); }
+.strip .countNote { margin:0;color:var(--fit-muted);font-size:11px;text-align:right;line-height:1.6; }
+.countNote small { display:block;font-size:10px; }
+.status { position:relative;min-width:0; }
+.status[data-fitment-status="compatible"] { --fit-signal:#12694f; }
+.status[data-fitment-status="incompatible"] { --fit-signal:#9a441f; }
+.status[data-fitment-status="unknown"] { --fit-signal:#7d6221; }
+.statusHeading { display:flex;gap:9px;align-items:flex-start;min-width:0; }
+.statusIcon { display:inline-grid;place-items:center;flex:0 0 22px;height:22px;border:1px solid currentColor;border-radius:50%;color:var(--fit-signal); }
+.statusIcon svg { width:17px!important;height:17px!important; }
+.statusHeading strong { display:block;font-size:13px;line-height:1.5;font-weight:650;color:var(--fit-signal);overflow-wrap:anywhere; }
+.detail { border-block:1px solid var(--fit-line);padding:17px 0;margin:18px 0;overflow:hidden; }
+.status .vehicleName { margin:4px 0 0;font-size:13px;font-weight:550;line-height:1.55;color:var(--fit-ink);overflow-wrap:anywhere; }
+.status .reason { color:var(--fit-muted);font-size:12px;line-height:1.7;margin:12px 0 6px; }
+.actions { display:flex;gap:5px 18px;flex-wrap:wrap; }
+.status .actions button { font-size:12px;min-height:42px; }
+.fineprint { display:block;color:var(--fit-muted);font-size:10px;line-height:1.65;margin-top:8px; }
+.compact { margin-top:0;padding:2px 0 10px; }
+.compact .statusHeading strong { font-size:11px;font-weight:550;line-height:1.6; }
+.compact .statusIcon { width:18px;flex-basis:18px;height:18px; }
+.compact .statusIcon svg { width:14px!important;height:14px!important; }
+.scanTrack { position:absolute;inset:auto 0 0;height:2px;overflow:hidden;pointer-events:none; }
+.scanTrack i { display:block;width:100%;height:100%;background:linear-gradient(90deg,transparent,#00c2ff 50%,transparent);opacity:0; }
+.strip button:focus-visible,.status button:focus-visible { outline:2px solid var(--fit-blue);outline-offset:4px; }
+.srOnly { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0; }
+[data-fitment-motion="off"] .plate,[data-fitment-motion="off"] button::after,[data-fitment-motion="off"] button span { transition:none!important; }
+@media(max-width:800px) {
+ .strip { padding:20px 18px 0; }.vehicleRow { gap:16px;flex-wrap:wrap; }.vehicleActions { width:100%;justify-content:flex-start;margin-left:90px; }.strip .filterRow { align-items:flex-start;flex-direction:column;gap:8px; }.strip .countNote { text-align:left; }
+}
+@media(max-width:480px) {
+ .strip { padding:16px 13px 0; }.depthMark { flex-basis:52px;width:52px;height:62px; }.plate { inset:12px 4px; }.vehicleRow { gap:13px;padding-bottom:15px; }.vehicleActions { margin-left:0;gap:22px; }.strip .vehicleCopy h2 { font-size:20px; }.fitModes { gap:18px; }.strip .fitModes button { font-size:11px; }
+}
+@media(prefers-reduced-motion:reduce) { .strip *,.strip *::before,.strip *::after,.status *,.status *::before,.status *::after { animation:none!important;transition:none!important; } }

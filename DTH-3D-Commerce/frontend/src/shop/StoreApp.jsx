@@ -1,16 +1,26 @@
+// DTH ACCESS181 — login gate before storefront catalog rendering.
+import AccessBoundary181 from '../experience/access181/AccessBoundary181';
+import TransitionRoutes from '../experience/journey/TransitionRoutes';
+import StudioEntry from '../experience/journey/StudioEntry';
+import { vehicleLabel as nvxVehicleLabel } from '../../../shared/nvx.mjs';
+import NVXPicker from './garage/NVXPicker';
 import AccountPage from './account/AccountPage';
+import CheckoutPage from './checkout/CheckoutPage.jsx';
 import { ConfirmationSeal } from './account/AccountMotion';
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, Route, Routes, useLocation, useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import { CATEGORIES, filterProducts, fitment, formatMoney,normalizeItems, quoteOrder } from '../../../shared/domain.mjs';
 import { PREVIEW, FLOW, createOrder, saveProduct, loadAdminProducts, loadOrder } from './api';
 import { StoreProvider, useStore } from './useStore';
+import CartDrawer from './cart/CartDrawer';
+import FullCartPage from './cart/page/FullCartPage';
 import './store.css';
 import Icon from './components/StoreIcon.jsx';
 import ProductCard from './components/ProductCard.jsx';
 import HomePage from './home/HomePage.jsx';
-import ShopPage from './catalog/ShopPage';
+import ShopPage from './discovery174/DiscoveryPage';
 import ProductImage from './catalog/components/ProductImage';
+import ProductDecisionPage from './product/ProductDecisionPage';
 const StoryPage = lazy(() => import('../experience/story/StoryPage'));
 const Viewer3D = lazy(() => import('./Viewer3D'));
 const categoryNames = { suspension: 'Suspension', wheels: 'Wheels', exhausts: 'Exhausts', mirrors: 'Mirrors', brakes: 'Brakes' };
@@ -21,27 +31,8 @@ function Dialog({ title, onClose, children }) {
     <div className="dth-dialog-title"><h2>{title}</h2><button onClick={onClose} aria-label="Close dialog">×</button></div>{children}
   </dialog>;
 }
-function VehiclePicker({ onClose }) {
-  const { data, vehicleId, setVehicle } = useStore();
-  const existing = data.vehicles.find(v => v.id === vehicleId);
-  const [make, setMake] = useState(existing?.make || '');
-  const [model, setModel] = useState(existing?.model || '');
-  const [year, setYear] = useState(existing?.year ? String(existing.year) : '');
-  const unique = list => [...new Set(list)];
-  const models = unique(data.vehicles.filter(v => v.make === make).map(v => v.model));
-  const years = unique(data.vehicles.filter(v => v.make === make && v.model === model).map(v => v.year));
-  const match = data.vehicles.find(v => v.make === make && v.model === model && String(v.year) === year);
-  return <Dialog title="Find your fit." onClose={onClose}>
-    <p className="dth-muted">Choose a vehicle to filter the demo catalog. These fictional vehicles and mappings are for evaluation only.</p>
-    <form className="dth-form" onSubmit={e => { e.preventDefault(); if (match) { setVehicle(match.id); onClose(); } }}>
-      <label>Make<select value={make} required onChange={e => { setMake(e.target.value); setModel(''); setYear(''); }}><option value="">Choose make</option>{unique(data.vehicles.map(v => v.make)).map(m => <option key={m}>{m}</option>)}</select></label>
-      <label>Model<select value={model} required disabled={!make} onChange={e => { setModel(e.target.value); setYear(''); }}><option value="">Choose model</option>{models.map(m => <option key={m}>{m}</option>)}</select></label>
-      <label>Year<select value={year} required disabled={!model} onChange={e => setYear(e.target.value)}><option value="">Choose year</option>{years.map(y => <option key={y}>{y}</option>)}</select></label>
-      <button className="dth-button dth-primary" type="submit" disabled={!match}>Show matching parts <Icon name="arrow" /></button>
-      {vehicleId && <button className="dth-button dth-ghost" type="button" onClick={() => { setVehicle(''); onClose(); }}>Clear selected vehicle</button>}
-    </form>
-  </Dialog>;
-}
+function VehiclePicker({ onClose }) { return <NVXPicker onClose={onClose} />; }
+
 function Shell() {
   const store = useStore(), location = useLocation();
   const [vehicleOpen, setVehicleOpen] = useState(false);
@@ -60,7 +51,12 @@ function Shell() {
         <NavLink to="/shop">Shop parts</NavLink>
         <NavLink to="/account">My account</NavLink>
       </nav>
-      <div className="dth-header-tools"><button className="dth-vehicle-button" onClick={() => setVehicleOpen(true)} disabled={store.loading || !!store.error}><Icon name="vehicle" /><span>{vehicle ? `${vehicle.model} · ${vehicle.year}` : 'Select your vehicle'}</span><span className="dth-lime">＋</span></button><Link to="/account" className="dth-icon-button" aria-label="Your account"><Icon name="user" /></Link><Link to="/bag" className="dth-bag-button" aria-label={`Shopping bag, ${count} items`}><Icon name="bag" /><span>{count}</span></Link></div>
+      <div className="dth-header-tools"><button className="dth-vehicle-button" onClick={() => setVehicleOpen(true)} disabled={store.loading || !!store.error}><Icon name="vehicle" /><span>{vehicle ? `${nvxVehicleLabel(vehicle)}` : 'Select your vehicle'}</span><span className="dth-lime">＋</span></button><Link to="/account" className="dth-icon-button" aria-label="Your account"><Icon name="user" /></Link><Link to="/bag" className="dth-bag-button" aria-label={`Shopping bag, ${count} items`} aria-haspopup="dialog" aria-controls="dth-cart-drawer"
+        onClick={event => {
+          if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+          if (location.pathname === '/bag') return;
+          event.preventDefault(); store.openCart(event.currentTarget);
+        }}><Icon name="bag" /><span>{count}</span></Link></div>
     </header>
     <main id="dth-content" tabIndex={-1}>
       {store.loading ? <div className="dth-empty">Loading the studio…</div> : store.error ? <div className="dth-empty"><h1>We could not load the store.</h1><p role="alert">{store.error}</p><button className="dth-button dth-primary" onClick={store.refresh}>Try again</button><p>Check the API, MongoDB and the seed step. API mode never silently switches to preview data.</p></div> : <Outlet context={{ chooseVehicle: () => setVehicleOpen(true) }} />}
@@ -68,6 +64,7 @@ function Shell() {
     <footer className="dth-footer"><Link to="/" className="dth-footer-brand">DTH<span> / PARTS STUDIO</span></Link><p>Inspect the design. Check the demo fit. Explore with confidence.</p><div><span>COMP1682 · Final Year Project</span><span>Demo models are not installation guidance.</span></div></footer>
     <div className={`dth-toast ${store.notice ? 'is-visible' : ''}`} role="status" aria-live="polite">{store.notice}</div>
     {vehicleOpen && <VehiclePicker onClose={() => setVehicleOpen(false)} />}
+    <CartDrawer />
   </div>;
 }
 function ModelView({ product, hero = false }) {
@@ -97,7 +94,7 @@ function Product() {
   );
 
   return product ? (
-    <ProductDetails
+    <ProductDecisionPage
       key={`${product.id}:${product.slug}`}
       product={product}
     />
@@ -336,7 +333,7 @@ function ProductDetails({ product }) {
 
             {vehicle && (
               <p>
-                {vehicle.make} {vehicle.model} · {vehicle.year}
+                {nvxVehicleLabel(vehicle)}
               </p>
             )}
 
@@ -456,7 +453,7 @@ function ProductDetails({ product }) {
               <ul>
                 {matches.map(item => (
                   <li key={item.id}>
-                    {item.make} {item.model} · {item.year}
+                    {nvxVehicleLabel(item)}
                   </li>
                 ))}
               </ul>
@@ -493,7 +490,7 @@ function ProductDetails({ product }) {
 //     const product = store.data.products.find(p => p.id === item.productId);
 //     const vehicle = store.data.vehicles.find(v => v.id === item.vehicleId);
 //     return <article className="dth-bag-item" key={`${item.productId}:${item.vehicleId}`}>
-//       {product && <Link to={`/products/${product.slug}`}><img src={product.imageUrl} alt={product.name} /></Link>}<div><h2>{product?.name || 'Unavailable product'}</h2><p>{product?.finish}</p><p className="dth-fit">{vehicle ? `${vehicle.model} · ${vehicle.year} · demo mapping` : 'Unknown demo vehicle'}</p><button disabled={busy} className="dth-text-button" onClick={() => store.setBag(items => items.filter((_, n) => n !== index))} aria-label={`Remove ${product?.name || item.productId}`}>Remove</button></div><div className="dth-bag-item-end"><strong>{formatMoney((product?.price || 0) * item.quantity)}</strong><label>Qty<select disabled={busy} aria-label={`Quantity for ${product?.name || item.productId}`} value={item.quantity} onChange={e => change(index, Number(e.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1}>{i + 1}</option>)}</select></label></div></article>;
+//       {product && <Link to={`/products/${product.slug}`}><img src={product.imageUrl} alt={product.name} /></Link>}<div><h2>{product?.name || 'Unavailable product'}</h2><p>{product?.finish}</p><p className="dth-fit">{vehicle ? `${nvxVehicleLabel(vehicle)} · demo mapping` : 'Unknown demo vehicle'}</p><button disabled={busy} className="dth-text-button" onClick={() => store.setBag(items => items.filter((_, n) => n !== index))} aria-label={`Remove ${product?.name || item.productId}`}>Remove</button></div><div className="dth-bag-item-end"><strong>{formatMoney((product?.price || 0) * item.quantity)}</strong><label>Qty<select disabled={busy} aria-label={`Quantity for ${product?.name || item.productId}`} value={item.quantity} onChange={e => change(index, Number(e.target.value))}>{Array.from({ length: 10 }, (_, i) => <option key={i + 1}>{i + 1}</option>)}</select></label></div></article>;
 //   })}<Link className="dth-text-button" to="/shop">← Continue exploring</Link></div><aside className="dth-order-summary"><p className="dth-eyebrow">MOCK CHECKOUT</p><h2>Build summary</h2><div><span>Subtotal</span><strong>{quote ? formatMoney(quote.total) : '—'}</strong></div><div><span>Delivery</span><span>Not applicable — demo</span></div><div className="dth-total"><span>Total</span><strong>{quote ? formatMoney(quote.total) : '—'}</strong></div><p className="dth-muted">{PREVIEW ? 'Preview: the simulated result exists only in this page session. It is not sent to a server.' : 'The API rechecks product prices and demo compatibility before saving the simulated order to MongoDB.'}</p><label className="dth-checkbox"><input type="checkbox" checked={ack} disabled={busy} onChange={e => setAck(e.target.checked)} />I understand this is a demonstration, with no payment, shipment or real fitment guarantee.</label>{!PREVIEW && !store.user ? <Link className="dth-button dth-primary" to="/account?return=/bag">Sign in to continue</Link> : <button className="dth-button dth-primary" disabled={!ack || !quote || busy || store.authLoading} onClick={checkout}>{busy ? 'Creating simulated order…' : 'Place simulated order'}<Icon name="arrow" /></button>}{(quoteError || error) && <p className="dth-error" role="alert">{quoteError || error}</p>}</aside></div>}</section>;
 // }
 // function Completed() {
@@ -859,7 +856,7 @@ function ProductDetails({ product }) {
                       {reviewing ? (
                         <p>
                           {vehicle
-                            ? `${vehicle.make} ${vehicle.model} · ${vehicle.year}`
+                            ? `${nvxVehicleLabel(vehicle)}`
                             : item.vehicleId}
                         </p>
                       ) : (
@@ -894,7 +891,7 @@ function ProductDetails({ product }) {
                                   ).status !== 'compatible'
                                 }
                               >
-                                {v.make} {v.model} · {v.year}
+                                {nvxVehicleLabel(v)}
                               </option>
                             ))}
                           </select>
@@ -1275,6 +1272,13 @@ function ProductDetails({ product }) {
           </span>
         </div>
 
+        {order.checkout && <div className="dth-receipt-meta" aria-label="Demo checkout details">
+          <strong>{order.checkout.recipientName}</strong>
+          <span>{order.checkout.email} · {order.checkout.phone}</span>
+          <span>{order.checkout.addressLine} · {order.checkout.city}</span>
+          <span>Demo pay on delivery · No real shipment</span>
+        </div>}
+
         <ul className="dth-receipt-lines">
           {order.lines.map(line => {
             const vehicle = store.data.vehicles.find(
@@ -1286,9 +1290,9 @@ function ProductDetails({ product }) {
                 <div>
                   <h2>{line.name}</h2>
                   <p>
-                    {vehicle
-                      ? `${vehicle.make} ${vehicle.model} · ${vehicle.year}`
-                      : line.vehicleId}
+                    {line.vehicleLabel || (vehicle
+                      ? `${nvxVehicleLabel(vehicle)}`
+                      : line.vehicleId)}
                   </p>
                   <small>
                     {line.quantity} × {formatMoney(line.unitPrice)}
@@ -1330,10 +1334,10 @@ function Admin() {
 }
 function NotFound() { return <div className="dth-empty"><p className="dth-eyebrow">404 / OFF THE GRID</p><h1>This part of the studio is empty.</h1><Link className="dth-button dth-primary" to="/shop">Back to the collection</Link></div>; }
 export default function StoreApp() {
-  return <StoreProvider>
-      <Routes>
+  return <StoreProvider><AccessBoundary181>
+      <TransitionRoutes>
         <Route element={<Shell />}>
-          <Route index element={<HomePage />} />
+          <Route index element={<StudioEntry />} />
           <Route
             path="story"
             element={
@@ -1349,12 +1353,12 @@ export default function StoreApp() {
             }
           />
           <Route path="shop" element={<ShopPage  />} /><Route path="products/:slug" element={<Product />} />
-          <Route path="bag" element={<Bag />} /><Route path="order-complete" element={<Completed />} />
+          <Route path="bag" element={<FullCartPage />} /><Route path="order-complete" element={<Completed />} />
+          <Route path="checkout" element={<CheckoutPage />} />
           <Route path="account" element={<AccountPage />} />
           <Route path="admin" element={<Admin />} />
           <Route path="*" element={<NotFound />} />
         </Route>
-    </Routes>
-  </StoreProvider>;
+    </TransitionRoutes>
+  </AccessBoundary181></StoreProvider>;
 }
- 

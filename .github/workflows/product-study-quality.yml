@@ -1,0 +1,54 @@
+name: Product Study quality
+on:
+  pull_request:
+    paths:
+      - 'DTH-3D-Commerce/frontend/**'
+      - 'DTH-3D-Commerce/shared/**'
+      - 'DTH-3D-Commerce/tests/**'
+      - '.github/workflows/product-study-quality.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  product-study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: DTH-3D-Commerce
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: DTH-3D-Commerce/package-lock.json
+      - name: Install and regressions
+        run: |
+          npm ci
+          npm run check
+          npm test
+          npm run test:experience
+          node --test tests/product-decision.test.mjs tests/product-study.test.mjs
+          npm run build
+          npm run build:flow
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare browser
+        run: |
+          pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Real WebGL, modes, hotspots and compatible purchase
+        env:
+          DTH_APP_URL: http://127.0.0.1:4173
+        run: |
+          npm run preview --workspace frontend -- --host 127.0.0.1 --port 4173 > /tmp/dth-product-study.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
+          python tests/browser/product_study.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: product-study-evidence
+          path: DTH-3D-Commerce/test-results/product-study/**
+          retention-days: 7

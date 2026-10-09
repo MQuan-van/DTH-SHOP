@@ -1,5 +1,9 @@
+import { handleGarageFlow, saveGarageFlowVehicle } from './account/member/garageFlow.mjs';
+import { buildNVXDemoCatalog } from '../../../shared/nvx.mjs';
 /** Explicit UI rehearsal, NOT authentication or a database. Only fictitious @dth.test identities and the public fixture password work. No passwords stored, no API requests. */
 import { normalizeItems, quoteOrder, validateRegistration } from '../../../shared/domain.mjs';
+import { quoteCart } from '../../../shared/cartQuote.mjs';
+import { normalizeCheckoutDetails } from '../../../shared/checkout.mjs';
 import { orderQuery, vehiclePreference } from '../../../shared/account.mjs';
 export const FLOW_EMAIL = 'demo@dth.test';
 export const FLOW_PASSWORD = 'DthFlow2026!';
@@ -34,9 +38,14 @@ export function createFlowSession({ catalog, storage, uuid = () => crypto.random
     let body = {};
     if (options.body) { try { body = JSON.parse(options.body); } catch { fail('Invalid JSON.'); } }
     if (body === null || typeof body !== 'object' || Array.isArray(body)) fail('Invalid request body.');
+    const garageResult = handleGarageFlow({ route, method, body, member, catalog, persist });
+    if (garageResult !== undefined) return garageResult;
     if (method === 'GET' && route === '/auth/me') return { user: copy(user()) };
     if (method === 'GET' && route === '/products') return { data: copy(catalog.products) };
     if (method === 'GET' && route === '/vehicles') return { data: copy(catalog.vehicles) };
+    if (method === 'POST' && route === '/cart/quote') {
+      return { data: quoteCart(body.items, catalog.products, catalog.vehicles, { source: 'flow', now }) };
+    }
     if (method === 'POST' && ['/auth/login', '/auth/register'].includes(route)) {
       const value = credentials(body);
       let current = state.users.find(u => u.email === value.email);
@@ -52,12 +61,13 @@ export function createFlowSession({ catalog, storage, uuid = () => crypto.random
     if (method === 'PUT' && route === '/account/vehicle') {
       const current = member(), id = vehiclePreference(body);
       if (id && !catalog.vehicles.some(v => v.id === id)) fail('Choose a vehicle from the catalog.');
-      current.savedVehicleId = id; persist(); return { user: copy(current) };
+      return saveGarageFlowVehicle(current, id, catalog, persist);
     }
     if (method === 'POST' && route === '/orders') {
       const current = member();
       if (body.demoAcknowledged !== true) fail('Confirm that this is a simulated order.');
-      const items = normalizeItems(body.items), fingerprint = JSON.stringify(items);
+      const items = normalizeItems(body.items), checkout = body.checkout === undefined ? null : normalizeCheckoutDetails(body.checkout);
+      const fingerprint = JSON.stringify(checkout ? { items, checkout } : items);
       if (typeof body.idempotencyKey !== 'string' || !/^[a-zA-Z0-9-]{8,80}$/.test(body.idempotencyKey)) fail('Invalid request key.');
       const previous = state.orders.find(o => o.userId === current.id && o.idempotencyKey === body.idempotencyKey);
       if (previous) {
@@ -65,9 +75,15 @@ export function createFlowSession({ catalog, storage, uuid = () => crypto.random
         return { data: publicOrder(previous) };
       }
       const quote = quoteOrder(items, catalog.products, catalog.vehicles);
+      const checked = quoteCart(items, catalog.products, catalog.vehicles, { source: 'flow', now });
+      if (!checked.valid) fail('The current catalog cannot confirm every line. Check your bag again.', 409);
       if (!Number.isSafeInteger(body.expectedTotal) || quote.total !== body.expectedTotal) fail('The total changed. Review your bag again.', 409);
+      if (body.expectedQuoteFingerprint !== undefined && body.expectedQuoteFingerprint !== checked.fingerprint)
+        fail('The reviewed parts, vehicles or prices changed. Check your bag again.', 409);
       if (state.orders.length >= 100) fail('Rehearsal limit reached. Reset the demo tab.');
-      const order = { ...quote, id: `FLOW-${uuid().toUpperCase()}`, userId: current.id, fingerprint, idempotencyKey: body.idempotencyKey, createdAt: now(), status: 'flow-demo', demoOnly: true };
+      const order = { ...quote, lines: checked.lines.map(({ status, issue, ...line }) => line),
+        quotedAt: checked.quotedAt, quoteFingerprint: checked.fingerprint, checkout,
+        id: `FLOW-${uuid().toUpperCase()}`, userId: current.id, fingerprint, idempotencyKey: body.idempotencyKey, createdAt: now(), status: 'flow-demo', demoOnly: true };
       state.orders.unshift(order); persist(); return { data: publicOrder(order) };
     }
     if (method === 'GET' && ['/account/orders', '/orders'].includes(route)) {
@@ -97,7 +113,7 @@ export function createFlowSession({ catalog, storage, uuid = () => crypto.random
 let instance;
 export async function flowRequest(path, options) {
   if (!instance) {
-    const catalog = (await import('../../../shared/catalog.json')).default;
+    const catalog = buildNVXDemoCatalog((await import('../../../shared/catalog.json')).default);
     let storage;
     try { storage = window.sessionStorage; } catch { storage = null; }
     instance = createFlowSession({ catalog, storage });

@@ -1,3 +1,5 @@
+// DTH Loader 17.2 — deferred graphics startup, existing readiness preserved.
+import { useStartupWebGL } from '../loader/StartupRenderContext.jsx';
 import { Component, Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import gsap from 'gsap';
@@ -32,8 +34,8 @@ function Story({ product, chooseVehicle, config }) {
   useSceneInputGate(director);
   const [lightAngle,setLightAngle]=useState(0), [part,setPart]=useState('');
   useEffect(()=>director.subscribe(()=>{setPart(director.state.selectedPart);setLightAngle(director.state.lightAngle);}),[director]);
-  const [capable] = useState(hasWebGL);
-  const [sceneStatus, setSceneStatus] = useState(capable && product.modelUrl ? 'loading' : 'fallback');
+  const { capable, allow3D } = useStartupWebGL(hasWebGL);
+  const [sceneStatus, setSceneStatus] = useState(product.modelUrl ? 'loading' : 'fallback');
   const [attempt, setAttempt] = useState(0), [rigged, setRigged] = useState(false);
   const [motion, setMotion] = useState(true), [quality, setQuality] = useState('auto'), [slow, setSlow] = useState(false);
   const [chapter, setChapter] = useState(0), [inspect, setInspect] = useState(false);
@@ -67,10 +69,11 @@ function Story({ product, chooseVehicle, config }) {
 
   useEffect(() => { director.set({ motion: animated, active, inspecting: inspect, manualExplode: explode }); }, [director, animated, active, inspect, explode]);
   useEffect(() => {
-    if (sceneStatus !== 'loading') return;
+    if (!allow3D || sceneStatus !== 'loading') return;
     const timeout = setTimeout(fail, config.loadTimeoutMs);
     return () => clearTimeout(timeout);
-  }, [sceneStatus, attempt, fail, config.loadTimeoutMs]);
+  }, [sceneStatus, attempt, fail, config.loadTimeoutMs, allow3D]);
+  useEffect(() => { if (capable === false) fail(); }, [capable, fail]);
   useLayoutEffect(() => {
     if (sceneStatus !== 'ready' || !animated) { director.set({ reveal: 1 }); return; }
     const intro = { reveal: 0 };
@@ -124,7 +127,7 @@ function Story({ product, chooseVehicle, config }) {
 
         <p className={styles.price}>
           {formatMoney(product.price)}
-          <small>DEMO PRICE</small>
+          {/* <small>DEMO PRICE</small> */}
         </p>
       </div>
 
@@ -168,7 +171,7 @@ function Story({ product, chooseVehicle, config }) {
       </div>
       <div className={styles.artwork} aria-hidden="true"><span>DTH</span><i/><i/></div>
       <div className={styles.canvas} data-interactive={inspect} aria-hidden="true">
-        {!fallback && <SceneBoundary key={attempt} onFailure={fail}><Suspense fallback={null}>
+        {allow3D && !fallback && <SceneBoundary key={attempt} onFailure={fail}><Suspense fallback={null}>
           <CinematicScene
             cameraFov={policy.compact ? 32 : 38}
             wheelZoom={HOME_SHOWROOM.wheelZoom}

@@ -1,0 +1,78 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { NVX_IDS as ids, NVX_VEHICLES } from '../shared/nvx.mjs';
+import { InputError } from '../shared/domain.mjs';
+import { GarageError, garageSnapshot as snapshot, garageFields as fields, garageEnvelope as envelope, normalizeGarageCommand as normalize, applyGarageCommand as apply, applyLegacyVehicle, verifyGarageEnvelope as verify } from '../shared/garage.mjs';
+import { createGarageService } from '../backend/commerce/garage/service.mjs';
+import { installGarage } from '../backend/commerce/garage/routes.mjs';
+import { handleGarageFlow, saveGarageFlowVehicle } from '../frontend/src/shop/account/member/garageFlow.mjs';
+import { acceptGarageResponse, pickGarageVehicle } from '../frontend/src/shop/account/member/garageClient.mjs';
+import { animateGarage } from '../frontend/src/shop/account/member/garageMotion.mjs';
+import { fixture } from './garage16.fixtures.mjs';
+const [v1,v2,v3]=ids, cmd=(action='add',vehicleId=v1,revision=0)=>({action,vehicleId,revision});
+const user=(extra={})=>({_id:'a',email:'a@dth.test',role:'customer',disabled:false,savedVehicleId:'',...extra});
+const mutate=(u,c,allowed=ids)=>({...u,...fields(apply(u,c,allowed))});
+
+test('new account starts empty without a default',()=>assert.deepEqual(snapshot(),{vehicleIds:[],defaultVehicleId:'',revision:0}));
+test('Step15 saved NVX is projected read-only',()=>{const u=user({savedVehicleId:v2});const before=structuredClone(u);assert.deepEqual(snapshot(u).vehicleIds,[v2]);assert.deepEqual(u,before)});
+test('explicit empty garage does not resurrect a removed default',()=>assert.deepEqual(snapshot(user({garageVehicleIds:[],savedVehicleId:v1})).vehicleIds,[]));
+test('legacy non-NVX is not relabelled as NVX',()=>assert.deepEqual(snapshot(user({savedVehicleId:'street155-2022'})).vehicleIds,[]));
+test('snapshot removes unknown ids and duplicates without mutating the document',()=>{const u=user({garageVehicleIds:[v2,v2,'x',v1]});assert.deepEqual(snapshot(u).vehicleIds,[v2,v1]);assert.equal(u.garageVehicleIds.length,4)});
+test('GarageError uses the existing API InputError boundary',()=>assert.ok(new GarageError('conflict',409) instanceof InputError));
+for(const invalid of [null,[],{},'add',{...cmd(),userId:'other'},{...cmd(),role:'admin'},{...cmd(),vehicleId:{$ne:null}},{...cmd(),vehicleId:'nvx-v4'},{...cmd(),year:2026},{...cmd(),action:'replace'}])
+  test(`reject malformed/mass-assignment body ${JSON.stringify(invalid)}`,()=>assert.throws(()=>normalize(invalid)));
+for(const revision of [-1,1.5,NaN,Infinity,'1',undefined,Number.MAX_SAFE_INTEGER])
+  test(`revision validation ${String(revision)}`,()=>assert.throws(()=>normalize({...cmd(),revision})));
+test('clear-default requires the explicit empty ID',()=>{assert.throws(()=>normalize(cmd('clear-default',v1)));assert.equal(normalize(cmd('clear-default','')).vehicleId,'')});
+test('first add becomes default and increments revision',()=>assert.deepEqual(apply(user(),cmd()),{vehicleIds:[v1],defaultVehicleId:v1,revision:1}));
+test('subsequent add preserves the old default',()=>{const u=mutate(user(),cmd());assert.equal(apply(u,cmd('add',v2,1)).defaultVehicleId,v1)});
+test('duplicate add is a no-op',()=>{const u=mutate(user(),cmd());assert.deepEqual(apply(u,cmd('add',v1,1)),snapshot(u))});
+test('all three versions can be stored with no year',()=>{let u=user();for(let i=0;i<3;i++)u=mutate(u,cmd('add',ids[i],i));assert.deepEqual(snapshot(u).vehicleIds,ids);assert.equal(snapshot(u).revision,3);assert.ok(!('year' in u))});
+test('default must belong to the garage',()=>assert.throws(()=>apply(user(),cmd('set-default',v1)),{status:409}));
+test('unavailable catalogue version cannot be added',()=>assert.throws(()=>apply(user(),cmd(),[v2,v3]),{status:409}));
+test('unavailable saved version can still be removed',()=>{const u=user({savedVehicleId:v1});assert.deepEqual(apply(u,cmd('remove',v1),[]).vehicleIds,[])});
+test('removing default clears it instead of assigning another',()=>{const u=user({garageVehicleIds:[v1,v2],savedVehicleId:v1});assert.equal(apply(u,cmd('remove',v1)).defaultVehicleId,'')});
+test('removing nondefault preserves default',()=>assert.equal(apply(user({garageVehicleIds:[v1,v2],savedVehicleId:v1}),cmd('remove',v2)).defaultVehicleId,v1));
+test('clearing default retains all vehicles',()=>assert.deepEqual(apply(user({garageVehicleIds:[v1,v2],savedVehicleId:v1}),cmd('clear-default','')).vehicleIds,[v1,v2]));
+test('stale client revision is a conflict, not a lost update',()=>assert.throws(()=>apply(user({garageRevision:3}),cmd()),{status:409}));
+test('legacy endpoint adds + defaults without erasing other saved versions',()=>{const u=user({garageVehicleIds:[v1],savedVehicleId:v1});const g=applyLegacyVehicle(u,v2);assert.deepEqual(g.vehicleIds,[v1,v2]);assert.equal(g.defaultVehicleId,v2);assert.equal(g.revision,1)});
+test('legacy clear does not remove the garage list',()=>assert.deepEqual(applyLegacyVehicle(user({garageVehicleIds:[v1,v2],savedVehicleId:v1}),'').vehicleIds,[v1,v2]));
+test('legacy clear can explicitly clear an old non-NVX default',()=>assert.equal(applyLegacyVehicle(user({savedVehicleId:'street155-2022'}),'').revision,1));
+test('account envelope does not expose password hashes or private flags',()=>{const e=envelope(user({passwordHash:'secret',disabled:false}));assert.ok(!JSON.stringify(e).includes('secret'));assert.equal(e.user.disabled,undefined)});
+test('response ownership is verified',()=>assert.throws(()=>verify(envelope(user()),'b'),{status:502}));
+test('response list/default/revision mismatch is rejected',()=>{const e=envelope(user({savedVehicleId:v1}));e.garage.defaultVehicleId=v2;assert.throws(()=>verify(e,'a'))});
+test('server response is accepted only for its current owner',()=>assert.equal(verify(envelope(user()),'a').user.id,'a'));
+test('old identity response is ignored',()=>assert.equal(acceptGarageResponse(envelope(user()),{ownerId:'a',epoch:0,currentEpoch:1,request:1,currentRequest:1}),null));
+test('old request response is ignored',()=>assert.equal(acceptGarageResponse(envelope(user()),{ownerId:'a',epoch:1,currentEpoch:1,request:1,currentRequest:2}),null));
+test('selected card, shop choice and account default are distinct',()=>{const g={vehicleIds:[v1,v2],defaultVehicleId:v1};assert.equal(pickGarageVehicle(g,v2,v1),v2);assert.equal(pickGarageVehicle(g,'',v2),v2);assert.equal(pickGarageVehicle(g,'',''),v1)});
+test('cart and order data remain untouched by account transitions',()=>{const u=user({bag:[{vehicleId:v1,productId:'a',quantity:2}],orders:[{id:'order',vehicleId:v1}],garageVehicleIds:[v1,v2],savedVehicleId:v1});const before=structuredClone(u);apply(u,cmd('set-default',v2));assert.deepEqual(u,before)});
+
+test('service read does not write/migrate user documents',async()=>{const f=fixture([user({savedVehicleId:v2})]);assert.deepEqual((await f.service.read('a')).garage.vehicleIds,[v2]);assert.equal(f.calls.filter(c=>c.write).length,0);assert.equal(f.rows.get('a').garageVehicleIds,undefined)});
+test('service rejects unknown owner/disabled account',async()=>{const f=fixture([user({disabled:true})]);await assert.rejects(f.service.read('a'),{status:401});await assert.rejects(f.service.read('b'),{status:401})});
+test('validation precedes all service queries',async()=>{const f=fixture();await assert.rejects(f.service.mutate('a',{...cmd(),userId:'b'}));assert.equal(f.calls.length,0)});
+test('service persists list, default and revision in one write',async()=>{const f=fixture();const result=await f.service.mutate('a',cmd());assert.deepEqual(result.garage.vehicleIds,[v1]);const write=f.calls.find(c=>c.write);assert.equal(write.options.upsert,false);assert.equal(write.options.runValidators,true);assert.deepEqual(Object.keys(write.update.$set).sort(),['garageRevision','garageVehicleIds','savedVehicleId']);assert.equal(f.rows.get('a').savedVehicleId,v1)});
+test('new account mutation does not alter another owner',async()=>{const f=fixture([user(),user({_id:'b',email:'b@dth.test'})]);await f.service.mutate('a',cmd());assert.equal(f.rows.get('b').garageVehicleIds,undefined)});
+test('two same-revision concurrent writes cannot both succeed',async()=>{const f=fixture();const r=await Promise.allSettled([f.service.mutate('a',cmd('add',v1)),f.service.mutate('a',cmd('add',v2))]);assert.equal(r.filter(x=>x.status==='fulfilled').length,1);assert.equal(r.find(x=>x.status==='rejected').reason.status,409);assert.equal(f.rows.get('a').garageRevision,1)});
+test('fresh client revision can add after a conflict',async()=>{const f=fixture();await f.service.mutate('a',cmd());const e=await f.service.mutate('a',cmd('add',v2,1));assert.deepEqual(e.garage.vehicleIds,[v1,v2]);assert.equal(e.garage.revision,2)});
+test('no-op retry makes no additional write',async()=>{const f=fixture();await f.service.mutate('a',cmd());await f.service.mutate('a',cmd('add',v1,1));assert.equal(f.calls.filter(c=>c.write).length,1)});
+test('absent database version is not fabricated',async()=>{const f=fixture([user()],NVX_VEHICLES.slice(1));await assert.rejects(f.service.mutate('a',cmd()),{status:409});assert.equal(f.calls.filter(c=>c.write).length,0)});
+test('legacy writer participates in revision/CAS discipline',async()=>{const f=fixture();await f.service.mutate('a',cmd());const r=await f.service.saveLegacy('a',v2);assert.deepEqual(r.garage.vehicleIds,[v1,v2]);assert.equal(r.garage.defaultVehicleId,v2);await assert.rejects(f.service.mutate('a',cmd('remove',v1,1)),{status:409})});
+test('a new service instance sees saved state (mock persistence)',async()=>{const f=fixture();await f.service.mutate('a',cmd());assert.equal((await createGarageService({User:f.User,Vehicle:f.Vehicle}).read('a')).garage.defaultVehicleId,v1)});
+test('authenticated and write-limit middleware guard every garage mutation',()=>{const routes=[],a=()=>{},l=()=>{};installGarage({get:(p,...s)=>routes.push({p,s}),post:(p,...s)=>routes.push({p,s}),put:(p,...s)=>routes.push({p,s})},{...fixture(),authenticated:a,writeLimit:l});assert.equal(routes.length,3);routes.forEach(r=>assert.equal(r.s[0],a));routes.slice(1).forEach(r=>assert.equal(r.s[1],l))});
+test('route uses authenticated owner, never URL or body owner',async()=>{const f=fixture(),routes={};installGarage({get(){},put(){},post:(p,...h)=>routes[p]=h.at(-1)},{...f,authenticated:()=>{},writeLimit:()=>{}});let response,error;await routes['/account/garage']({auth:{user:{_id:'a'}},body:cmd(),params:{id:'b'}},{setHeader(){},json(v){response=v}},e=>{error=e});assert.ifError(error);assert.equal(response.user.id,'a')});
+
+test('Flow adapter shares garage rules but only persists explicit demo state',()=>{const u=user();let writes=0;const ctx={route:'/account/garage',member:()=>u,catalog:{vehicles:NVX_VEHICLES},persist:()=>writes++};handleGarageFlow({...ctx,method:'GET'});assert.equal(writes,0);const r=handleGarageFlow({...ctx,method:'POST',body:cmd()});assert.equal(r.garage.defaultVehicleId,v1);assert.equal(writes,1)});
+test('Flow requires a signed-in member',()=>assert.throws(()=>handleGarageFlow({route:'/account/garage',method:'GET',member:()=>{throw new GarageError('login',401)}}),{status:401}));
+test('Flow adapter leaves unrelated routes alone',()=>assert.equal(handleGarageFlow({route:'/orders',method:'GET'}),undefined));
+test('Flow rejects stale updates exactly like API',()=>{const u=user({garageRevision:3});assert.throws(()=>handleGarageFlow({route:'/account/garage',method:'POST',body:cmd(),member:()=>u,catalog:{vehicles:NVX_VEHICLES},persist:()=>{}}),{status:409})});
+test('legacy Flow save preserves list/default invariant',()=>{const u=user({garageVehicleIds:[v1],savedVehicleId:v1});const e=saveGarageFlowVehicle(u,v2,{vehicles:NVX_VEHICLES},()=>{});assert.deepEqual(e.garage.vehicleIds,[v1,v2]);assert.equal(e.user.savedVehicleId,v2)});
+
+test('reduced motion schedules no effects',()=>{let n=0;animateGarage({querySelectorAll:()=>[{animate(){n++}}]},false)();assert.equal(n,0)});
+test('motion is finite and does not hide content without WAAPI',()=>assert.doesNotThrow(()=>animateGarage({querySelectorAll:()=>[{}, {animate(){throw Error('unsupported')}}]})()));
+test('motion caps work and cleanup is idempotent',()=>{let n=0,c=0;const options=[];const nodes=Array.from({length:10},()=>({animate(f,o){n++;options.push(o);return {cancel(){c++},finished:Promise.resolve()}}}));const off=animateGarage({querySelectorAll:()=>nodes});off();off();assert.equal(n,6);assert.equal(c,6);assert.ok(options.every(o=>o.iterations===1&&o.delay+o.duration<=400&&o.fill==='backwards'))});
+test('null motion root is safe',()=>assert.doesNotThrow(()=>animateGarage(null)()));
+test('cancelled animation promises are handled',async()=>{const off=animateGarage({querySelectorAll:()=>[{animate(){return{cancel(){},finished:Promise.reject(Error('cancel'))}}}]});off();await new Promise(r=>setImmediate(r))});
+test('new hook never reassigns bag or shopping selection',async()=>{const s=await readFile(new URL('../frontend/src/shop/account/member/useGarage.js',import.meta.url),'utf8');assert.doesNotMatch(s,/\.setBag\s*\(|\.setVehicle\s*\(/)});
+test('garage mounts the existing viewer, not a video or replacement scooter',async()=>{const s=await readFile(new URL('../frontend/src/shop/account/member/GarageStage.jsx',import.meta.url),'utf8');assert.match(s,/import\('\.\.\/\.\.\/Viewer3D'\)/);assert.doesNotMatch(s,/<video|\.mp4|new Canvas/)});
+test('deletion requires a confirmation dialog with safe cancel focus',async()=>{const s=await readFile(new URL('../frontend/src/shop/account/member/GarageDialog.jsx',import.meta.url),'utf8');assert.match(s,/cancel\.current\?\.focus/);assert.match(s,/onCancel/);assert.match(s,/dialog\.showModal/)});

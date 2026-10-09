@@ -1,3 +1,7 @@
+import { useJournalMotion } from './journal/journalMotion';
+import StoryEditorial from './journal/StoryEditorial';
+// DTH Loader 17.2 — deferred graphics startup, existing readiness preserved.
+import { useStartupWebGL } from '../loader/StartupRenderContext.jsx';
 import { Component, Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
@@ -49,11 +53,12 @@ export function StoryHero({ product }) {
   const policy = useExperiencePolicy();
   const active = useStageActivity(frame);
   useSceneInputGate(signal);
-  const [capable] = useState(hasWebGL);
+  const { capable, allow3D } = useStartupWebGL(hasWebGL);
   const [motion, setMotion] = useState(true);
   const [attempt, setAttempt] = useState(0);
-  const [status, setStatus] = useState(capable && product.modelUrl ? 'loading' : 'fallback');
-  const animated = motion && !policy.reduced;
+  const [status, setStatus] = useState(product.modelUrl ? 'loading' : 'fallback');
+  const journalMotion = useJournalMotion();
+  const animated = motion && !policy.reduced && journalMotion;
   const ready = useCallback(() => setStatus('ready'), []);
   const fail = useCallback(() => setStatus('fallback'), []);
 
@@ -62,10 +67,11 @@ export function StoryHero({ product }) {
   }, [signal, animated, active]);
 
   useEffect(() => {
-    if (status !== 'loading') return;
+    if (!allow3D || status !== 'loading') return;
     const timeout = setTimeout(fail, STORY_HERO.loadTimeoutMs);
     return () => clearTimeout(timeout);
-  }, [status, attempt, fail]);
+  }, [status, attempt, fail, allow3D]);
+  useEffect(() => { if (capable === false) fail(); }, [capable, fail]);
 
   useLayoutEffect(() => {
     if (!animated) { playedEntrance.current = true; return; }
@@ -123,7 +129,7 @@ export function StoryHero({ product }) {
       <div className={styles.composition}>
         <div className={styles.identity} data-story-identity>
           <p className={styles.kicker} data-story-enter><span className={styles.cyanMark} aria-hidden="true" />PRODUCT STUDY / 01</p>
-          <h1 className={styles.title} id="dth-story-title" data-story-enter><span>MORE THAN</span><span>A PART<span className={styles.fullStop}>.</span></span></h1>
+          <h2 className={styles.title} id="dth-story-title" data-story-enter><span>More than</span><span>a part<span className={styles.fullStop}>.</span></span></h2>
           <p className={styles.intro} data-story-enter>Step closer. <br />See it from every angle.</p>
           <Link to="/shop" className={styles.textLink} data-story-enter>Explore the collection <span aria-hidden="true">↗</span></Link>
         </div>
@@ -131,7 +137,7 @@ export function StoryHero({ product }) {
         <div className={styles.visual} data-story-visual>
           <div ref={frame} className={styles.sceneFrame} data-story-scene={status} aria-busy={status === 'loading'}>
             <div className={styles.canvas} aria-hidden="true">
-              {status !== 'fallback' && <SceneBoundary key={attempt} onFailure={fail}>
+              {allow3D && status !== 'fallback' && <SceneBoundary key={attempt} onFailure={fail}>
                 <Suspense fallback={null}>
                   <StoryHeroScene product={product} signal={signal} surface={surface} frameRef={frame} compact={policy.compact} onReady={ready} onFailure={fail} />
                 </Suspense>
@@ -166,8 +172,8 @@ export function StoryHero({ product }) {
       <div className={styles.foot} data-story-enter>
         <div className={styles.chapter}><span>01</span><span>THE FORM</span></div>
         <div className={styles.controls} role="group" aria-label="Story view controls">
-          <button type="button" onClick={toggleMotion} aria-pressed={animated} disabled={policy.reduced}>
-            {policy.reduced ? 'Reduced motion' : animated ? 'Pause motion' : 'Play motion'}
+          <button type="button" onClick={toggleMotion} aria-pressed={animated} disabled={policy.reduced || !journalMotion}>
+            {policy.reduced ? 'Reduced motion' : !journalMotion ? 'Motion paused' : animated ? 'Pause 3D motion' : 'Play 3D motion'}
           </button>
           <span aria-hidden="true">/</span>
           <button type="button" onClick={resetView} disabled={status !== 'ready'}>Reset view</button>
@@ -193,8 +199,11 @@ export function StoryHero({ product }) {
 export default function StoryPage() {
   const { data } = useStore();
   const product = selectStoryProduct(data.products);
-  if (!product) return <section className={styles.page}><div className={styles.empty}>
-    <h1>The story is taking shape.</h1><p>No active product is available.</p><Link to="/shop">Back to the collection ↗</Link>
-  </div></section>;
-  return <StoryHero key={`${product.id}:${product.modelUrl || ''}`} product={product} />;
+  return <StoryEditorial>{product
+    ? <StoryHero key={`${product.id}:${product.modelUrl || ''}`} product={product} />
+    : <section className={styles.page}><div className={styles.empty}>
+        <h2>Parts coming into focus.</h2><p>No active 3D product is available.</p>
+        <Link to="/shop">Explore parts ↗</Link>
+      </div></section>
+  }</StoryEditorial>;
 }

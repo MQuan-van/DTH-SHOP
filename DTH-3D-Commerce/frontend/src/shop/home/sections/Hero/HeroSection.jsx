@@ -1,3 +1,6 @@
+// DTH Loader 17.2 — deferred graphics startup, existing readiness preserved.
+import { useStartupAllowed } from '../../../../experience/loader/StartupRenderContext.jsx';
+import { vehicleLabel as nvxVehicleLabel } from '../../../../../../shared/nvx.mjs';
 import { Component, Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../../../components/StoreIcon.jsx';
@@ -27,6 +30,7 @@ function MiniIcon({ name }) {
 }
 export default function HeroSection({ config, motion, motionEnabled, reduced, onToggleMotion, chooseVehicle }) {
   const { data, vehicleId } = useStore();
+  const startupAllowed = useStartupAllowed();
   const exhibits = useMemo(() => resolveExhibits(data.products, config.exhibits), [data.products, config.exhibits]);
   const [selectedId, setSelectedId] = useState(() => exhibits[0]?.product.id);
   const activeExhibit = exhibits.find(item => item.product.id === selectedId) || exhibits[0];
@@ -118,7 +122,7 @@ export default function HeroSection({ config, motion, motionEnabled, reduced, on
         </div>
         <div className={styles.sceneSlot} aria-hidden="true" data-interactive={inspect ? 'true' : 'false'}>
           {(fallback || status !== 'ready') && <img className={styles.still} src={activeExhibit.stillUrl || product.imageUrl} alt="" draggable="false" />}
-          {!fallback && <StageBoundary key={`${product.id}:${product.modelUrl}`} onFailure={onFailure}>
+          {startupAllowed && !fallback && <StageBoundary key={`${product.id}:${product.modelUrl}`} onFailure={onFailure}>
             <Suspense fallback={null}>
               <HeroScene ref={sceneApi} product={product} exhibit={activeExhibit} settings={config.scene}
                 active={active} motionEnabled={motionEnabled} inspect={inspect} wireframe={wireframe}
@@ -141,7 +145,7 @@ export default function HeroSection({ config, motion, motionEnabled, reduced, on
 
         <div className={`${styles.annotation} ${styles.fitment}`} data-enter>
           <span className={styles.micro}>03 / YOUR RIDE</span>
-          <h2>{vehicle ? `${vehicle.model} · ${vehicle.year}` : 'The right starting point.'}</h2>
+          <h2>{vehicle ? `${nvxVehicleLabel(vehicle)}` : 'The right starting point.'}</h2>
           <p className={vehicle && match.status === 'compatible' ? styles.compatible : ''}>{vehicle ? match.text : 'Select your vehicle. Explore matching parts.'}</p>
         </div>
 

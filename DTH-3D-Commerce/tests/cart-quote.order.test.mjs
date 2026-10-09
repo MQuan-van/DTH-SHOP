@@ -13,12 +13,12 @@ test('Quote and order routes preserve review facts, security middleware and idem
   const user = { _id: '507f191e810c19729de860ea', email: 'quote@example.test', role: 'customer', disabled: false };
   const state = {
     products: [
-      { id: 'part-a', name: 'Part A', price: 100_000, currency: 'VND', active: true, vehicleIds: ['bike-a'] },
-      { id: 'part-b', name: 'Part B', price: 200_000, currency: 'VND', active: true, vehicleIds: ['bike-b'] },
+      { id: 'part-a', name: 'Part A', price: 100_000, currency: 'VND', active: true, vehicleIds: ['yamaha-nvx-v1'] },
+      { id: 'part-b', name: 'Part B', price: 200_000, currency: 'VND', active: true, vehicleIds: ['yamaha-nvx-v2'] },
     ],
     vehicles: [
-      { id: 'bike-a', make: 'Yamaha', model: 'NVX', year: 2024 },
-      { id: 'bike-b', make: 'Honda', model: 'SH', year: 2023 },
+      { id: 'yamaha-nvx-v1', make: 'Yamaha', model: 'NVX V1', demoOnly: true },
+      { id: 'yamaha-nvx-v2', make: 'Yamaha', model: 'NVX V2', demoOnly: true },
     ],
     orders: [], catalogReads: 0, sessionReads: 0,
   };
@@ -71,8 +71,8 @@ test('Quote and order routes preserve review facts, security middleware and idem
     return { status: response.status, body: await response.json() };
   }
   const items = [
-    { productId: 'part-a', vehicleId: 'bike-a', quantity: 1 },
-    { productId: 'part-b', vehicleId: 'bike-b', quantity: 1 },
+    { productId: 'part-a', vehicleId: 'yamaha-nvx-v1', quantity: 1 },
+    { productId: 'part-b', vehicleId: 'yamaha-nvx-v2', quantity: 1 },
   ];
   let reviewed;
   await t.test('Guest quote has no session lookup and does not create an order', async () => {

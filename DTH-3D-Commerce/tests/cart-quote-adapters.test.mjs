@@ -4,11 +4,12 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { build } from 'esbuild';
 import { quoteCart, cartQuoteFingerprint } from '../shared/cartQuote.mjs';
+import { buildNVXDemoCatalog } from '../shared/nvx.mjs';
 import { verifyCartQuoteResponse } from '../shared/cartQuoteResponse.mjs';
 import { createFlowSession, FLOW_EMAIL, FLOW_PASSWORD } from '../frontend/src/shop/flowSession.mjs';
 import { createCartState } from '../frontend/src/shop/cart/cartState.mjs';
 
-const fixture = JSON.parse(await readFile(new URL('../shared/catalog.json', import.meta.url), 'utf8'));
+const fixture = buildNVXDemoCatalog(JSON.parse(await readFile(new URL('../shared/catalog.json', import.meta.url), 'utf8')));
 const product = fixture.products.find(p => p.active !== false && p.vehicleIds.length >= 2);
 assert.ok(product, 'Use a real fixture part with two supported vehicles.');
 const items = product.vehicleIds.slice(0, 2).map(vehicleId => ({ productId: product.id, vehicleId, quantity: 1 }));

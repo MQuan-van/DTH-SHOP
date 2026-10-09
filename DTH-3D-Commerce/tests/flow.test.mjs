@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createFlowSession, FLOW_EMAIL, FLOW_PASSWORD, FLOW_STORAGE_KEY } from '../frontend/src/shop/flowSession.mjs';
-const catalog = JSON.parse(readFileSync(new URL('../shared/catalog.json', import.meta.url)));
+import { buildNVXDemoCatalog } from '../shared/nvx.mjs';
+const catalog = buildNVXDemoCatalog(JSON.parse(readFileSync(new URL('../shared/catalog.json', import.meta.url))));
 function setup() {
   const map = new Map(), storage = {getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v)};
   let seq=0;

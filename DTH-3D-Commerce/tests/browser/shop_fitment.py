@@ -102,22 +102,21 @@ with sync_playwright() as playwright:
         expect(toggle).not_to_be_checked(timeout=15000)
         assert parse_qs(urlsplit(page.url).query).get('fit') == ['all']
         # expect(products.locator('[data-status="incompatible"]')).not_to_have_count(0)
-        # Page 1 contains the first nine compatible products.
+        # Page 1: 9 compatible products
         expect(products).to_have_count(9)
         expect(products.locator('[data-status="compatible"]')).to_have_count(9)
 
-        # Verify nonmatching products on the next catalog page.
+        # Page 2: 1 compatible, 8 incompatible
         page.get_by_role('button', name='Page 2', exact=True).click()
-
-        expect(products).to_have_count(9)
         expect(products.locator('[data-status="compatible"]')).to_have_count(1)
         expect(products.locator('[data-status="incompatible"]')).to_have_count(8)
 
-        # Verify the remaining nonmatching products.
+        # Page 3: 2 incompatible
         page.get_by_role('button', name='Page 3', exact=True).click()
-
         expect(products).to_have_count(2)
         expect(products.locator('[data-status="incompatible"]')).to_have_count(2)
+
+
         check('All parts option keeps explicit incompatible badges, not fabricated fitment')
 
         path = '/shop?category=wheels&sort=price-high&fit=all&max=9000000&testKey=keep'

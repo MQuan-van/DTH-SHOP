@@ -5,11 +5,12 @@ import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import sharp from 'sharp';
 import { makeApp } from '../backend/commerce/app.mjs';
+import { buildNVXDemoCatalog } from '../shared/nvx.mjs';
 import { Product, Vehicle, User, Session, Order } from '../backend/commerce/models.mjs';
 import { Conversation, Message } from '../backend/commerce/support/models.mjs';
 const uri=process.env.TEST_MONGO_URI;
 if(!uri || !/^mongodb:\/\/127\.0\.0\.1:\d+\/dth_[a-z_]+_test$/.test(uri))throw new Error('Use a dedicated local dth_*_test database. Never run cleanup tests on application data.');
-const catalog=JSON.parse(await readFile(new URL('../shared/catalog.json',import.meta.url),'utf8'));
+const catalog=buildNVXDemoCatalog(JSON.parse(await readFile(new URL('../shared/catalog.json',import.meta.url),'utf8')));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(fn){for(let i=0;i<60;i++){if(await fn())return;await sleep(80);}throw new Error('Timed out waiting for live event');}
 await test('Real HTTP + MongoDB support and admin integration',async t=>{

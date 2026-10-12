@@ -1,0 +1,71 @@
+name: Shop Discovery quality
+on:
+  pull_request:
+    paths:
+      - 'DTH-3D-Commerce/frontend/src/shop/**'
+      - 'DTH-3D-Commerce/shared/**'
+      - 'DTH-3D-Commerce/tests/shop-discovery.test.mjs'
+      - 'DTH-3D-Commerce/tests/browser/shop_discovery.py'
+      - 'DTH-3D-Commerce/package*.json'
+      - 'DTH-3D-Commerce/frontend/package.json'
+      - '.github/workflows/shop-discovery-quality.yml'
+  push:
+    branches: [feat/shop-discovery, feature/3d-store]
+    paths:
+      - 'DTH-3D-Commerce/frontend/src/shop/**'
+      - 'DTH-3D-Commerce/shared/**'
+      - 'DTH-3D-Commerce/tests/shop-discovery.test.mjs'
+      - 'DTH-3D-Commerce/tests/browser/shop_discovery.py'
+      - 'DTH-3D-Commerce/package*.json'
+      - 'DTH-3D-Commerce/frontend/package.json'
+      - '.github/workflows/shop-discovery-quality.yml'
+permissions:
+  contents: read
+jobs:
+  discovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Locked install and regression tests
+        working-directory: DTH-3D-Commerce
+        run: |
+          npm ci
+          npm run check
+          npm test
+          npm run test:experience
+          node --test tests/shop-discovery.test.mjs
+      - name: API build (no database connection)
+        working-directory: DTH-3D-Commerce
+        env:
+          VITE_STORE_MODE: api
+        run: npm run build
+      - name: Build database-free Flow review
+        working-directory: DTH-3D-Commerce
+        run: npm run build:flow
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare browser (test tooling only)
+        run: python -m pip install playwright==1.55.0 && python -m playwright install --with-deps chromium
+      - name: Start compiled frontend
+        working-directory: DTH-3D-Commerce
+        run: |
+          npm run preview > /tmp/shop-discovery-vite.log 2>&1 &
+          for i in $(seq 1 30); do if curl -fsS http://127.0.0.1:4173 >/dev/null; then exit 0; fi; sleep 1; done
+          cat /tmp/shop-discovery-vite.log; exit 1
+      - name: Keyboard, filter, navigation and reduced-motion browser regression
+        working-directory: DTH-3D-Commerce
+        run: python tests/browser/shop_discovery.py --url http://127.0.0.1:4173
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: shop-discovery-review
+          path: DTH-3D-Commerce/test-results/shop-discovery/**
+          retention-days: 7
+          if-no-files-found: warn

@@ -1,0 +1,202 @@
+[
+  {
+    "id": "street",
+    "source": "v1.jpg",
+    "identification": "Yamaha NVX V1 — user filename",
+    "originalSha256": "c1cfdca7fa5e9963e96cafbc41f1dc7be28660bc04524c89ced542d055000ee2",
+    "originalSize": [
+      1536,
+      2048
+    ],
+    "edits": "EXIF orientation; resize without upscaling; WebP conversion. No generative edits. Camera metadata not copied.",
+    "outputs": [
+      {
+        "file": "street-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 112466
+      },
+      {
+        "file": "street-1280.webp",
+        "width": 1280,
+        "height": 1707,
+        "bytes": 423718
+      }
+    ]
+  },
+  {
+    "id": "titanium",
+    "source": "NVX V2 xám titan.png",
+    "identification": "Yamaha NVX V2 — user filename",
+    "originalSha256": "4c338e989bf8b730f1d8367da4f0486d160af2ab77b2c49c1dc3bb11dada60ef",
+    "originalSize": [
+      1086,
+      1448
+    ],
+    "edits": "EXIF orientation; resize without upscaling; WebP conversion. No generative edits. Camera metadata not copied.",
+    "outputs": [
+      {
+        "file": "titanium-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 96826
+      },
+      {
+        "file": "titanium-1280.webp",
+        "width": 1086,
+        "height": 1448,
+        "bytes": 216814
+      }
+    ]
+  },
+  {
+    "id": "crew",
+    "source": "nvx hồng và trắng.png",
+    "identification": "Unassigned community photograph",
+    "originalSha256": "5f42c2b388628e4bbd9597d24c0ac02635321acc1647d368bed2a498eecf5735",
+    "originalSize": [
+      1536,
+      2048
+    ],
+    "edits": "EXIF orientation; resize without upscaling; WebP conversion. No generative edits. Camera metadata not copied.",
+    "outputs": [
+      {
+        "file": "crew-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 121084
+      },
+      {
+        "file": "crew-1280.webp",
+        "width": 1280,
+        "height": 1707,
+        "bytes": 391836
+      }
+    ]
+  },
+  {
+    "id": "workshop",
+    "source": "nxv cùa a hải.png",
+    "identification": "Unassigned community photograph",
+    "originalSha256": "613d1211861bbb63279d03cc10961ece6e48eaf266ba44f486670229cf0b1014",
+    "originalSize": [
+      1536,
+      2048
+    ],
+    "edits": "EXIF orientation; resize without upscaling; WebP conversion. No generative edits. Camera metadata not copied.",
+    "outputs": [
+      {
+        "file": "workshop-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 86060
+      },
+      {
+        "file": "workshop-1280.webp",
+        "width": 1280,
+        "height": 1707,
+        "bytes": 298560
+      }
+    ]
+  },
+  {
+    "id": "mechanical",
+    "source": "1.png",
+    "identification": "Unassigned community photograph",
+    "originalSha256": "77918ceed59c30c368c44ad587d04a97a92a03c70e9b822d01c8516a14ef848b",
+    "originalSize": [
+      1536,
+      1024
+    ],
+    "edits": "EXIF orientation; resize without upscaling; WebP conversion. No generative edits. Camera metadata not copied.",
+    "outputs": [
+      {
+        "file": "mechanical-640.webp",
+        "width": 640,
+        "height": 427,
+        "bytes": 55336
+      },
+      {
+        "file": "mechanical-1280.webp",
+        "width": 1280,
+        "height": 853,
+        "bytes": 185192
+      }
+    ]
+  },
+  {
+    "id": "afterhours",
+    "source": "scooter1_3.png",
+    "identification": "Unassigned community photograph",
+    "originalSha256": "959a2460d28bd07c659a0872bddce30a53b78edc204a7764133f9f3ea4d4f4ae",
+    "originalSize": [
+      1536,
+      2048
+    ],
+    "edits": "EXIF orientation; resize without upscaling; WebP conversion. No generative edits. Camera metadata not copied.",
+    "outputs": [
+      {
+        "file": "afterhours-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 58366
+      },
+      {
+        "file": "afterhours-1280.webp",
+        "width": 1280,
+        "height": 1707,
+        "bytes": 152034
+      }
+    ]
+  },
+  {
+    "id": "light",
+    "source": "scooter1_2.png",
+    "identification": "Unassigned community photograph",
+    "originalSha256": "7c8423787233a1df0d394bdda86d48f0b230fc82e3844194375e904fec8195ad",
+    "originalSize": [
+      1536,
+      2048
+    ],
+    "edits": "EXIF orientation; resize without upscaling; WebP conversion. No generative edits. Camera metadata not copied.",
+    "outputs": [
+      {
+        "file": "light-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 36388
+      },
+      {
+        "file": "light-1280.webp",
+        "width": 1280,
+        "height": 1707,
+        "bytes": 104604
+      }
+    ]
+  },
+  {
+    "id": "bluehour",
+    "source": "IMG_8996(2).jpg",
+    "identification": "Unassigned community photograph",
+    "originalSha256": "1837e45f1f7ddd3670b4c0a34d9073382b62731002a14f5dcf142108b888eec7",
+    "originalSize": [
+      1536,
+      2048
+    ],
+    "edits": "EXIF orientation; resize without upscaling; WebP conversion. No generative edits. Camera metadata not copied.",
+    "outputs": [
+      {
+        "file": "bluehour-640.webp",
+        "width": 640,
+        "height": 853,
+        "bytes": 39766
+      },
+      {
+        "file": "bluehour-1280.webp",
+        "width": 1280,
+        "height": 1707,
+        "bytes": 102600
+      }
+    ]
+  }
+]

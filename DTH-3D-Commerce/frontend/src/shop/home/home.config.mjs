@@ -79,7 +79,7 @@ export const HOME_CONFIG = {
   },
   workflow: {
     steps: [
-      { title: 'Select your vehicle', detail: 'Make. Model. Year.' },
+      { title: 'Select your vehicle', detail: 'Yamaha. NVX V1 / V2 / V3.' },
       { title: 'Explore every angle', detail: 'Interactive product inspection.' },
       { title: 'Imagine your next build', detail: 'Demo checkout. No real payment.' },
     ],

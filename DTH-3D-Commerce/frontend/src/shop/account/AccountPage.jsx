@@ -1,3 +1,10 @@
+import { MODE } from '../api';
+import { signInDestination } from '../../experience/journey/journey.logic.mjs';
+import useLoginCinematic from './login/useLoginCinematic';
+import LoginAtmosphere from './login/LoginAtmosphere';
+import { vehicleLabel as nvxVehicleLabel } from '../../../../shared/nvx.mjs';
+import GarageWorkspace from './member/GarageWorkspace';
+import GarageSummary from './member/GarageSummary';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { accountReturnPath, orderUnits } from '../../../../shared/account.mjs';
@@ -13,8 +20,8 @@ import ProductImage from '../catalog/components/ProductImage';
 
 const date = value => Number.isFinite(new Date(value).getTime())
   ? new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(value)) : '—';
-const vehicleName = vehicle => vehicle ? `${vehicle.make} ${vehicle.model} · ${vehicle.year}` : 'No vehicle saved';
-const views = { overview: 'Your account.', vehicle: 'Your vehicle.', orders: 'Your orders.', security: 'Account settings.' };
+const vehicleName = vehicle => vehicle ? `${nvxVehicleLabel(vehicle)}` : 'No vehicle saved';
+const views = { overview: 'Overview', vehicle: 'My Garage', orders: 'Orders', security: 'Profile' };
 
 function useLive() {
   const live = useRef(false);
@@ -27,12 +34,12 @@ function Notice({ children, error = false }) {
 function Busy({ label = 'Loading…' }) {
   return <div className={s.loading} role="status"><span className={s.spinner} aria-hidden="true" />{label}</div>;
 }
-function PasswordField({ label = 'Password', value, onChange, autoComplete, hint, disabled }) {
+function PasswordField({ label = 'Password', value, onChange, autoComplete, hint, disabled, events = {} }) {
   const [visible, setVisible] = useState(false), id = useId();
   return <div className={s.field}><label htmlFor={id}>{label}</label>
     <span className={s.password}>
       <input id={id} type={visible ? 'text' : 'password'} value={value} onChange={onChange} disabled={disabled}
-        required minLength={12} maxLength={128} autoComplete={autoComplete} aria-describedby={hint ? `${id}-hint` : undefined} />
+        required minLength={12} maxLength={128} autoComplete={autoComplete} aria-describedby={hint ? `${id}-hint` : undefined} {...events} />
       <button type="button" aria-label={visible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
         aria-pressed={visible} disabled={disabled} onClick={() => setVisible(v => !v)}>{visible ? 'Hide' : 'Show'}</button>
     </span>
@@ -46,6 +53,7 @@ function AuthForm() {
   const [busy, setBusy] = useState(false), [error, setError] = useState('');
   const lock = useRef(false), live = useLive(), errorBox = useRef(null), title = useRef(null);
   const registering = mode === 'register';
+  const cinematic = useLoginCinematic({ registering, busy, error });
   useEffect(() => { title.current?.focus({ preventScroll: true }); }, [mode]);
   useEffect(() => { if (error) errorBox.current?.focus(); }, [error]);
   async function submit(event) {
@@ -61,15 +69,17 @@ function AuthForm() {
       store.setUser(user);
       setPassword(''); setConfirm('');
       store.setNotice(registering ? 'Account created.' : 'Signed in.');
-      navigate(accountReturnPath(params.get('return')), { replace: true });
+      navigate(signInDestination(params.get('return'), MODE, user), { replace: true });
     } catch (e) { if (live.current) setError(e.message); }
     finally { lock.current = false; if (live.current) setBusy(false); }
   }
   function switchMode() { setMode(registering ? 'login' : 'register'); setPassword(''); setConfirm(''); setError(''); }
-  return <div className={s.authLayout}>
+  return <div ref={cinematic.ref} className={s.authLayout} data-cinematic-auth data-auth-phase={cinematic.phase}
+    onPointerMove={cinematic.pointer} onPointerLeave={cinematic.leave}>
     <aside className={s.brandPanel} aria-label="DTH Parts Studio">
+      <LoginAtmosphere phase={cinematic.phase} />
       <span className={s.brand}>DTH<span>PARTS STUDIO</span></span>
-      <AccountVisual phase={busy ? 'working' : registering ? 'register' : undefined} />
+      <AccountVisual phase={cinematic.phase} />
       <div className={s.brandFoot}><span>Built around you.</span><Icon name="arrow" /></div>
     </aside>
     <div className={s.authPanel}>
@@ -77,9 +87,9 @@ function AuthForm() {
       <div className={s.authBody} key={mode}>
         <h1 ref={title} tabIndex={-1}>{registering ? 'Create account.' : 'Welcome back.'}</h1>
         <form onSubmit={submit} aria-busy={busy}>
-          <label className={s.field}>Email<input type="email" required maxLength={254} autoComplete="email" value={email} disabled={busy} onChange={e => setEmail(e.target.value)} /></label>
-          <PasswordField value={password} onChange={e => setPassword(e.target.value)} autoComplete={registering ? 'new-password' : 'current-password'} disabled={busy} hint={registering ? '12–128 characters. Use a password unique to this demo.' : undefined} />
-          {registering && <PasswordField label="Confirm password" value={confirm} onChange={e => setConfirm(e.target.value)} autoComplete="new-password" disabled={busy} />}
+          <label className={s.field}>Email<input type="email" required maxLength={254} autoComplete="email" value={email} disabled={busy} onChange={e => setEmail(e.target.value)} {...cinematic.field('email')} /></label>
+          <PasswordField value={password} onChange={e => setPassword(e.target.value)} autoComplete={registering ? 'new-password' : 'current-password'} disabled={busy} hint={registering ? '12–128 characters. Use a password unique to this demo.' : undefined} events={cinematic.field('password')} />
+          {registering && <PasswordField label="Confirm password" value={confirm} onChange={e => setConfirm(e.target.value)} autoComplete="new-password" disabled={busy} events={cinematic.field('confirm')} />}
           {error && <p ref={errorBox} className={s.error} tabIndex={-1} role="alert">{error}</p>}
           <button className={s.primary} disabled={busy} type="submit">{busy ? <><span className={s.spinner} aria-hidden="true" />Please wait…</> : <>{registering ? 'Create account' : 'Sign in'}<Icon name="arrow" /></>}</button>
         </form>
@@ -90,55 +100,7 @@ function AuthForm() {
   </div>;
 }
 
-function VehicleForm() {
-  const store = useStore(), live = useLive(), lock = useRef(false), fieldId = useId();
-  const saved = store.data.vehicles.find(v => v.id === store.user.savedVehicleId);
-  const [make, setMake] = useState(saved?.make || ''), [model, setModel] = useState(saved?.model || ''), [year, setYear] = useState(saved ? String(saved.year) : '');
-  const [busy, setBusy] = useState(false), [message, setMessage] = useState(''), [error, setError] = useState('');
-  const { vehicles } = store.data;
-  const unique = values => [...new Set(values)];
-  const selected = vehicles.find(v => v.make === make && v.model === model && String(v.year) === year);
-  const active = vehicles.find(v => v.id === store.vehicleId);
-  function useActive() { if (active) { setMake(active.make); setModel(active.model); setYear(String(active.year)); setMessage(''); } }
-  async function save(id) {
-    if (lock.current) return;
-    lock.current = true; setBusy(true); setError(''); setMessage('');
-    try {
-      const user = await saveAccountVehicle(id);
-      if (!live.current) return;
-      const previousSaved = store.user.savedVehicleId;
-      store.setUser(user);
-      if (id || store.vehicleId === previousSaved) store.setVehicle(id);
-      if (!id) { setMake(''); setModel(''); setYear(''); }
-      setMessage(id ? (FLOW ? 'Demo vehicle saved in this tab.' : 'Vehicle saved to your account.') : 'Saved vehicle removed.');
-    } catch (e) {
-      if (!live.current) return;
-      if (e.status === 401) { store.setUser(null); store.setNotice('Your session expired. Please sign in again.'); }
-      else setError(e.message);
-    } finally { lock.current = false; if (live.current) setBusy(false); }
-  }
-  return <div className={s.vehicleGrid}>
-    <section className={s.panel}>
-      <div className={s.panelHeading}><Icon name="vehicle" /><h2>Save your ride</h2></div>
-      <form onSubmit={e => { e.preventDefault(); if (selected) void save(selected.id); }} aria-busy={busy}>
-        <div className={s.field}><label htmlFor={`${fieldId}-make`}>Make</label><select id={`${fieldId}-make`} required disabled={busy} value={make} onChange={e => { setMake(e.target.value); setModel(''); setYear(''); setMessage(''); }}><option value="">Choose make</option>{unique(vehicles.map(v => v.make)).map(v => <option key={v}>{v}</option>)}</select></div>
-        <div className={s.field}><label htmlFor={`${fieldId}-model`}>Model</label><select id={`${fieldId}-model`} required disabled={!make || busy} value={model} onChange={e => { setModel(e.target.value); setYear(''); setMessage(''); }}><option value="">Choose model</option>{unique(vehicles.filter(v => v.make === make).map(v => v.model)).map(v => <option key={v}>{v}</option>)}</select></div>
-        <div className={s.field}><label htmlFor={`${fieldId}-year`}>Year</label><select id={`${fieldId}-year`} required disabled={!model || busy} value={year} onChange={e => { setYear(e.target.value); setMessage(''); }}><option value="">Choose year</option>{unique(vehicles.filter(v => v.make === make && v.model === model).map(v => v.year)).sort((a, b) => b - a).map(v => <option key={v}>{v}</option>)}</select></div>
-        <Notice error>{error}</Notice><Notice>{message}</Notice>
-        <button type="submit" className={s.primary} disabled={!selected || busy}>{busy ? 'Saving…' : 'Save vehicle'}<Icon name="check" /></button>
-        {active && <button type="button" className={s.textButton} disabled={busy} onClick={useActive}>Use current shop selection</button>}
-      </form>
-    </section>
-    <aside className={`${s.panel} ${s.vehicleSummary}`}>
-      <span className={s.pill}>{saved ? (FLOW ? 'SAVED IN THIS TAB' : 'SAVED IN ACCOUNT') : 'NOT SAVED YET'}</span>
-      <div className={s.vehicleSymbol} aria-hidden="true"><Icon name="vehicle" /></div>
-      <h2>{vehicleName(saved)}</h2>
-      <p>Restored when you sign in. Each bag item keeps its own vehicle.</p>
-      
-      {store.user.savedVehicleId && <button type="button" className={s.textButton} disabled={busy} onClick={() => save('')}>Remove saved vehicle</button>}
-    </aside>
-  </div>;
-}
+function VehicleForm() { return <GarageWorkspace />; }
 
 function OrderContent({ order }) {
   const store = useStore();
@@ -147,7 +109,7 @@ function OrderContent({ order }) {
     <ul className={s.receipt}>{order.lines.map(line => {
       const vehicle = store.data.vehicles.find(v => v.id === line.vehicleId);
       const product = store.data.products.find(p => p.id === line.productId);
-      return <li key={`${line.productId}:${line.vehicleId}`}>{product && <Link className={s.receiptThumb} to={`/products/${product.slug}`} aria-label={`View ${line.name}`}><ProductImage product={product} /></Link>}<div className={s.receiptInfo}><strong>{line.name}</strong><p>{vehicle ? vehicleName(vehicle) : line.vehicleId}</p><small>{line.quantity} × {formatMoney(line.unitPrice)}</small></div><b>{formatMoney(line.lineTotal)}</b></li>;
+      return <li key={`${line.productId}:${line.vehicleId}`}>{product && <Link className={s.receiptThumb} to={`/products/${product.slug}`} aria-label={`View ${line.name}`}><ProductImage product={product} /></Link>}<div className={s.receiptInfo}><strong>{line.name}</strong><p>{line.vehicleLabel || (vehicle ? vehicleName(vehicle) : line.vehicleId)}</p><small>{line.quantity} × {formatMoney(line.unitPrice)}</small></div><b>{formatMoney(line.lineTotal)}</b></li>;
     })}</ul>
     <div className={s.receiptTotal}><span>Demo total</span><strong>{formatMoney(order.total)}</strong></div>
     <p className={s.fine}>No payment was charged. No products will be shipped.</p>
@@ -185,7 +147,7 @@ function DeleteDialog({ onClose }) {
     finally { lock.current = false; if (live.current) setBusy(false); }
   }
   return <dialog className={s.dialog} ref={ref} aria-labelledby={title} onCancel={e => { e.preventDefault(); if (!busy) onClose(); }}>
-    <h2 id={title}>Delete account?</h2><p>Your saved vehicle and simulated orders will be permanently removed.</p>
+    <h2 id={title}>Delete account?</h2><p>Your saved vehicles and simulated orders will be permanently removed.</p>
     <form onSubmit={remove} aria-busy={busy}>
       <PasswordField label="Current password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password" disabled={busy} />
       <label className={s.checkbox}><input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} disabled={busy} />I understand this cannot be undone.</label>
@@ -232,26 +194,26 @@ function MemberArea() {
   const openOrder = id => go('orders', { ...(view === 'orders' ? Object.fromEntries(params) : {}), view: 'orders', order: id });
   return <div className={s.memberLayout}>
     <aside className={s.sidebar}>
-      <AccountVisual compact />
-      <div className={s.identity}><span className={s.avatar} aria-hidden="true">{store.user.email.slice(0, 1).toUpperCase()}</span><strong>{store.user.email}</strong><span>Member since {date(store.user.createdAt)}</span></div>
+      {/* Step16: keep the member navigation quiet; the auth illustration is unchanged. */}
+      <div className={s.identity}><span className={s.avatar} aria-hidden="true">{store.user.email.slice(0, 1).toUpperCase()}</span><strong>{store.user.email}</strong></div>
       <nav aria-label="Account navigation">
-        {Object.entries({ overview: ['user', 'Overview'], vehicle: ['vehicle', 'Saved vehicle'], orders: ['bag', 'Orders'], security: ['check', 'Settings'] }).map(([key, [icon, label]]) => <Link key={key} to={key === 'overview' ? '/account' : `/account?view=${key}`} aria-current={view === key ? 'page' : undefined}><Icon name={icon} />{label}<span aria-hidden="true">↗</span></Link>)}
+        {Object.entries({ overview: ['user', 'Overview'], vehicle: ['vehicle', 'Garage'], orders: ['bag', 'Orders'], security: ['check', 'Profile'] }).map(([key, [icon, label]]) => <Link key={key} to={key === 'overview' ? '/account' : `/account?view=${key}`} aria-current={view === key ? 'page' : undefined}><Icon name={icon} />{label}<span aria-hidden="true">↗</span></Link>)}
       </nav>
       {store.user.role === 'admin' && <Link className={s.textButton} to="/admin">Manage catalog →</Link>}
       <button className={s.logout} disabled={loggingOut} onClick={signOut}>{loggingOut ? 'Signing out…' : 'Sign out'}<span aria-hidden="true">↗</span></button>
       <Notice error>{exitError}</Notice>
     </aside>
     <div className={s.memberContent} key={`${view}:${orderId}`}>
-      <header className={s.pageHeading}><h1 ref={heading} tabIndex={-1}>{orderId ? 'Order detail.' : views[view]}</h1><Link to="/shop" className={s.back}>Shop parts ↗</Link></header>
-      {view === 'vehicle' ? <VehicleForm /> : view === 'security' ? <section className={s.panel}><h2>Account details</h2><dl className={s.details}><div><dt>Email</dt><dd>{store.user.email}</dd></div><div><dt>Member since</dt><dd>{date(store.user.createdAt)}</dd></div><div><dt>Saved vehicle</dt><dd>{vehicleName(saved)}</dd></div></dl><div className={s.dangerArea}><h3>Delete demo account</h3><p>Removes this account, its saved vehicle and simulated orders.</p><button className={s.dangerOutline} onClick={() => setRemove(true)}>Delete account</button></div></section> : orderId ? <OrderDetail key={orderId} id={orderId} onBack={() => { const next = new URLSearchParams(params); next.delete('order'); setParams(next); }} /> : <>
+      <header className={s.pageHeading}><h1 ref={heading} tabIndex={-1}>{orderId ? 'Order detail' : views[view]}</h1>{view !== 'vehicle' && <Link to="/shop" className={s.back}>Shop parts ↗</Link>}</header>
+      {view === 'vehicle' ? <VehicleForm /> : view === 'security' ? <section className={s.panel}><h2>Account details</h2><dl className={s.details}><div><dt>Email</dt><dd>{store.user.email}</dd></div><div><dt>Member since</dt><dd>{date(store.user.createdAt)}</dd></div><div><dt>Saved vehicle</dt><dd>{vehicleName(saved)}</dd></div></dl><div className={s.dangerArea}><h3>Delete demo account</h3><p>Removes this account, its saved vehicles and simulated orders.</p><button className={s.dangerOutline} onClick={() => setRemove(true)}>Delete account</button></div></section> : orderId ? <OrderDetail key={orderId} id={orderId} onBack={() => { const next = new URLSearchParams(params); next.delete('order'); setParams(next); }} /> : <>
         {view === 'overview' && <div className={s.overviewCards}>
-          <section className={`${s.panel} ${s.savedCard}`}><div className={s.cardTop}><Icon name="vehicle" /><span className={s.pill}>YOUR RIDE</span></div><h2>{saved ? saved.model : 'Add your vehicle.'}</h2><p>{saved ? `${saved.make} · ${saved.year}` : 'Save once. Find matching parts faster.'}</p><div className={s.actions}><button className={s.secondary} onClick={() => go('vehicle')}>{saved ? 'Manage vehicle' : 'Choose vehicle'}<Icon name="arrow" /></button>{saved && saved.id !== store.vehicleId && <button className={s.textButton} onClick={() => { store.setVehicle(saved.id); store.setNotice('Saved vehicle selected.'); }}>Use for shopping</button>}</div></section>
+          <GarageSummary />
           <button className={`${s.panel} ${s.orderStat}`} onClick={() => go('orders')}><span className={s.cardTop}><Icon name="bag" /><span>ORDER HISTORY</span></span><strong>{records ? records.total : '—'}</strong><span>Simulated orders <Icon name="arrow" /></span></button>
         </div>}
         <section className={s.panel}>
           <div className={s.panelHeading}><h2>{view === 'overview' ? 'Recent orders' : 'Order history'}</h2>{view === 'overview' && <button className={s.textButton} onClick={() => go('orders')}>View all →</button>}</div>
           {view === 'orders' && <form className={s.search} onSubmit={e => { e.preventDefault(); go('orders', { ...(draft.trim() ? { q: draft.trim() } : {}) }); }}><label className={s.srOnly} htmlFor="account-order-search">Search orders</label><input id="account-order-search" type="search" maxLength={64} placeholder="Order number or product" value={draft} onChange={e => setDraft(e.target.value)} /><button className={s.secondary} type="submit">Search</button></form>}
-          {error ? <><Notice error>{error}</Notice><button className={s.secondary} onClick={() => setRetry(n => n + 1)}>Try again</button></> : !records ? <Busy label="Loading orders…" /> : !records.data.length ? <div className={s.empty}><Icon name="bag" /><h3>{search || page > 1 ? 'No matching orders.' : 'Your next build starts here.'}</h3>{search || page > 1 ? <button className={s.secondary} onClick={() => go('orders')}>Reset search</button> : <Link className={s.secondary} to="/shop">Explore parts<Icon name="arrow" /></Link>}</div> : <>
+          {error ? <><Notice error>{error}</Notice><button className={s.secondary} onClick={() => setRetry(n => n + 1)}>Try again</button></> : !records ? <Busy label="Loading orders…" /> : !records.data.length ? <div className={s.empty}><Icon name="bag" /><h3>{search || page > 1 ? 'No matching orders.' : 'No orders yet.'}</h3>{search || page > 1 ? <button className={s.secondary} onClick={() => go('orders')}>Reset search</button> : <Link className={s.secondary} to="/shop">Explore parts<Icon name="arrow" /></Link>}</div> : <>
             <ul className={s.orderList}>{(view === 'overview' ? records.data.slice(0, 3) : records.data).map((order, i) => <li key={order.id} style={{ '--account-row': Math.min(i, 5) }}><button onClick={() => openOrder(order.id)} className={s.orderRow}><span className={s.orderGlyph} aria-hidden="true"><Icon name="bag" /></span><span className={s.orderName}><strong>{order.id}</strong><small>{date(order.createdAt)} · {orderUnits(order)} items</small></span><span className={s.orderAmount}><b>{formatMoney(order.total)}</b><small>Demo confirmed</small></span><Icon name="arrow" /></button></li>)}</ul>
             {view === 'orders' && records.total > records.pageSize && <nav className={s.pagination} aria-label="Order pages"><button className={s.secondary} disabled={page <= 1} onClick={() => go('orders', { ...(search ? { q: search } : {}), page: String(page - 1) })}>Previous</button><span>Page {page} of {Math.ceil(records.total / records.pageSize)}</span><button className={s.secondary} disabled={page * records.pageSize >= records.total} onClick={() => go('orders', { ...(search ? { q: search } : {}), page: String(page + 1) })}>Next</button></nav>}
           </>}

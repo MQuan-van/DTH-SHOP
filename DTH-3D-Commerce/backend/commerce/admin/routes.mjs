@@ -1,3 +1,4 @@
+import { nvxVehicleQuery } from '../../../shared/nvx.mjs';
 import { Product, Vehicle, Order, User } from '../models.mjs';
 import { Conversation } from '../support/models.mjs';
 import { InputError, validateProduct } from '../../../shared/domain.mjs';
@@ -17,7 +18,7 @@ function productRecord(body, previous, vehicles) {
 export function installAdmin(router,{authenticated,admin,writeLimit}) {
   const guard=[authenticated,admin];
   router.get('/admin/studio/overview',...guard,route(async(req,res)=>{
-    const [products,active,vehicles,orders,openChats]=await Promise.all([Product.countDocuments(),Product.countDocuments({active:true}),Vehicle.countDocuments(),Order.countDocuments(),Conversation.countDocuments({status:'open'})]);
+    const [products,active,vehicles,orders,openChats]=await Promise.all([Product.countDocuments(),Product.countDocuments({active:true}),Vehicle.countDocuments(nvxVehicleQuery()),Order.countDocuments(),Conversation.countDocuments({status:'open'})]);
     res.json({data:{products,active,vehicles,orders,openChats}});
   }));
   router.get('/admin/studio/products',...guard,route(async(req,res)=>{
@@ -31,7 +32,7 @@ export function installAdmin(router,{authenticated,admin,writeLimit}) {
     const data=await Product.findOne({id:req.params.id}).select('-_id -__v').lean();if(!data)throw new InputError('Product not found.',404);res.json({data});
   }));
   router.post('/admin/studio/products',...guard,writeLimit,route(async(req,res)=>{
-    const record=productRecord(req.body,null,await Vehicle.find().lean());
+    const record=productRecord(req.body,null,await Vehicle.find(nvxVehicleQuery()).lean());
     if(await Product.exists({$or:[{id:record.id},{slug:record.slug}]}))throw new InputError('This product ID is already in use.',409);
     const saved=await Product.create(record);const data=saved.toObject();delete data._id;delete data.__v;res.status(201).json({data});
   }));
@@ -39,12 +40,12 @@ export function installAdmin(router,{authenticated,admin,writeLimit}) {
     const previous=await Product.findOne({id:req.params.id}).lean();if(!previous)throw new InputError('Product not found.',404);
     if(req.body.id!==previous.id)throw new InputError('The product ID cannot be changed.');
     if(typeof req.body.expectedUpdatedAt!=='string'||req.body.expectedUpdatedAt!==previous.updatedAt.toISOString())throw new InputError('This product changed elsewhere. Reload it before saving.',409);
-    const record=productRecord(req.body,previous,await Vehicle.find().lean());
+    const record=productRecord(req.body,previous,await Vehicle.find(nvxVehicleQuery()).lean());
     const data=await Product.findOneAndUpdate({id:previous.id,updatedAt:previous.updatedAt},{$set:record},{new:true,runValidators:true}).select('-_id -__v').lean();
     if(!data)throw new InputError('Another editor saved first. Reload the product.',409);res.json({data});
   }));
   router.get('/admin/studio/vehicles',...guard,route(async(req,res)=>{
-    const vehicles=await Vehicle.find().sort({make:1,model:1,year:1}).select('-_id -__v').lean();
+    const vehicles=await Vehicle.find(nvxVehicleQuery()).sort({make:1,model:1}).select('-_id -__v').lean();
     const data=await Promise.all(vehicles.map(async v=>({...v,products:await Product.countDocuments({vehicleIds:v.id})})));res.json({data});
   }));
   router.get('/admin/studio/orders',...guard,route(async(req,res)=>{

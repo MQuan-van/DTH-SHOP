@@ -1,0 +1,166 @@
+/* Step 19C — deliberately scoped to Inbox: no WebGL, no overlays on controls. */
+.root {
+  --motion-ice: #b9edff;
+  --motion-blue: #0a81cb;
+  --motion-deep: #092f4b;
+}
+/* Step19B hid this exit link on medium screens; keep it available everywhere. */
+.root [data-website-home] {display:inline-flex!important}
+/* The banner is now a 2D editorial scene: soft traveling glint + typography. */
+.root [data-inbox-hero] {
+  position: relative;
+  isolation: isolate;
+  background: radial-gradient(ellipse at 85% 25%,#1b719d80,transparent 58%),
+    linear-gradient(114deg,#071c30 0%,#0d3451 61%,#145479 100%);
+}
+.root [data-inbox-hero]::after {
+  content:"";
+  position:absolute;
+  z-index:0;
+  inset:0;
+  pointer-events:none;
+  opacity:.55;
+  background:linear-gradient(105deg,transparent 16%,#7bddff04 40%,#bdeeff27 50%,#7bddff04 60%,transparent 82%);
+  transform:translateX(-105%);
+  animation:inbox19c-sheen 9s ease-in-out 1s infinite;
+}
+.root [data-inbox-hero] > :not(:first-child) { position:relative; z-index:1; }
+.root [data-inbox-hero] h1 {
+  animation:inbox19c-heading 760ms cubic-bezier(.18,.82,.22,1) both;
+}
+.root [data-inbox-hero] h1 em {
+  color:#8bdcff;
+  text-shadow:0 0 26px #17a7ed22;
+}
+/* A deliberately abstract motion motif, not a fake live/online-status graphic. */
+.lead {
+  position:relative;
+  overflow:hidden;
+  border-color:#bddff2;
+  background:linear-gradient(112deg,#e4f5ff,#fff 69%);
+}
+.lead::before {
+  content:"";
+  position:absolute;
+  left:0;top:0;bottom:0;width:4px;
+  background:linear-gradient(180deg,#13c0f6,#006ec2);
+  box-shadow:4px 0 24px #25aef444;
+  pointer-events:none;
+}
+.lead > div:first-child {min-width:0;}
+.lead h2 {letter-spacing:-.055em!important;}
+.signal {height:44px;display:flex;align-items:center;gap:5px;padding:0 16px;flex:none;pointer-events:none;border-left:1px solid #cee7f6}
+.signal i {width:4px;height:10px;background:linear-gradient(180deg,#27c3f5,#0873c3);border-radius:9px;opacity:.65;transform-origin:center}
+.root[data-motion=on] .signal i {animation:inbox19c-waves 2.3s ease-in-out infinite}
+.signal i:nth-child(2),.signal i:nth-child(4){animation-delay:-.35s!important;height:20px}
+.signal i:nth-child(3){animation-delay:-.7s!important;height:30px}
+.signal i:nth-child(5){animation-delay:-1.05s!important;height:14px}
+/* Summaries and cards have controlled entrances; their numeric content stays real. */
+.root [data-inbox-summary] > div {position:relative;overflow:hidden;transition:border-color .25s,transform .25s,box-shadow .25s}
+.root [data-inbox-summary] > div::before {
+  content:"";position:absolute;left:16px;right:16px;bottom:0;height:2px;
+  transform:scaleX(0);transform-origin:left;
+  background:linear-gradient(90deg,#0aa8ea,#1673c9);
+  transition:transform .42s cubic-bezier(.18,.82,.22,1);
+}
+.root [data-inbox-summary] > div:hover {transform:translateY(-3px);border-color:#addbf2;box-shadow:0 12px 28px #0e5c9812}
+.root [data-inbox-summary] > div:hover::before{transform:scaleX(1)}
+/* A thin animated copper-free candy-blue track ties the three-pane workspace together. */
+.root [data-inbox-workspace] {position:relative;isolation:isolate;border-color:#b9dcec;box-shadow:0 18px 60px #052d4b18}
+.root [data-inbox-workspace]::before {
+  content:"";position:absolute;left:0;right:0;top:0;height:3px;z-index:5;pointer-events:none;
+  background:linear-gradient(90deg,#0d72b7,#42d4ff,#0b71c0);
+  background-size:220% 100%;
+  animation:inbox19c-track 7s ease-in-out infinite;
+}
+.root [data-inbox-workspace] [data-inbox-scroll-list] {scroll-behavior:smooth;overscroll-behavior:contain}
+.root [data-inbox-queue-item] {
+  position:relative;overflow:hidden;
+  transition:transform .3s cubic-bezier(.18,.82,.22,1),background .25s,border-color .25s,box-shadow .25s;
+}
+.root [data-inbox-queue-item]::after {
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(100deg,#0eaaff10,transparent 68%);
+  opacity:0;transition:opacity .28s;
+}
+.root [data-inbox-queue-item]:hover {transform:translateX(3px);background:#e5f5ff;box-shadow:inset 4px 0 #32bdf2}
+.root [data-inbox-queue-item]:hover::after{opacity:1}
+.root [data-inbox-queue-item][aria-current=true] {
+  background:linear-gradient(105deg,#cceeff,#eff9ff 78%);
+  border-left-color:#0b8cd7;
+  box-shadow:inset 0 0 0 1px #a9defd,0 4px 18px #0881d010;
+}
+.root [data-inbox-queue-item][aria-current=true]::after{opacity:.8}
+.root [data-inbox-queue-item][data-unread=true] b {
+  background:#0589d5;color:white;
+  box-shadow:0 0 0 4px #159cde18;
+  animation:inbox19c-unread 2.7s ease-in-out infinite;
+}
+/* Thread switching: new header slides into place, status/CTA remain clickable. */
+.root [data-inbox-thread-head] {
+  position:relative;
+  border-bottom-color:#c5e5f5;
+  background:linear-gradient(95deg,#f1f9ff 0%,#fff 74%);
+}
+.root[data-motion=on] [data-inbox-thread-head] {animation:inbox19c-thread-in 460ms cubic-bezier(.16,.85,.2,1) both}
+.root [data-inbox-thread-head]::before {
+  content:"";position:absolute;inset:0 auto 0 0;width:3px;pointer-events:none;
+  background:linear-gradient(180deg,#5bddff,#047ac8);
+}
+.root [data-inbox-thread-head] strong {letter-spacing:-.025em}
+.root [data-inbox-workspace] :global(.dth-chat-message) {animation:none!important} /* WAAPI animates *new* nodes only. */
+.root [data-inbox-workspace] :global(.dth-chat-bubble) {
+  transition:box-shadow .2s,transform .2s;
+}
+.root [data-inbox-workspace] :global(.dth-chat-bubble:hover) {
+  box-shadow:0 8px 24px #0a58831b;
+}
+.root [data-inbox-workspace] :global(.dth-chat-composer) {
+  border-top-color:#bddff0;
+  background:linear-gradient(180deg,#f0f9ff,#fff 70%);
+}
+.root [data-inbox-workspace] :global(.dth-chat-composer textarea) {
+  transition:border-color .2s,box-shadow .2s,background .2s;
+}
+.root [data-inbox-workspace] :global(.dth-chat-composer textarea:focus) {
+  outline:none;
+  border-color:#27a9e6;
+  box-shadow:0 0 0 4px #20b1eb24,0 10px 26px #125b8310;
+}
+.root [data-inbox-workspace] :global(.dth-chat-send) {
+  transition:transform .23s cubic-bezier(.18,.82,.22,1),background .2s,box-shadow .2s;
+}
+.root [data-inbox-workspace] :global(.dth-chat-send:hover:not(:disabled)) {
+  transform:translateY(-2px);
+  background:#005ea9;
+  box-shadow:0 9px 22px #087fc532;
+}
+.root [data-inbox-workspace] :global(.dth-chat-send:active:not(:disabled)) {transform:scale(.98)}
+.root [data-inbox-workspace] :global(.dth-chat-actions button),
+.root [data-inbox-workspace] :global(.dth-chat-composer button) {min-height:36px}
+.root [data-inbox-workspace] :global(.dth-chat-typing) {color:#287eae}
+.root :global([role="status"]) {scroll-margin-top:20px}
+.root [data-inbox-workspace] :global(.dth-chat-new) {box-shadow:0 6px 16px #0d84c12b}
+.root [data-inbox-workspace] :global(.dth-chat-new:hover) {background:#d6f0ff}
+.root [data-inbox-workspace] :global(.dth-chat-attachment) {animation:inbox19c-thread-in .28s ease-out both}
+@keyframes inbox19c-heading {from{opacity:.5;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes inbox19c-thread-in {from{opacity:.24;transform:translate3d(18px,8px,0)}to{opacity:1;transform:none}}
+@keyframes inbox19c-sheen {0%,16%{transform:translateX(-110%)}44%,100%{transform:translateX(120%)}}
+@keyframes inbox19c-waves {0%,100%{transform:scaleY(.55);opacity:.55}50%{transform:scaleY(1.3);opacity:.95}}
+@keyframes inbox19c-track {0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes inbox19c-unread {0%,100%{box-shadow:0 0 0 4px #159cde16}50%{box-shadow:0 0 0 8px #159cde04}}
+@media(hover:none){.root [data-inbox-queue-item]:hover{transform:none}.root [data-inbox-summary]>div:hover{transform:none}}
+@media(max-width:1100px){.signal{display:none}.root [data-inbox-hero]::after{display:none}}
+@media(max-width:680px){
+  .root [data-website-home]{display:inline-flex!important;min-height:34px;padding:7px 9px!important;font-size:10px!important}
+  .root [data-website-home] svg{display:none}
+  .root [data-inbox-summary]>div:hover{transform:none}
+  .root [data-inbox-workspace]::before{height:2px}
+  .root [data-inbox-queue-item]:hover{transform:none}
+}
+@media(max-width:390px){.root [data-website-home]{padding:6px 7px!important;font-size:9px!important}}
+@media(prefers-reduced-motion:reduce){
+  .root *, .root *::before, .root *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .root [data-inbox-queue-item]:hover,.root [data-inbox-summary]>div:hover{transform:none!important}
+}
+.root[data-motion=off] *, .root[data-motion=off] *::before, .root[data-motion=off] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}

@@ -1,16 +1,14 @@
 import {useEffect,useRef,useState} from 'react';
-import {UI_KEY} from './opsPro.logic.mjs';
-function initial() { try { const x=JSON.parse(sessionStorage.getItem(UI_KEY)||'{}');return {motion:x.motion!==false,focus:!!x.focus}; } catch {return {motion:true,focus:false};} }
+/** Step19C: manual UI motion and focus persistence were removed. */
 export default function useOpsUI() {
-  const [prefs,setPrefs]=useState(initial),[reduced,setReduced]=useState(false),[compact,setCompact]=useState(false);
+  const [reduced,setReduced]=useState(() => matchMedia('(prefers-reduced-motion: reduce)').matches),[compact,setCompact]=useState(() => matchMedia('(max-width: 900px)').matches);
   useEffect(()=>{
     const media=matchMedia('(prefers-reduced-motion: reduce)'),mobile=matchMedia('(max-width: 900px)');
     const sync=()=>{setReduced(media.matches);setCompact(mobile.matches);};sync();
     media.addEventListener('change',sync);mobile.addEventListener('change',sync);
     return()=>{media.removeEventListener('change',sync);mobile.removeEventListener('change',sync);};
   },[]);
-  function update(next){setPrefs(p=>{const value={...p,...next};try{sessionStorage.setItem(UI_KEY,JSON.stringify(value));}catch{}return value;});}
-  return {motion:prefs.motion&&!reduced,reduced,compact,focus:prefs.focus,setMotion:v=>update({motion:v}),setFocus:v=>update({focus:v})};
+  return {motion:!reduced,reduced,compact};
 }
 /** Animate only once on arrival. Text and hit targets stay stable afterwards. */
 export function useOpsEntrance(root,motion) {

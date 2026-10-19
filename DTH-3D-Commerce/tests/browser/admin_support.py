@@ -37,7 +37,7 @@ with sync_playwright() as p:
     for page in [admin,customer]:page.set_default_timeout(20000);page.on('pageerror',lambda e:errors.append(str(e)))
     try:
         login(admin,admin_email,'admin','/admin')
-        expect(admin.locator('[data-admin-pro="overview"] h1')).to_have_text('Your studio.In motion.')
+        expect(admin.locator('[data-admin-pro="overview"] h1')).to_have_text('Your studio.In control.')
         login(customer,customer_email,'customer','/shop');ok('Actual account login in two isolated cookie sessions with safe role destinations')
         fit(admin);shot(admin,'01-admin-overview');expect(admin.get_by_role('navigation',name='Admin navigation')).to_be_visible();ok('Separate modular admin shell and data-driven overview')
         customer.goto(base+'/admin');expect(customer.get_by_role('heading',name='Administrator access required.')).to_be_visible()

@@ -6,6 +6,7 @@ from urllib.parse import urlsplit
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
 from flow_auth import login_flow
+from scroll19_checks import review_scroll19, review_inspection19
 out=Path('test-results/cinematic');out.mkdir(parents=True,exist_ok=True)
 base=os.environ.get('DTH_CINEMATIC_URL','http://127.0.0.1:4173')
 checks,errors=[],[]
@@ -18,19 +19,29 @@ def ok(name):checks.append(name);print('PASS:',name,flush=True)
 def shot(page,name):page.screenshot(path=str(out/(name+'.png')))
 def assert_stage(page):
  bounds=page.locator('[data-stage]').evaluate("el=>({height:el.offsetHeight, parent:el.parentElement.offsetHeight, position:getComputedStyle(el).position})")
- assert bounds['position']=='relative',bounds
- assert abs(bounds['height']-bounds['parent'])<=2,bounds
+ if page.locator('[data-cinematic]').get_attribute('data-cinematic')=='true':
+  assert bounds['position']=='sticky',bounds
+  assert bounds['parent']>bounds['height']*2,bounds
+  stage=page.locator('[data-stage]').bounding_box()
+  assert stage and stage['y']>=-2 and stage['y']<page.viewport_size['height'],stage
+ else:
+  assert bounds['position']=='relative',bounds
+  assert abs(bounds['height']-bounds['parent'])<=2,bounds
  assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
  assert page.locator('[data-stage] canvas').count()==1
  def_bounds=page.locator('[data-stage] canvas').bounding_box()
  assert def_bounds['height']>250 and def_bounds['width']>250,def_bounds
 def select_chapter(page,amount):
  index={0:0,.29:1,.61:2,1:3}[amount]
- button=page.get_by_role('navigation',name='Product story chapters').get_by_role('button').nth(index)
+ button=page.locator('nav[aria-label="Product story chapters"] button:visible').nth(index)
  button.scroll_into_view_if_needed();before=page.evaluate('scrollY');button.click()
  expect(page.locator('[data-chapter]')).to_have_attribute('data-chapter',['form','surface','assembly','build'][index])
  page.wait_for_function('(p)=>Math.abs(Number(document.querySelector("[data-navigation]").dataset.progress)-p)<.0001',arg=amount)
- assert abs(page.evaluate('scrollY')-before)<2
+ if page.locator('[data-cinematic]').get_attribute('data-cinematic')=='true':
+  target=page.locator('[data-cinematic]').evaluate('(el,p)=>Math.max(0,el.getBoundingClientRect().top+scrollY-parseFloat(getComputedStyle(el).getPropertyValue("--header-height"))+(el.offsetHeight-el.querySelector("[data-stage]").offsetHeight)*p)',amount)
+  assert abs(page.evaluate('scrollY')-target)<3,(target,page.evaluate('scrollY'))
+ else:
+  assert abs(page.evaluate('scrollY')-before)<2
  assert_stage(page)
 with sync_playwright() as p:
  browser=p.chromium.launch(headless=True,args=['--use-angle=swiftshader','--enable-unsafe-swiftshader'])
@@ -40,14 +51,16 @@ with sync_playwright() as p:
   login_flow(page,base,'/story')  # Real Story mount records the per-user visit.
   expect(page.locator('[data-story-editorial]')).to_be_visible()
   page.goto(base+'/');expect(page.locator('[data-scene]')).to_have_attribute('data-scene','ready')
-  expect(page.locator('[data-cinematic]')).to_have_attribute('data-cinematic','false')
-  page.wait_for_timeout(1500);assert_stage(page);shot(page,'01-home');ok('Real GLB loads in a taller, single normal-flow showroom')
+  expect(page.locator('[data-cinematic]')).to_have_attribute('data-cinematic','true')
+  page.wait_for_timeout(1500);assert_stage(page);shot(page,'01-home');ok('Real GLB loads in a native-scroll sticky story')
+  review_scroll19(page)
   for name,amount,chapter in [('02-surface',.29,'surface'),('03-assembly',.61,'assembly'),('04-reassembled',1,'build')]:
    select_chapter(page,amount);expect(page.locator('[data-chapter]')).to_have_attribute('data-chapter',chapter);shot(page,name)
-  ok('Chapter buttons change the scene without scrolling the document')
+  ok('Chapter buttons scroll to the matching camera progress in the story')
   page.get_by_role('button',name='Find my fit',exact=False).click();expect(page.get_by_role('dialog',name='Choose your Yamaha NVX')).to_be_visible();page.get_by_role('button',name='Close dialog',exact=True).click();ok('Home uses the existing vehicle selector instead of a disconnected form')
   select_chapter(page,0);expect(page.locator('[data-chapter]')).to_have_attribute('data-chapter','form');ok('Chapter transitions are reversible')
   page.get_by_role('button',name='Inspect in 3D',exact=False).click();expect(page.locator('[data-inspect]')).to_have_attribute('data-inspect','true')
+  review_inspection19(page)
   slider=page.get_by_role('slider',name='Assembly separation');slider.focus();slider.press('End');expect(slider).to_have_value('1');page.wait_for_timeout(1800);shot(page,'05-inspect-exploded')
   page.get_by_role('button',name='Rotate right',exact=True).click();page.get_by_role('button',name='Zoom in',exact=True).click();page.get_by_role('button',name='Reset view',exact=True).click();expect(slider).to_have_value('0')
   page.get_by_role('button',name='Wireframe',exact=True).click();expect(page.get_by_role('button',name='Wireframe',exact=True)).to_have_attribute('aria-pressed','true');page.wait_for_timeout(600);shot(page,'06-wireframe')

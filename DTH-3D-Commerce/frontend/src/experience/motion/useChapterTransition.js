@@ -1,6 +1,6 @@
 import { useCallback, useLayoutEffect, useReducer, useRef } from 'react';
 import gsap from 'gsap';
-import { useScrollDirector } from './useScrollDirector';
+import { useScrollDirector } from '../scroll19/useScrollDirector19.js';
 import { clamp01 } from './story.mjs';
 
 /** Seconds. The renderer, camera presets and page layout are not changed. */
@@ -291,7 +291,7 @@ export function useChapterTransition(root, copy, director, options) {
         lastContent = key;
         killTweens();
         restoreStyles();
-        if (!quietNext && canAnimate()) {
+        if (!quietNext && canAnimate() && !o.cinematic) {
           phase('arriving');
           enter(++serial, 1, true);
         }

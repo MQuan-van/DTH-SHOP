@@ -18,7 +18,7 @@ export default function OverviewPro(){
   const stats=overview.data?.data,catalog=coverage(stats),rows=queue.data?.data||[],recent=sortRows(rows,'unread').slice(0,5),q=metrics(rows);
   usePageTitle('Overview');useOpsEntrance(root,ui.motion);
   return <div ref={root} className={s.root} data-admin-pro="overview" data-motion={ui.motion?'on':'off'}>
-    <Topbar label="Overview" ui={ui} status={support.status}><button type="button" className={s.iconButton} aria-label="Refresh dashboard" onClick={()=>{overview.reload();queue.reload();orders.reload();}}><ProIcon name="refresh"/></button></Topbar>
+    <Topbar label="Overview" status={support.status}/>
     <Hero ui={ui} status={support.status}/>
     <ResourceState resource={{...overview,data:overview.data||{}}} label="metrics"/>
     <div className={s.metricGrid} data-pro-enter>{cards.map(([key,label,icon,to],i)=><Link className={s.metric} data-primary={i===0} key={key} to={to}>

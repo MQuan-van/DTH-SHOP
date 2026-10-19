@@ -12,7 +12,7 @@ export const HOME_AUTOROTATE = Object.freeze({
 // Presentation policy, deliberately separate from the persisted camera/asset schema.
 // Only Home opts into these values; Admin still edits the same saved keyframes.
 export const HOME_SHOWROOM = Object.freeze({
-  scrollLinked: false,
+  scrollLinked: true, // Step19A: native-scroll cinematic story on capable desktop.
   wheelZoom: false,
   extraHeightPx: 100,
   pedestalScale: Object.freeze([1.4, 1, 1.12]),

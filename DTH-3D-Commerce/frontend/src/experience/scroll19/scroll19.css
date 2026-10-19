@@ -1,0 +1,59 @@
+/* Step19A: selected elements only. Existing colour system, fonts and GLB are retained. */
+[data-scroll19-home] [data-scroll19-story][data-cinematic="true"] {
+  height: calc(var(--scroll19-stage-height, 700px) + var(--scroll19-distance, 2200px));
+  overflow-anchor: none;
+}
+[data-scroll19-story][data-cinematic="true"] [data-stage] {
+  height: var(--scroll19-stage-height, 700px);
+  min-height: 0;
+  max-height: none;
+}
+[data-scroll19-story][data-cinematic="true"][data-motion="on"]:not([data-inspect="true"]) [data-story-copy] {
+  opacity: var(--scroll19-copy-opacity, 1);
+  transform: translate3d(0, var(--scroll19-copy-y, 0px), 0);
+}
+[data-scroll19-story] [data-story-copy]:focus-within {
+  opacity: 1 !important;
+  transform: none !important;
+}
+[data-scroll19-story][data-cinematic="true"] [data-stage]::after {
+  content: "";
+  position: absolute;
+  z-index: 7;
+  pointer-events: none;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0047ab, #0066dd 58%, #64d9ff);
+  box-shadow: 0 -3px 18px #0066cc24;
+  transform: scaleX(var(--story-progress, 0));
+  transform-origin: left center;
+}
+[data-scroll19-home] [data-scroll19-reveal="card"] {
+  transform-origin: center bottom;
+}
+[data-scroll19-home] [data-scroll19-reveal="card"]:focus-within,
+[data-scroll19-product] [data-scroll19-reveal]:focus-within {
+  opacity: 1 !important;
+  transform: none !important;
+}
+/* Clip x without creating the non-scrolling ancestor that breaks CSS sticky.
+   Inline overflow locks from existing dialogs retain priority. */
+html[data-dth-scroll19-product="true"] body { overflow-x: clip; overflow-y: visible; }
+@media (min-width: 1000px) and (min-height: 680px) and (pointer: fine) {
+  [data-scroll19-product][data-product-detail][data-product-ux="17"] [data-ux17-stage] {
+    height: clamp(280px, calc(100svh - var(--scroll19-header, 80px) - 190px), 600px);
+  }
+  [data-scroll19-product] [data-scroll19-media][data-scroll19-sticky="true"] {
+    position: sticky;
+    top: calc(var(--scroll19-header, 80px) + 14px);
+    align-self: start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-scroll19-story] [data-story-copy] { opacity: 1 !important; transform: none !important; }
+  [data-scroll19-story] [data-stage]::after { display: none; }
+  [data-scroll19-home] [data-scroll19-reveal],
+  [data-scroll19-product] [data-scroll19-reveal] { opacity: 1 !important; transform: none !important; }
+}

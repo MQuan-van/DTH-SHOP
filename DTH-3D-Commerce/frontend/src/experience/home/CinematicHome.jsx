@@ -3,6 +3,7 @@ import { useStartupWebGL } from '../loader/StartupRenderContext.jsx';
 import { Component, Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 import gsap from 'gsap';
+import { useScrollReveals19 } from '../scroll19/useScrollReveals19.js';
 import { useStore } from '../../shop/useStore';
 import ProductImage from '../../shop/catalog/components/ProductImage';
 import { formatMoney } from '../../../../shared/domain.mjs';
@@ -27,7 +28,7 @@ class SceneBoundary extends Component {
 }
 function Arrow() { return <span aria-hidden="true">↗</span>; }
 
-function Story({ product, chooseVehicle, config }) {
+function Story({ product, chooseVehicle, config, motion, setMotion }) {
   const root = useRef(null), stage = useRef(null), copy = useRef(null), api = useRef(null);
   const director = useMemo(createDirector, []);
   const policy = useExperiencePolicy();
@@ -37,12 +38,12 @@ function Story({ product, chooseVehicle, config }) {
   const { capable, allow3D } = useStartupWebGL(hasWebGL);
   const [sceneStatus, setSceneStatus] = useState(product.modelUrl ? 'loading' : 'fallback');
   const [attempt, setAttempt] = useState(0), [rigged, setRigged] = useState(false);
-  const [motion, setMotion] = useState(true), [quality, setQuality] = useState('auto'), [slow, setSlow] = useState(false);
+  const [quality, setQuality] = useState('auto'), [slow, setSlow] = useState(false);
   const [chapter, setChapter] = useState(0), [inspect, setInspect] = useState(false);
   const [explode, setExplode] = useState(0), [wireframe, setWireframe] = useState(false);
   const animated = motion && !policy.reduced;
   const fallback = sceneStatus === 'fallback';
-  const cinematic = HOME_SHOWROOM.scrollLinked && animated && !policy.compact && !fallback;
+  const cinematic = HOME_SHOWROOM.scrollLinked && animated && !policy.compact && !policy.saveData && !fallback;
   const active = useStageActivity(stage);
   // const selectChapter = useScrollDirector(root, director, { cinematic, animated, onChapter: setChapter, config });
   const changeChapter = useChapterTransition(
@@ -155,7 +156,7 @@ function Story({ product, chooseVehicle, config }) {
       </div>
     </div>
   );
-  return <section ref={root} className={styles.story} aria-label="Interactive product story"
+  return <section ref={root} className={styles.story} data-scroll19-story aria-label="Interactive product story"
     style={{ '--story-screens': config.storyScreens, '--showroom-extra-height': `${HOME_SHOWROOM.extraHeightPx}px` }}
     data-navigation={cinematic ? 'scroll' : 'chapters'}
     data-cinematic={cinematic} data-inspect={inspect} data-motion={animated ? 'on' : 'off'} data-chapter={text.id}>
@@ -284,6 +285,8 @@ function Story({ product, chooseVehicle, config }) {
 
 export default function CinematicHome({ config = CINEMATIC_CONFIG, version = 0, binding }) {
   const { data, vehicleId } = useStore();
+  const page = useRef(null), pagePolicy = useExperiencePolicy();
+  const [motion, setMotion] = useState(true);
   const { chooseVehicle } = useOutletContext();
   const live = data.products.filter(p => p && p.active !== false);
   const record = live.find(p => p.id === config.productId) || live[0];
@@ -295,19 +298,21 @@ export default function CinematicHome({ config = CINEMATIC_CONFIG, version = 0, 
     document.documentElement.dataset.dthCinematic = 'true';
     return () => { delete document.documentElement.dataset.dthCinematic; };
   }, []);
+  useScrollReveals19(page, { enabled: motion && !pagePolicy.reduced && !pagePolicy.saveData, compact: pagePolicy.compact,
+    contentKey: `${product?.id || 'empty'}:${version}:${collection.map(item => item.id).join(',')}` });
   if (!product) return <section className="dth-empty"><h1>The collection is taking shape.</h1><p>No active products are available.</p><Link to="/shop">Back to parts</Link></section>;
-  return <div className={styles.cinema} data-experience-version={version}>
-    <Story key={`${product.id}:${product.modelUrl}`} product={product} chooseVehicle={chooseVehicle} config={config}/>
+  return <div ref={page} className={styles.cinema} data-scroll19-home data-experience-version={version}>
+    <Story key={`${product.id}:${product.modelUrl}`} product={product} chooseVehicle={chooseVehicle} config={config} motion={motion} setMotion={setMotion}/>
     <section className={styles.collection} id="dth-collection" aria-labelledby="collection-title">
-      <div className={styles.collectionHeading}><div><p className={styles.eyebrow}>THE SELECTED COLLECTION</p><h2 id="collection-title" tabIndex={-1}>Different parts.<br/><em>Same curiosity.</em></h2></div><Link className={styles.textLink} to="/shop">All parts <Arrow/></Link></div>
-      <div className={styles.collectionGrid}>{collection.map((item, index) => <article key={item.id} className={styles.collectionItem}>
+      <div className={styles.collectionHeading} data-scroll19-reveal="heading"><div><p className={styles.eyebrow}>THE SELECTED COLLECTION</p><h2 id="collection-title" tabIndex={-1}>Different parts.<br/><em>Same curiosity.</em></h2></div><Link className={styles.textLink} to="/shop">All parts <Arrow/></Link></div>
+      <div className={styles.collectionGrid}>{collection.map((item, index) => <article key={item.id} className={styles.collectionItem} data-scroll19-reveal="card">
         <Link className={styles.collectionImage} to={`/products/${item.slug}`} aria-label={`View ${item.name}`}><span className={styles.itemNumber}>0{index + 1}</span><ProductImage product={item}/><span className={styles.itemExplore}>Explore <Arrow/></span></Link>
         <div className={styles.itemInfo}><div><p className={styles.eyebrow}>{categories[item.category]}</p><h3><Link to={`/products/${item.slug}`}>{item.name}</Link></h3></div><span>{formatMoney(item.price)}</span></div>
       </article>)}</div>
       <nav className={styles.categoryNav} aria-label="Browse categories">{Object.entries(categories).map(([id, name]) => <Link to={`/shop?category=${id}`} key={id}>{name} <Arrow/></Link>)}</nav>
     </section>
     <section className={styles.fitment} aria-labelledby="fitment-title">
-      <p className={styles.eyebrow}>THE NEXT CHAPTER</p><div className={styles.fitmentMain}><h2 id="fitment-title">Your ride.<br/><em>Your direction.</em></h2><div><p>{vehicle ? `${vehicle.make} ${vehicle.model} · ${vehicle.year}` : 'Start with your vehicle.'}</p><button type="button" onClick={chooseVehicle}>{vehicle ? 'Change vehicle' : 'Select my vehicle'} <Arrow/></button><small>Compatibility is based on synthetic demo data.</small></div></div>
+      <p className={styles.eyebrow}>THE NEXT CHAPTER</p><div className={styles.fitmentMain} data-scroll19-reveal="heading"><h2 id="fitment-title">Your ride.<br/><em>Your direction.</em></h2><div><p>{vehicle ? `${vehicle.make} ${vehicle.model} · ${vehicle.year}` : 'Start with your vehicle.'}</p><button type="button" onClick={chooseVehicle}>{vehicle ? 'Change vehicle' : 'Select my vehicle'} <Arrow/></button><small>Compatibility is based on synthetic demo data.</small></div></div>
       <span className={styles.fitmentMark} aria-hidden="true">///</span>
     </section>
   </div>;

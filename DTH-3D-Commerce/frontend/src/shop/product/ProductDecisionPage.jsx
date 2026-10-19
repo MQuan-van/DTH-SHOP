@@ -13,6 +13,7 @@ import { CATEGORY_LABELS, matchingPartsHref, productSpecs, purchaseState, safeSh
 import styles from './ProductDecision.module.css';
 import Disclosure from '../ux17/Disclosure';
 import '../ux17/commerce17.css';
+import { useScrollReveals19 } from '../../experience/scroll19/useScrollReveals19.js';
 
 export default function ProductDecisionPage({ product }) {
   const store = useStore(), { chooseVehicle } = useOutletContext();
@@ -31,6 +32,7 @@ export default function ProductDecisionPage({ product }) {
   const compatibleVehicles = store.data.vehicles.filter(v => Array.isArray(product.vehicleIds) && product.vehicleIds.includes(v.id));
   const description = typeof product.description === 'string' ? product.description : '';
   useProductEntrance(root, motion && active, product.id);
+  useScrollReveals19(root, { enabled: motion && !policy.saveData, compact: policy.compact, contentKey: product.id });
   useEffect(() => {
     setQuantity(1); setReceipt(null); setError('');
     // Explicitly preserves every vehicle stored on existing bag lines.
@@ -75,7 +77,7 @@ export default function ProductDecisionPage({ product }) {
   }
   const buttonLabel = !state.available || !state.priceOK ? 'Unavailable' : !state.match.canAdd ? 'Choose matching vehicle'
     : !state.remaining || state.full ? 'Demo limit reached' : receipt ? 'Added to bag' : 'Add to bag';
-  return <section ref={root} className={styles.page} data-product-detail data-product-ux="17" data-motion={motion ? 'on' : 'off'}>
+  return <section ref={root} className={styles.page} data-product-detail data-scroll19-product data-product-ux="17" data-motion={motion ? 'on' : 'off'}>
     <div className={styles.container} data-ux17-container>
       <nav className={styles.breadcrumb} aria-label="Breadcrumb">
         <Link to={returnTo}>← Back to parts</Link><span aria-hidden="true">/</span><span aria-current="page">{product.name}</span>
@@ -85,7 +87,7 @@ export default function ProductDecisionPage({ product }) {
           {policy.reduced ? 'Reduced motion' : motion ? 'Ⅱ Motion on' : '▷ Motion off'}</button>
       </div>
       <div className={styles.hero} data-ux17-hero>
-        <div className={styles.mediaColumn} data-product-enter>
+        <div className={styles.mediaColumn} data-scroll19-media data-product-enter>
           <ProductMedia key={`${product.id}:${product.modelUrl}`} product={product} motion={motion} policy={policy}/>
         </div>
         <div className={styles.information} data-ux17-info>
@@ -124,7 +126,7 @@ export default function ProductDecisionPage({ product }) {
             </form>
             <p className={styles.purchaseFine}>Simulated purchase · No payment or shipment.</p>
           </div>
-          <div data-ux17-details>
+          <div data-ux17-details data-scroll19-reveal="details">
             <Disclosure id="dth-product-about" title="Details" motion={motion}>
               <p>{description || 'No description has been supplied.'}</p><small>{product.assetLicense || 'Asset provenance should be recorded by the catalog owner.'}</small>
             </Disclosure>
@@ -141,8 +143,10 @@ export default function ProductDecisionPage({ product }) {
           </div>
         </div>
       </div>
-      <ProductRecommendations product={product} products={store.data.products} vehicles={store.data.vehicles}
-        vehicleId={store.vehicleId} fromShop={returnTo} onChooseVehicle={chooseVehicle} motion={motion}/>
+      <div data-scroll19-reveal="recommendations">
+        <ProductRecommendations product={product} products={store.data.products} vehicles={store.data.vehicles}
+          vehicleId={store.vehicleId} fromShop={returnTo} onChooseVehicle={chooseVehicle} motion={motion}/>
+      </div>
       {/* Product information is available in the disclosures beside the viewer. */}
     </div>
   </section>;

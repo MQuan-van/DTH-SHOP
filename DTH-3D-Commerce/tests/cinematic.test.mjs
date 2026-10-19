@@ -1,4 +1,5 @@
 import test from 'node:test';
+import './scroll19.test.mjs';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import * as THREE from 'three';

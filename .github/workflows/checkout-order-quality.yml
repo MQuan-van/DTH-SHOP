@@ -1,0 +1,28 @@
+name: Checkout Order Quality
+on:
+  push:
+    paths:
+      - 'DTH-3D-Commerce/**'
+      - '.github/workflows/checkout-order-quality.yml'
+  pull_request:
+    paths:
+      - 'DTH-3D-Commerce/**'
+      - '.github/workflows/checkout-order-quality.yml'
+jobs:
+  checkout:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: DTH-3D-Commerce
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: DTH-3D-Commerce/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npm run test:checkout
+      - run: npm run test:cart-quote
+      - run: npm run build

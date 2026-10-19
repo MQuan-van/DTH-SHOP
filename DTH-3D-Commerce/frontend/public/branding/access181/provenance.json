@@ -1,0 +1,6 @@
+{
+  "source": "User-provided nxv cùa a hải.png",
+  "source_sha256": "613d1211861bbb63279d03cc10961ece6e48eaf266ba44f486670229cf0b1014",
+  "operations": "Crop white DTH mark; threshold and simplify contours; triangulate/extrude for 3D. No vehicle/image reconstruction.",
+  "role": "Brand visual only; floating props are abstract, not catalog items."
+}

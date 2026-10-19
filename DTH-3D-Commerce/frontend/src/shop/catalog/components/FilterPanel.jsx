@@ -1,3 +1,4 @@
+import { vehicleLabel as nvxVehicleLabel } from '../../../../../shared/nvx.mjs';
 import { useId } from 'react';
 import { formatMoney } from '../../../../../shared/domain.mjs';
 import { SHOP_CONFIG } from '../catalog.config.mjs';
@@ -25,9 +26,9 @@ export default function FilterPanel({ query, counts, ceiling, vehicle, vehicleId
     <fieldset className={styles.fieldset}><legend>Vehicle compatibility</legend>
       <label className={styles.radioRow}><input type="radio" name={`${id}-fit`} checked={query.fit === 'match'} onChange={() => onPatch({ fit: 'match' })} /><span>Matching parts only</span></label>
       <label className={styles.radioRow}><input type="radio" name={`${id}-fit`} checked={query.fit === 'all'} onChange={() => onPatch({ fit: 'all' })} /><span>Show all parts</span></label>
-      <p className={styles.filterHelp}>{vehicle ? `Using ${vehicle.model} · ${vehicle.year}.` : vehicleId ? 'The saved vehicle is not in this demo dataset. Choose another vehicle.' : 'Select a vehicle to activate matching. Until then, all parts are shown.'}</p>
+      <p className={styles.filterHelp}>{vehicle ? `Using ${nvxVehicleLabel(vehicle)}.` : vehicleId ? 'The saved vehicle is not in this demo dataset. Choose another vehicle.' : 'Select a vehicle to activate matching. Until then, all parts are shown.'}</p>
       {!vehicle && <button className={styles.outlineButton} type="button" onClick={onChooseVehicle}><ShopIcon name="vehicle" />Select vehicle</button>}
     </fieldset>
-    <p className={styles.datasetNote}><ShopIcon name="info" />Compatibility uses synthetic demo data, not manufacturer verification.</p>
+    {/* <p className={styles.datasetNote}><ShopIcon name="info" />Compatibility uses synthetic demo data, not manufacturer verification.</p> */}
   </div>;
 }

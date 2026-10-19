@@ -8,7 +8,9 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { formatMoney } from '../../../../../shared/domain.mjs';
 import { useStore } from '../../useStore';
-import { clampZoom, describeFit } from '../catalog.logic.mjs';
+import { clampZoom } from '../catalog.logic.mjs';
+import FitmentStatus from '../fitment/FitmentStatus';
+import { explainFitment } from '../fitment/fitment.logic.mjs';
 import { SHOP_CONFIG } from '../catalog.config.mjs';
 import ProductImage from './ProductImage';
 import ShopIcon from './ShopIcon';
@@ -306,12 +308,14 @@ export default function QuickView({
   product,
   onClose,
   onChooseVehicle,
+  onExploreMatches,
   motion,
   trigger,
 }) {
   const { data, vehicleId, bag, add } = useStore();
   const navigate = useNavigate();
   const titleId = useId();
+  const cartAddPending = useRef(false);
 
   const dialog = useRef(null);
   const image = useRef(null);
@@ -328,8 +332,7 @@ export default function QuickView({
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const match = describeFit(product, vehicleId, data.vehicles);
-  const vehicle = data.vehicles.find(item => item.id === vehicleId);
+  const match = explainFitment(product, vehicleId, data.vehicles);
 
   const category =
     SHOP_CONFIG.categories.find(
@@ -371,6 +374,11 @@ export default function QuickView({
   useEffect(() => {
     setQuantity(q => Math.max(1, Math.min(q, remaining)));
   }, [remaining]);
+
+  useEffect(() => {
+    setMessage('');
+    setError('');
+  }, [vehicleId, product.id]);
 
   async function dismiss(after) {
     const controller = session.current;
@@ -519,6 +527,7 @@ export default function QuickView({
   }
 
   function buy() {
+    if (cartAddPending.current) return;
     setMessage('');
     setError('');
 
@@ -530,9 +539,12 @@ export default function QuickView({
     }
 
     if (add(product, vehicleId, quantity)) {
+      cartAddPending.current = true;
       setMessage(
         `${quantity} × ${product.name} added to your bag.`
       );
+      // The shared cart waits until this dialog and its scroll lock are released.
+      void dismiss();
     } else {
       setError(
         'Could not add this item. Check the vehicle and demo bag limits.'
@@ -692,36 +704,11 @@ export default function QuickView({
               <span>Demo price · VND</span>
             </div>
 
-            <div className={styles.quickFit}>
-              <p
-                className={styles.fitBadge}
-                data-status={match.status}
-              >
-                <ShopIcon
-                  name={
-                    match.status === 'compatible'
-                      ? 'check'
-                      : 'vehicle'
-                  }
-                />
-                {match.label}
-              </p>
-
-              <p>
-                {vehicle
-                  ? `${vehicle.make} · ${vehicle.model} · ${vehicle.year}`
-                  : 'Choose a vehicle to check fit.'}
-              </p>
-
-              <button
-                type="button"
-                className={styles.textButton}
-                onClick={openVehicle}
-              >
-                {vehicle ? 'Change vehicle' : 'Choose vehicle'}
-                <ShopIcon name="arrow" />
-              </button>
-            </div>
+            <FitmentStatus
+              product={product} vehicleId={vehicleId} vehicles={data.vehicles}
+              motion={motion} onChooseVehicle={openVehicle}
+              onExploreMatches={onExploreMatches ? () => void dismiss(onExploreMatches) : undefined}
+            />
 
             <div className={styles.buyRow}>
               <label>

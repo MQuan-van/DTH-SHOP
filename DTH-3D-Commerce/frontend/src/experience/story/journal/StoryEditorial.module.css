@@ -1,0 +1,65 @@
+.journal { --journal-paper:#f7f8f7;--journal-ink:#14232f;--journal-blue:#2161cf;--journal-muted:#5c6d7a;
+  position:relative;background:var(--journal-paper);color:var(--journal-ink);font-family:Inter,'Segoe UI',Arial,sans-serif;overflow:clip; }
+.journal,.journal *{box-sizing:border-box}.journal :is(h1,h2,p,figure){margin:0}.journal a{color:inherit;text-decoration:none}
+.journal :is(a,button):focus-visible{outline:2px solid var(--journal-blue);outline-offset:5px}
+.hero,.crew,.closing{width:min(1480px,92%);margin-inline:auto}
+.hero{padding-top:28px;padding-bottom:clamp(56px,7vw,104px)}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:20px;min-height:46px;border-bottom:1px solid #c6d1d680;padding-bottom:14px;
+  font-size:10px;letter-spacing:.12em;color:var(--journal-muted)}
+.topline>div{display:flex;gap:24px;align-items:center}.topline a{display:inline-flex;align-items:center;gap:20px;min-height:40px;font-size:12px;letter-spacing:0}
+.journal .topline button{border:0;background:none;box-shadow:none;min-height:40px;padding:6px 0;color:var(--journal-muted);font-family:inherit;font-size:11px;line-height:1.4;letter-spacing:0;cursor:pointer}
+.heroGrid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.12fr);align-items:center;gap:7%;padding-top:34px}
+.heroCopy{padding-top:4%;padding-bottom:12%}
+.journal .heroCopy h1{font-size:clamp(62px,7.4vw,116px);line-height:.93;font-weight:650;letter-spacing:-.065em}
+.journal em{font-style:normal;color:var(--journal-blue);font-weight:inherit}
+.journal .heroCopy p{font-size:clamp(14px,1.25vw,18px);line-height:1.65;color:var(--journal-muted);margin-top:30px;letter-spacing:-.015em}
+.discover{margin-top:46px;display:inline-flex;min-height:46px;align-items:center;gap:35px;border-bottom:1px solid #718492;font-size:13px;font-weight:500}
+.discover span{font-size:20px;transition:transform .2s ease}.discover:hover span{transform:translateY(3px)}
+.heroFigure{min-width:0}.heroWindow{position:relative;aspect-ratio:.94;overflow:hidden;background:#d5dcd9}
+.parallax{position:absolute;inset:-20px 0;transform:translate3d(0,var(--journal-y,0px),0)}
+.heroPhoto{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 78%;filter:saturate(.91) contrast(1.025)}
+.imageLabel{position:absolute;top:24px;left:24px;font-size:9px;letter-spacing:.16em;color:white;text-shadow:0 1px 4px #0008}
+.heroFigure figcaption{display:flex;justify-content:space-between;gap:20px;margin-top:14px;font-size:10px;color:var(--journal-muted)}
+.heroFigure figcaption span:last-child{letter-spacing:.1em}
+.crew{padding-block:30px clamp(64px,9vw,136px);scroll-margin-top:30px}
+.chapterHeading{display:flex;align-items:flex-end;justify-content:space-between;gap:36px;margin-bottom:34px}
+.journal .chapterHeading h2{font-size:clamp(38px,4.8vw,66px);line-height:1.03;letter-spacing:-.055em;font-weight:600}
+.journal .chapterHeading p{font-size:13px;line-height:1.6;color:var(--journal-muted);max-width:210px;padding-bottom:3px}
+.focusFrame{position:relative;aspect-ratio:1.93;overflow:hidden;background:#cbd3d1}
+.focusImage{width:100%;height:100%;display:block;object-fit:cover;transform:scale(var(--photo-zoom,1));filter:saturate(.92) contrast(1.015);animation:dth-photo-focus .52s cubic-bezier(.2,.7,.2,1) both}
+@keyframes dth-photo-focus{from{opacity:.45;clip-path:inset(0 6% 0 0)}to{opacity:1;clip-path:inset(0 0 0 0)}}
+.focusNumber{position:absolute;bottom:22px;right:26px;font-size:13px;letter-spacing:.1em;color:white;text-shadow:0 1px 5px #000b}
+.focusFooter{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-top:20px}
+.focusChoices{display:flex;gap:8px;flex-wrap:wrap}.journal .focusChoices button{display:flex;align-items:center;justify-content:space-between;gap:30px;
+  min-height:46px;padding:10px 17px;border:1px solid transparent;border-radius:0;background:transparent;color:var(--journal-muted);
+  font:500 12px/1.4 Inter,'Segoe UI',Arial,sans-serif;box-shadow:none;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.journal .focusChoices button[aria-pressed='true']{background:var(--journal-ink);border-color:var(--journal-ink);color:white}
+.journal .focusChoices button:hover:not([aria-pressed='true']){border-color:#97aabb;color:var(--journal-ink)}
+.journal .caption{font-size:10px;color:var(--journal-muted);white-space:nowrap}.caption span{padding-inline:10px}
+.study{border-block:1px solid #c6d1d660}
+.closing{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:10%;align-items:center;padding-block:clamp(64px,8vw,124px)}
+.closeImage{aspect-ratio:1.12;overflow:hidden;background:#d5dcd9}.closePhoto{width:100%;height:100%;display:block;object-fit:cover;object-position:50% 54%;filter:saturate(.88)}
+.smallMark{font-size:9px;letter-spacing:.14em;color:var(--journal-muted)}
+.journal .closeCopy h2{margin:26px 0 35px;font-size:clamp(46px,5.6vw,80px);font-weight:600;line-height:1;letter-spacing:-.055em}
+.journal .enter{display:flex;align-items:center;justify-content:space-between;gap:48px;max-width:275px;min-height:58px;padding:16px 22px;background:var(--journal-blue);color:white;
+  font-size:14px;font-weight:600;transition:background .2s,transform .2s}.enter:hover{background:#154baf;transform:translateY(-2px)}.enter span{font-size:22px}
+.shopLink{display:inline-block;margin-top:20px;min-height:38px;font-size:12px;color:var(--journal-muted)!important}
+.journal .sourceNote{width:92%;margin:0 auto;padding:0 0 30px;text-align:center;color:var(--journal-muted);font-size:10px;line-height:1.6}
+.photoFallback{display:grid!important;place-items:center;background:#e0e6e5!important;font-size:12px;color:var(--journal-muted)}
+.journal[data-journal-motion='off'] *{animation:none!important;transition:none!important}.journal[data-journal-motion='off'] .parallax{transform:none}
+@media(min-width:1920px){.heroGrid{gap:8%}.heroCopy h1{font-size:120px}}
+@media(max-width:1000px){.heroGrid{gap:5%}.journal .heroCopy h1{font-size:clamp(55px,7.6vw,86px)}.heroWindow{aspect-ratio:.84}}
+@media(max-width:759px){
+  .hero,.crew,.closing{width:calc(100% - 36px)}.hero{padding-top:12px;padding-bottom:62px}
+  .topline{font-size:8px;gap:12px}.topline>div{gap:14px}.topline a{font-size:11px;gap:10px}.journal .topline button{font-size:10px}
+  .heroGrid{display:flex;flex-direction:column;align-items:stretch;gap:30px;padding-top:32px}.heroCopy{padding:0;position:relative}
+  .journal .heroCopy h1{font-size:clamp(62px,15vw,90px);line-height:.94}.journal .heroCopy p{margin-top:21px;font-size:13px}
+  .discover{margin-top:20px;font-size:12px}.heroWindow{aspect-ratio:.98}.imageLabel{top:16px;left:16px;font-size:8px}
+  .heroFigure figcaption{font-size:9px}.chapterHeading{display:block;margin-bottom:24px}.journal .chapterHeading p{margin-top:18px;max-width:none}
+  .focusFrame{aspect-ratio:1.18}.focusImage{object-position:50% 69%!important}.focusFooter{display:block;padding-top:15px}.journal .caption{margin-top:14px;text-align:right}
+  .focusChoices{gap:2px;justify-content:space-between}.journal .focusChoices button{font-size:11px;padding:8px 10px;gap:12px}
+  .closing{grid-template-columns:1fr;gap:34px;padding-block:60px}.closeImage{aspect-ratio:1.38}.closeCopy{padding-inline:8px}.journal .closeCopy h2{font-size:56px;margin-top:18px}
+  .journal .sourceNote{font-size:9px}.parallax{inset:0;transform:none}
+}
+@media(prefers-reduced-motion:reduce){.journal *{animation:none!important;transition:none!important;scroll-behavior:auto!important}.parallax{transform:none}}
+@media(forced-colors:active){.journal{background:Canvas;color:CanvasText}.journal em{color:CanvasText}.journal .enter{background:ButtonFace;color:ButtonText;border:1px solid ButtonText}}

@@ -1,3 +1,5 @@
+// DTH Loader 17.2 — deferred graphics startup, existing readiness preserved.
+import { useStartupWebGL } from '../experience/loader/StartupRenderContext.jsx';
 import {
   Component,
   Suspense,
@@ -373,7 +375,7 @@ function ProductViewer({ product }) {
   const wrapper = useRef(null);
   const api = useRef(null);
 
-  const [capable] = useState(supports3D);
+  const { capable, allow3D } = useStartupWebGL(supports3D);
 
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -398,7 +400,7 @@ function ProductViewer({ product }) {
   }, []);
 
   const show3D =
-    capable &&
+    allow3D &&
     !!product.modelUrl &&
     !failed &&
     !imageMode;
@@ -468,7 +470,7 @@ function ProductViewer({ product }) {
     ? 'Image preview'
     : failed
       ? '3D could not load. Image preview is still available.'
-      : !capable || !product.modelUrl
+      : capable === false || !product.modelUrl
         ? '3D is unavailable. Image preview.'
         : ready
           ? 'Interactive 3D ready'

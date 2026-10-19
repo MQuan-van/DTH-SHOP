@@ -1,0 +1,22 @@
+/* Step18.0B: admin-only shell; never restyle the storefront or customer chat. */
+.dth-admin[data-ops18="true"][data-ops18b="true"]{--a-ink:#172f44;--a-muted:#617688;--a-line:#dce7ee;width:calc(100% - clamp(28px,4vw,88px));max-width:2160px;margin:26px auto 38px;grid-template-columns:216px minmax(0,1fr);gap:28px;font-size:14px;align-items:start}
+.dth-admin[data-ops18="true"][data-ops18b="true"]>.dth-admin-sidebar{position:sticky;top:24px;min-height:calc(100dvh - 56px);display:flex;flex-direction:column;border:1px solid #153c58;border-radius:22px;padding:30px 16px 22px;background:linear-gradient(157deg,#092338,#0e304a 62%,#103d5d);box-shadow:0 16px 40px #142b3b0d;color:#d8e8f6;overflow:hidden;isolation:isolate}
+.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-sidebar:before{content:'';position:absolute;inset:auto -60px -100px;height:300px;background:radial-gradient(ellipse,#147dcc38,transparent 70%);z-index:-1;pointer-events:none}
+.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-logo{color:white!important;font-size:34px;letter-spacing:-.07em;margin:0 10px 40px}
+.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-logo span{color:#7abce2;font-size:9px;letter-spacing:.20em;margin-top:9px}
+.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-sidebar nav{display:grid;gap:8px;border:0;padding:0}
+.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-sidebar nav a{color:#a8bfd1;min-height:48px;border:1px solid transparent;border-radius:12px;font-size:13px;padding:12px 13px;background:transparent;transform:none}
+.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-sidebar nav a>span{font-size:19px;color:#8fc3e7}
+.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-sidebar nav a:hover{background:#174663;color:white}
+.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-sidebar nav a[aria-current=page]{background:#eaf7ff;color:#0b4f8b;border-color:#f7fbff;box-shadow:0 6px 20px #020e1930;font-weight:650}
+.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-sidebar nav a[aria-current=page]>span{color:#0077cc}
+.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-operator{margin-top:auto;padding:28px 10px 0;border-top:1px solid #2c5069;gap:12px;font-size:12px}
+.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-operator>span{color:#76a6c5;font-size:9px;letter-spacing:.15em}
+.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-operator strong{color:#eff8ff;font-weight:500;font-size:12px}
+.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-operator a{color:#a3c4dc;font-size:11px}
+.dth-admin[data-ops18="true"][data-ops18b="true"]>.dth-admin-main{min-width:0;max-width:none;padding:0}
+@media(min-width:2300px){.dth-admin[data-ops18="true"][data-ops18b="true"]{max-width:2360px;grid-template-columns:240px minmax(0,1fr);gap:36px}}
+@media(max-width:1100px){.dth-admin[data-ops18="true"][data-ops18b="true"]{grid-template-columns:172px minmax(0,1fr);gap:18px;width:calc(100% - 32px)}.dth-admin[data-ops18="true"][data-ops18b="true"]>.dth-admin-sidebar{padding:24px 10px}.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-sidebar nav a{font-size:12px;gap:8px}}
+@media(max-width:900px){.dth-admin[data-ops18="true"][data-ops18b="true"]{display:block;margin-top:14px}.dth-admin[data-ops18="true"][data-ops18b="true"]>.dth-admin-sidebar{position:relative;top:auto;min-height:0;padding:9px;border-radius:15px;margin-bottom:16px;display:block}.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-logo,.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-operator{display:none}.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-sidebar nav{display:flex;overflow:auto;gap:4px}.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-sidebar nav a{min-width:0;min-height:42px;padding:9px 13px;white-space:nowrap;flex:0 0 auto}.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-sidebar nav a>span{font-size:15px}}
+@media(max-width:480px){.dth-admin[data-ops18="true"][data-ops18b="true"]{width:calc(100% - 20px)}.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-sidebar nav a{font-size:12px;padding:9px 11px}.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-sidebar nav a>span{display:none}}
+@media(prefers-reduced-motion:reduce){.dth-admin[data-ops18="true"][data-ops18b="true"] .dth-admin-sidebar *{animation:none!important;transition:none!important}}

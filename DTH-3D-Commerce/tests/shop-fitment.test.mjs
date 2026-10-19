@@ -1,0 +1,48 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { fitment } from '../shared/domain.mjs';
+import { explainFitment, vehicleCaption, summarizeFitment, matchingQuery } from '../frontend/src/shop/catalog/fitment/fitment.logic.mjs';
+import { readShopQuery, getPriceCeiling, selectShopProducts } from '../frontend/src/shop/catalog/catalog.logic.mjs';
+const data = JSON.parse(await readFile(new URL('../shared/catalog.json', import.meta.url), 'utf8'));
+const p = data.products[0], id = p.vehicleIds[0];
+const other = data.vehicles.find(v => !p.vehicleIds.includes(v.id)).id;
+const query = raw => readShopQuery(raw, getPriceCeiling(data.products));
+const state = (product = p, vehicle = id, vehicles = data.vehicles) => explainFitment(product, vehicle, vehicles);
+
+test('compatible record reuses the domain rule', () => { assert.equal(state().status, 'compatible'); assert.equal(state().canAdd,true); });
+test('absent vehicle mapping is not a real-world incompatibility claim', () => { const s=state(p,other); assert.equal(s.status,'incompatible');assert.match(s.detail,/not a real-world/);assert.equal(s.canAdd,false); });
+test('no selection is not incompatible', () => assert.equal(state(p,'').status,'unselected'));
+test('stale vehicle is unknown even if listed on product', () => assert.equal(state({...p,vehicleIds:['stale']},'stale').status,'unknown'));
+test('missing compatibility remains unknown', () => assert.equal(state({...p,vehicleIds:undefined}).status,'unknown'));
+test('empty mapping follows the current domain meaning (no match)', () => assert.equal(state({...p,vehicleIds:[]}).status,'incompatible'));
+test('all current product/vehicle statuses agree with the shared domain', () => { for(const item of data.products) for(const v of data.vehicles) assert.equal(state(item,v.id).status,fitment(item,v.id,data.vehicles).status); });
+for(const value of [null,{},'bad',42]) test(`malformed mapping ${JSON.stringify(value)} fails closed`,()=>assert.equal(state({...p,vehicleIds:value}).status,'unknown'));
+for(const value of [[null],[''],[id,4]]) test(`mixed mapping ${JSON.stringify(value)} not labelled a match`,()=>assert.equal(state({...p,vehicleIds:value}).canAdd,false));
+test('missing product does not throw',()=>assert.equal(state(null).status,'unknown'));
+test('missing vehicles do not throw',()=>assert.equal(state(p,id,null).status,'unknown'));
+test('invalid vehicles cannot match',()=>assert.equal(state(p,id,[null,{},42]).status,'unknown'));
+test('unknown vehicle cannot offer matching alternatives',()=>assert.equal(state(p,'stale').canExplore,false));
+test('missing fitment with known vehicle can explore alternatives',()=>assert.equal(state({...p,vehicleIds:null}).canExplore,true));
+test('compatible product does not show unnecessary alternatives',()=>assert.equal(state().canExplore,false));
+test('vehicle caption includes make model year',()=>assert.equal(vehicleCaption({id:'v',make:'DTH',model:'Street',year:2022}),'DTH Street · 2022'));
+test('caption handles optional fields',()=>assert.equal(vehicleCaption({id:'v'}),'v'));
+test('caption handles a missing vehicle',()=>assert.equal(vehicleCaption(null),''));
+test('status computation does not mutate product or vehicles',()=>{const before=JSON.stringify(data);state();assert.equal(JSON.stringify(data),before);});
+for(const raw of ['', 'q=apex','category=wheels','max=1000000','category=brakes&q=vector','q=impossible','fit=all&sort=price-high','category=wheels&category=suspension']) {
+ test(`counts match actual filtered results: ${raw||'default'}`,()=>{const q=query(raw),s=summarizeFitment(data.products,data.vehicles,id,q);const all=selectShopProducts(data.products,data.vehicles,id,{...q,fit:'all'});const fits=selectShopProducts(data.products,data.vehicles,id,{...q,fit:'match'});assert.equal(s.total,all.length);assert.equal(s.compatible,fits.length);assert.equal(s.compatible+s.incompatible+s.unknown+s.unselected,s.total);});
+}
+test('counts with stale vehicle are unknown, not incompatible',()=>{const s=summarizeFitment(data.products,data.vehicles,'stale',query(''));assert.equal(s.unknown,s.total);assert.equal(s.incompatible,0);});
+test('unselected count covers the pool',()=>{const s=summarizeFitment(data.products,data.vehicles,'',query(''));assert.equal(s.unselected,s.total);});
+test('counts exclude invalid and inactive prices without invented entries',()=>{const s=summarizeFitment([p,{...p,active:false},{...p,price:-1},null,{...p,price:NaN}],data.vehicles,id,query(''));assert.equal(s.total,1);});
+test('unknown mapping counted separately',()=>{const s=summarizeFitment([{...p,vehicleIds:undefined}],data.vehicles,id,query(''));assert.equal(s.unknown,1);assert.equal(s.incompatible,0);});
+test('empty catalog remains empty',()=>assert.equal(summarizeFitment([],[],id,query('')).total,0));
+test('matching query preserves all unrelated constraints',()=>{const source=new URLSearchParams('q=apex&category=wheels&category=brakes&max=9000000&sort=name&fit=all&page=3&source=story');const before=source.toString(),q=matchingQuery(source);assert.equal(source.toString(),before);assert.equal(q.get('fit'),'match');assert.equal(q.has('page'),false);for(const k of ['q','max','sort','source'])assert.equal(q.get(k),source.get(k));assert.deepEqual(q.getAll('category'),['wheels','brakes']);});
+test('matching query never supplies or modifies a vehicle',()=>assert.equal(matchingQuery('vehicle=keep&fit=all').get('vehicle'),'keep'));
+test('matching query is deterministic on repeated calls',()=>assert.equal(matchingQuery(matchingQuery('q=x')).toString(),matchingQuery('q=x').toString()));
+test('catalog and query remain immutable during counts',()=>{const before=JSON.stringify(data),q=query('q=apex&fit=all'),qb=JSON.stringify(q);summarizeFitment(data.products,data.vehicles,id,q);assert.equal(JSON.stringify(data),before);assert.equal(JSON.stringify(q),qb);});
+const read = path => readFile(new URL('../'+path,import.meta.url),'utf8');
+test('Search Discovery integration stays in ShopPage',async()=>assert.match(await read('frontend/src/shop/catalog/ShopPage.jsx'),/<SearchDiscovery/));
+test('QuickView retains guarded add and original animated dismiss',async()=>{const s=await read('frontend/src/shop/catalog/components/QuickView.jsx');assert.match(s,/if \(match.status !== 'compatible'\) return openVehicle\(\)/);assert.match(s,/await controller.close\(\)/);assert.match(s,/dismiss\(onExploreMatches\)/);});
+test('fitment components do not load WebGL or change persistent cart data',async()=>{for(const path of ['FitmentStatus.jsx','VehicleFitmentStrip.jsx','useFitmentMotion.js']){const s=await read('frontend/src/shop/catalog/fitment/'+path);assert.doesNotMatch(s,/@react-three|WebGLRenderer|localStorage|setBag\(/);}});
+test('motion cleanup cancels frames and observers',async()=>{const s=await read('frontend/src/shop/catalog/fitment/useFitmentMotion.js');for(const x of ['cancelAnimationFrame','animation.cancel()','io?.disconnect()','observer?.disconnect()','visibilitychange','prefers-reduced-motion'])assert.ok(s.includes(x));});

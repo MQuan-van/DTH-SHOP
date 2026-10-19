@@ -1,0 +1,39 @@
+name: Cart revalidation quality
+on:
+  pull_request:
+    paths:
+      - 'DTH-3D-Commerce/backend/**'
+      - 'DTH-3D-Commerce/frontend/**'
+      - 'DTH-3D-Commerce/shared/**'
+      - 'DTH-3D-Commerce/tests/**'
+      - 'DTH-3D-Commerce/package*.json'
+      - '.github/workflows/cart-revalidation-quality.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cart-revalidation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: DTH-3D-Commerce
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: DTH-3D-Commerce/package-lock.json
+      - name: Locked dependencies
+        run: npm ci
+      - name: Imports, baseline and cart regression
+        run: |
+          npm run check
+          npm test
+          npm run test:experience
+          npm run test:cart-quote
+      - name: Production and Flow builds
+        run: |
+          npm run build
+          npm run build:flow

@@ -1,0 +1,57 @@
+name: Product Decision quality
+on:
+  pull_request:
+    paths:
+      - 'DTH-3D-Commerce/frontend/**'
+      - 'DTH-3D-Commerce/shared/**'
+      - 'DTH-3D-Commerce/tests/**'
+      - '.github/workflows/product-decision-quality.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  product-decision:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: DTH-3D-Commerce
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: DTH-3D-Commerce/package-lock.json
+      - name: Locked dependencies and shared regression
+        run: |
+          npm ci
+          npm run check
+          npm test
+          npm run test:experience
+          node --test tests/product-decision.test.mjs tests/shop-motion.test.mjs tests/shop-discovery.test.mjs tests/shop-fitment.test.mjs
+      - name: Build API configuration (no database writes)
+        run: npm run build
+      - name: Build compiled Flow
+        run: npm run build:flow
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare browser
+        run: |
+          pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Product, fitment and bag in compiled browser
+        env:
+          DTH_REQUIRE_WEBGL: '1'
+          DTH_APP_URL: http://127.0.0.1:4173
+        run: |
+          npm run preview --workspace frontend -- --host 127.0.0.1 --port 4173 > /tmp/dth-product-preview.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
+          python tests/browser/product_decision.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: product-decision-evidence
+          path: DTH-3D-Commerce/test-results/product-decision/**
+          retention-days: 7

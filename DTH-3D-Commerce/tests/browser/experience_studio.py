@@ -24,8 +24,15 @@ def public(page):return page.request.get(base+'/api/shop/experience/home').json(
 def settle(canvas):
  canvas.evaluate('node=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))')
  expect(canvas).to_have_attribute('data-moving','false')
-def login(page,email):
- page.goto(base+'/account');expect(page.get_by_role('heading',name='Welcome back.')).to_be_visible();page.get_by_label('Email',exact=True).fill(email);page.get_by_label('Password',exact=True).fill(password);page.get_by_role('button',name='Sign in',exact=True).click();expect(page.get_by_role('heading',name='Your account.')).to_be_visible()
+def login(page,email,role):
+ page.goto(base+'/login')
+ access=page.locator('[data-access181][data-mode="api"]');expect(access).to_be_visible()
+ access.get_by_label('Email',exact=True).fill(email);access.get_by_label('Password',exact=True).fill(password)
+ with page.expect_response(lambda response:response.url==base+'/api/shop/auth/login' and response.request.method=='POST') as result:
+  access.get_by_role('button',name='Sign in',exact=True).click()
+ response=result.value;assert response.ok;assert response.json()['user']['role']==role
+ page.wait_for_url(base+('/admin' if role=='admin' else '/story?intro=1'))
+ assert page.request.get(base+'/api/shop/auth/me').json()['user']['email']==email
 def select_chapter(page,n):
  index={0:0,.29:1,.61:2,1:3}[n]
  button=page.get_by_role('navigation',name='Product story chapters').get_by_role('button').nth(index)
@@ -41,7 +48,11 @@ with sync_playwright() as p:
   page.set_default_timeout(25000);page.on('pageerror',lambda e:errors.append(str(e)))
   page.on('dialog',lambda dialog:dialog.accept())
  try:
-  customer.goto(base+'/');expect(customer.locator('[data-scene]')).to_have_attribute('data-scene','ready');canvas=customer.locator('[data-stage] canvas');customer.wait_for_timeout(1800)
+  login(customer,customer_email,'customer')
+  expect(customer.locator('[data-story-editorial]')).to_be_visible()
+  customer.get_by_role('link',name='Skip story',exact=False).click()
+  expect(customer).to_have_url(base+'/');expect(customer.locator('[data-scene]')).to_have_attribute('data-scene','ready');canvas=customer.locator('[data-stage] canvas');customer.wait_for_timeout(1800)
+  ok('Actual customer API login visits first-visit Story before entering Home')
   assert public(customer)['data'] is None;shot(customer,'01-home-form');initial=camera(canvas)
   for amount,name in [(.29,'02-home-surface'),(.61,'03-home-assembly'),(1,'04-home-return')]:select_chapter(customer,amount);shot(customer,name)
   assert distance(initial,camera(canvas))>.01;ok('Chapter selection drives the rendered camera while page scroll stays independent')
@@ -65,8 +76,8 @@ with sync_playwright() as p:
    customer.locator('.dth-header .dth-navigation a[href="/shop"]').click();expect(customer.locator('[data-stage] canvas')).to_have_count(0)
    customer.locator('.dth-header .dth-navigation a[href="/"]').click();expect(customer.locator('[data-scene]')).to_have_attribute('data-scene','ready');assert customer.locator('[data-stage] canvas').count()==1;assert int(customer.locator('[data-stage] canvas').get_attribute('data-listeners'))<=4
   ok('SPA route re-entry does not duplicate the WebGL stage or director listeners')
-  login(customer,customer_email);customer.goto(base+'/admin/experience');expect(customer.get_by_role('heading',name='Administrator access required.')).to_be_visible();assert customer.request.get(base+'/api/shop/admin/experience/home').status==403;ok('Customer cannot open or fetch the experience editor')
-  login(admin,admin_email);admin.goto(base+'/admin/experience');expect(admin.get_by_role('heading',name='Experience',exact=True)).to_be_visible();expect(admin.locator('[data-preview-scene]')).to_have_attribute('data-preview-scene','ready');shot(admin,'07-admin-experience')
+  customer.goto(base+'/admin/experience');expect(customer.get_by_role('heading',name='Administrator access required.')).to_be_visible();assert customer.request.get(base+'/api/shop/admin/experience/home').status==403;ok('Customer cannot open or fetch the experience editor')
+  login(admin,admin_email,'admin');admin.goto(base+'/admin/experience');expect(admin.get_by_role('heading',name='Experience',exact=True)).to_be_visible();expect(admin.locator('[data-preview-scene]')).to_have_attribute('data-preview-scene','ready');shot(admin,'07-admin-experience')
   assert admin.evaluate('document.documentElement.scrollWidth<=innerWidth+1');ok('Admin Studio loads the shared real 3D renderer')
   admin.get_by_role('button',name='Inspect / drag',exact=True).click()
   admin.get_by_role('group',name='Preview named views',exact=True).get_by_role('button',name='Side',exact=True).click()
@@ -89,7 +100,20 @@ with sync_playwright() as p:
   admin.get_by_role('button',name='Scene',exact=True).click();admin.get_by_label('Hero product',exact=True).select_option('apex-wheels');expect(admin.locator('[data-preview-scene]')).to_have_attribute('data-preview-scene','ready');expect(admin.get_by_text('Unrigged asset: safe whole-model viewing; no Apex assembly is applied.',exact=False)).to_be_visible();shot(admin,'10-admin-unrigged-wheel');admin.get_by_role('button',name='Discard changes',exact=True).click();ok('Replacing Apex with a wheel disables unsupported assembly without crashing')
   customer.goto(base+'/');expect(customer.locator('[data-scene]')).to_have_attribute('data-scene','ready');customer.emulate_media(reduced_motion='reduce');customer.reload();expect(customer.locator('[data-cinematic]')).to_have_attribute('data-cinematic','false');shot(customer,'11-reduced-motion');ok('Reduced motion remains a usable non-pinned Home')
   customer.emulate_media(reduced_motion='no-preference');customer.set_viewport_size({'width':390,'height':850});customer.reload();expect(customer.locator('[data-scene]')).to_have_attribute('data-scene','ready');assert customer.evaluate('document.documentElement.scrollWidth<=innerWidth+1');shot(customer,'12-compact-home');ok('Compact Home remains navigable without a forced desktop scroll story')
-  customer.set_viewport_size({'width':1440,'height':1000});customer.route('**/models/**/*.glb*',lambda route:route.abort());customer.goto(base+'/');expect(customer.locator('[data-scene]')).to_have_attribute('data-scene','fallback');expect(customer.get_by_role('link',name='View product',exact=False)).to_be_visible();shot(customer,'13-image-fallback');customer.unroute('**/models/**/*.glb*');customer.get_by_role('button',name='Retry 3D',exact=True).click();expect(customer.locator('[data-scene]')).to_have_attribute('data-scene','ready');ok('Failed versioned GLB preserves commerce links and Retry restores 3D')
+  customer.set_viewport_size({'width':1440,'height':1000});aborted=[]
+  def abort_model(route):
+   aborted.append(route.request.url);route.abort()
+  customer.route('**/models/**/*.glb*',abort_model);customer.goto(base+'/')
+  expect(customer.locator('[data-scene]')).to_have_attribute('data-scene','fallback',timeout=35000)
+  assert aborted and all('.glb?v=' in url for url in aborted),aborted
+  expect(customer.get_by_role('link',name='View product',exact=False)).to_be_visible();shot(customer,'13-image-fallback')
+  customer.unroute('**/models/**/*.glb*',abort_model)
+  with customer.expect_response(lambda response:response.url in aborted and response.request.method=='GET') as recovered:
+   customer.get_by_role('button',name='Retry 3D',exact=True).click()
+  assert recovered.value.ok and recovered.value.body()[:4]==b'glTF'
+  expect(customer.locator('[data-scene]')).to_have_attribute('data-scene','ready')
+  expect(customer.locator('[data-stage] canvas')).to_have_count(1);assert all(math.isfinite(n) for n in camera(customer.locator('[data-stage] canvas')))
+  ok('Actually aborted versioned GLB preserves commerce links and Retry fetches the real GLB and restores WebGL')
   assert not errors,errors;ok('No uncaught page exceptions in the complete experience workflow')
  except Exception:
   for name,page in [('admin',admin),('customer',customer)]:

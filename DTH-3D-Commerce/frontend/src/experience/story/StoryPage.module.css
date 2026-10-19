@@ -212,3 +212,13 @@
 @media (prefers-reduced-motion: reduce) {
   .page *, .page *::before, .page *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* DTH CINEMATIC CORE 17.3A — editorial Story shell. */
+:global([data-story-editorial]) .page{--story-paper:#f7f8f7;--story-accent:#2161cf;background:var(--story-paper)}
+:global([data-story-editorial]) .masthead,:global([data-story-editorial]) .backdrop,:global([data-story-editorial]) .corners,:global([data-story-editorial]) .identity>.kicker{display:none}
+:global([data-story-editorial]) .inner{width:min(1480px,92%);padding-top:34px}
+:global([data-story-editorial]) .title{font-family:Inter,'Segoe UI',Arial,sans-serif;font-size:clamp(35px,4vw,62px);font-weight:600;letter-spacing:-.055em;text-transform:none;line-height:1.02}
+:global([data-story-editorial]) .title>span{white-space:normal}:global([data-story-editorial]) .fullStop{color:#2161cf}
+:global([data-story-editorial]) .intro{font-size:14px}:global([data-story-editorial]) .panel{padding:0}
+:global([data-story-editorial]) .primary{background:#2161cf;color:#fff;clip-path:none;text-transform:none}:global([data-story-editorial]) .primary:hover{background:#154baf;color:#fff}
+@media(max-width:599px){:global([data-story-editorial]) .inner{width:calc(100% - 36px)}:global([data-story-editorial]) .title{font-size:38px}}

@@ -1,0 +1,56 @@
+name: Full Cart quality
+on:
+  pull_request:
+    paths:
+      - 'DTH-3D-Commerce/frontend/**'
+      - 'DTH-3D-Commerce/shared/**'
+      - 'DTH-3D-Commerce/tests/**'
+      - '.github/workflows/full-cart-quality.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-cart:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: DTH-3D-Commerce
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: DTH-3D-Commerce/package-lock.json
+      - name: Locked dependencies and regression
+        run: |
+          npm ci
+          npm run check
+          npm test
+          npm run test:experience
+          node --test tests/cart-drawer.test.mjs tests/full-cart.test.mjs
+      - name: Build application and Flow
+        run: |
+          npm run build
+          npm run build:flow
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare Chromium
+        run: |
+          pip install playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Compiled Flow bag, review and order
+        run: |
+          npm run preview --workspace frontend -- --host 127.0.0.1 --port 4173 > /tmp/dth-full-cart-preview.log 2>&1 &
+          trap 'kill $! 2>/dev/null || true' EXIT
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
+          curl -fsS http://127.0.0.1:4173/ >/dev/null
+          python tests/browser/full_cart.py --url http://127.0.0.1:4173
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: full-cart-evidence
+          path: DTH-3D-Commerce/test-results/full-cart/**
+          retention-days: 7

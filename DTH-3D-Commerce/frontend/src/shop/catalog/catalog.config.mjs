@@ -1,7 +1,7 @@
 /** Shop-only presentation. Does not change Home, GLB materials or dependencies. */
 export const SHOP_CONFIG = {
-  title: 'Find your next upgrade.',
-  description: 'Get closer to the details. Find the right match for your ride.',
+  title: 'Choose your upgrade.',
+  // description: 'Get closer to the details. Find the right match for your ride.',
   pageSize: 9,
   priceStep: 50000,
   motion: {

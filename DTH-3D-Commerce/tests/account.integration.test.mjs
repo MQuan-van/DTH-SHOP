@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { makeApp } from '../backend/commerce/app.mjs';
+import { buildNVXDemoCatalog } from '../shared/nvx.mjs';
 import { Product, Vehicle, User, Session, Order } from '../backend/commerce/models.mjs';
 
 const uri = process.env.TEST_MONGO_URI;
@@ -28,7 +29,7 @@ test('Account API against real MongoDB', async t => {
   await mongoose.connection.dropDatabase();
   try {
     await Promise.all([Product, Vehicle, User, Session, Order].map(m => m.init()));
-    const catalog = JSON.parse(await readFile(new URL('../shared/catalog.json', import.meta.url), 'utf8'));
+    const catalog = buildNVXDemoCatalog(JSON.parse(await readFile(new URL('../shared/catalog.json', import.meta.url), 'utf8')));
     await Product.insertMany(catalog.products); await Vehicle.insertMany(catalog.vehicles);
     const p = catalog.products[0], vehicleId = p.vehicleIds[0];
     await start();
@@ -44,7 +45,7 @@ test('Account API against real MongoDB', async t => {
     });
     await t.test('Unauthenticated account routes reject access', async () => { assert.equal((await request('/account/orders')).status, 401); assert.equal((await request('/account/vehicle', 'PUT', { vehicleId })).status, 401); });
     await t.test('Saved vehicle rejects missing CSRF and wrong Origin', async () => { assert.equal((await request('/account/vehicle', 'PUT', { vehicleId }, { cookie: a.cookie })).status, 403); assert.equal((await request('/account/vehicle', 'PUT', { vehicleId }, a, { Origin: 'https://evil.example' })).status, 403); });
-    await t.test('Saved vehicle rejects query injection and unknown IDs', async () => { assert.equal((await request('/account/vehicle', 'PUT', { vehicleId: { $ne: '' } }, a)).status, 400); assert.equal((await request('/account/vehicle', 'PUT', { vehicleId: 'unknown-vehicle' }, a)).status, 409); });
+    await t.test('Saved vehicle rejects query injection and non-NVX IDs', async () => { assert.equal((await request('/account/vehicle', 'PUT', { vehicleId: { $ne: '' } }, a)).status, 400); assert.equal((await request('/account/vehicle', 'PUT', { vehicleId: 'unknown-vehicle' }, a)).status, 400); });
     await t.test('Save writes the account document, never client-supplied roles', async () => { const r = await request('/account/vehicle', 'PUT', { vehicleId, role: 'admin', userId: 'another-user' }, a); assert.equal(r.status, 200); assert.equal(r.data.user.savedVehicleId, vehicleId); assert.equal(r.data.user.role, 'customer'); assert.equal((await User.findById(a.id).lean()).savedVehicleId, vehicleId); });
     await t.test('Save persists in current session', async () => assert.equal((await request('/auth/me', 'GET', undefined, a)).data.user.savedVehicleId, vehicleId));
     await t.test('Second account cannot see or change the first preference', async () => { const r = await request('/auth/register', 'POST', { email: 'account-b@example.test', password }); b = { cookie: r.cookie, csrf: r.data.csrf, id: r.data.user.id }; assert.equal(r.status, 201); assert.equal(r.data.user.savedVehicleId, ''); await request('/account/vehicle', 'PUT', { vehicleId: '', userId: a.id }, b); assert.equal((await User.findById(a.id).lean()).savedVehicleId, vehicleId); });

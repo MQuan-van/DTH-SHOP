@@ -2,11 +2,18 @@
 A chapter state assertion alone cannot establish that the stage stays onscreen.
 """
 import json, os
+from urllib.parse import urlsplit
 from pathlib import Path
 from playwright.sync_api import sync_playwright, expect
+from flow_auth import login_flow
 out=Path('test-results/cinematic');out.mkdir(parents=True,exist_ok=True)
 base=os.environ.get('DTH_CINEMATIC_URL','http://127.0.0.1:4173')
 checks,errors=[],[]
+model_requests={'aborted':[],'failed':[],'retry':None}
+# Home legitimately allows 20 seconds for graphics startup. Give its watchdog
+# time to publish fallback without changing the production readiness policy.
+SCENE_TIMEOUT_MS=30000
+MODEL_ROUTE='**/models/dth-demo/apex-suspension.glb*'
 def ok(name):checks.append(name);print('PASS:',name,flush=True)
 def shot(page,name):page.screenshot(path=str(out/(name+'.png')))
 def assert_stage(page):
@@ -30,13 +37,15 @@ with sync_playwright() as p:
  context=browser.new_context(viewport={'width':1440,'height':1000},device_scale_factor=1)
  page=context.new_page();page.set_default_timeout(25000);page.on('pageerror',lambda error:errors.append(str(error)))
  try:
+  login_flow(page,base,'/story')  # Real Story mount records the per-user visit.
+  expect(page.locator('[data-story-editorial]')).to_be_visible()
   page.goto(base+'/');expect(page.locator('[data-scene]')).to_have_attribute('data-scene','ready')
   expect(page.locator('[data-cinematic]')).to_have_attribute('data-cinematic','false')
   page.wait_for_timeout(1500);assert_stage(page);shot(page,'01-home');ok('Real GLB loads in a taller, single normal-flow showroom')
   for name,amount,chapter in [('02-surface',.29,'surface'),('03-assembly',.61,'assembly'),('04-reassembled',1,'build')]:
    select_chapter(page,amount);expect(page.locator('[data-chapter]')).to_have_attribute('data-chapter',chapter);shot(page,name)
   ok('Chapter buttons change the scene without scrolling the document')
-  page.get_by_role('button',name='Find my fit',exact=False).click();expect(page.get_by_role('dialog',name='Find your fit.')).to_be_visible();page.get_by_role('button',name='Close dialog',exact=True).click();ok('Home uses the existing vehicle selector instead of a disconnected form')
+  page.get_by_role('button',name='Find my fit',exact=False).click();expect(page.get_by_role('dialog',name='Choose your Yamaha NVX')).to_be_visible();page.get_by_role('button',name='Close dialog',exact=True).click();ok('Home uses the existing vehicle selector instead of a disconnected form')
   select_chapter(page,0);expect(page.locator('[data-chapter]')).to_have_attribute('data-chapter','form');ok('Chapter transitions are reversible')
   page.get_by_role('button',name='Inspect in 3D',exact=False).click();expect(page.locator('[data-inspect]')).to_have_attribute('data-inspect','true')
   slider=page.get_by_role('slider',name='Assembly separation');slider.focus();slider.press('End');expect(slider).to_have_value('1');page.wait_for_timeout(1800);shot(page,'05-inspect-exploded')
@@ -53,10 +62,26 @@ with sync_playwright() as p:
   for width in [390,768]:
    page.set_viewport_size({'width':width,'height':850});page.reload();expect(page.locator('[data-scene]')).to_have_attribute('data-scene','ready');expect(page.locator('[data-cinematic]')).to_have_attribute('data-cinematic','false');page.wait_for_timeout(800);assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1');shot(page,'09-compact-'+str(width))
   ok('Compact 390/768 views use manual chapters without horizontal overflow')
-  page.set_viewport_size({'width':1440,'height':1000});page.route('**/models/dth-demo/apex-suspension.glb',lambda route:route.abort());page.goto(base+'/');expect(page.locator('[data-scene]')).to_have_attribute('data-scene','fallback');expect(page.get_by_role('link',name='View product',exact=False)).to_be_visible();shot(page,'10-model-fallback')
-  page.unroute('**/models/dth-demo/apex-suspension.glb');page.get_by_role('button',name='Retry 3D').click();expect(page.locator('[data-scene]')).to_have_attribute('data-scene','ready');ok('Failed GLB keeps product links available and Retry restores 3D')
+  aborted,failed=model_requests['aborted'],model_requests['failed']
+  def abort_model(route):
+   assert urlsplit(route.request.url).path=='/models/dth-demo/apex-suspension.glb',route.request.url
+   aborted.append(route.request.url);route.abort('failed')
+  page.on('requestfailed',lambda request:failed.append({'url':request.url,'failure':request.failure}) if urlsplit(request.url).path=='/models/dth-demo/apex-suspension.glb' else None)
+  page.set_viewport_size({'width':1440,'height':1000});page.route(MODEL_ROUTE,abort_model);page.goto(base+'/')
+  expect(page.locator('[data-scene]')).to_have_attribute('data-scene','fallback',timeout=SCENE_TIMEOUT_MS)
+  assert aborted,'The Home GLB was not intercepted'
+  assert any(request['url'] in aborted and request['failure'] for request in failed),failed
+  expect(page.get_by_role('link',name='View product',exact=False)).to_be_visible();shot(page,'10-model-fallback')
+  page.unroute(MODEL_ROUTE,abort_model)
+  with page.expect_response(lambda response:urlsplit(response.url).path=='/models/dth-demo/apex-suspension.glb' and response.ok,timeout=SCENE_TIMEOUT_MS) as retry_response:
+   page.get_by_role('button',name='Retry 3D',exact=True).click()
+  model_requests['retry']={'url':retry_response.value.url,'status':retry_response.value.status}
+  expect(page.locator('[data-scene]')).to_have_attribute('data-scene','ready',timeout=SCENE_TIMEOUT_MS)
+  assert_stage(page)
+  assert page.locator('[data-stage] canvas').evaluate("canvas=>{const gl=canvas.getContext('webgl2');return !!gl&&!gl.isContextLost()&&gl.drawingBufferWidth>0&&gl.drawingBufferHeight>0;}")
+  ok('Actual aborted GLB reaches fallback; Retry fetches the GLB and restores real WebGL')
   assert not errors,errors;ok('No uncaught page exceptions')
  except Exception:
-  shot(page,'failure');(out/'failure.html').write_text(page.content());raise
+  shot(page,'failure');(out/'failure.html').write_text(page.content(),encoding='utf-8');raise
  finally:
-  (out/'results.json').write_text(json.dumps({'checks':checks,'pageErrors':errors},indent=2));browser.close()
+  (out/'results.json').write_text(json.dumps({'checks':checks,'pageErrors':errors,'modelRequests':model_requests},indent=2),encoding='utf-8');browser.close()

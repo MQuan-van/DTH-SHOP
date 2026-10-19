@@ -12,7 +12,33 @@ from flow_auth import login_flow
 BASE = os.environ.get('DTH_APP_URL', 'http://127.0.0.1:4173').rstrip('/')
 OUT = Path('test-results/product-recommendations')
 OUT.mkdir(parents=True, exist_ok=True)
-checks, errors = [], []
+checks, errors, navigation = [], [], []
+
+
+def route_snapshot(page, stage):
+    """Keep the native URL and BrowserRouter history state in CI evidence."""
+    snapshot = page.evaluate("""() => ({
+        url: location.href,
+        historyLength: history.length,
+        routerState: history.state,
+        title: document.title,
+        product: document.querySelector('[data-product-detail] h1')?.textContent,
+        mainInert: !!document.querySelector('#dth-content')?.inert
+    })""")
+    navigation.append({'stage': stage, **snapshot})
+    return snapshot
+
+
+def expect_product(page, slug, name):
+    # BrowserRouter updates the URL before TransitionRoutes finishes displaying
+    # the incoming route. Both must settle before another history operation.
+    expect(page).to_have_url(BASE + '/products/' + slug, timeout=20000)
+    detail = page.locator('[data-product-detail]')
+    expect(detail).to_have_count(1, timeout=20000)
+    expect(detail.locator('h1')).to_have_text(name, timeout=20000)
+    expect(detail.locator('[aria-current="page"]')).to_have_text(name, timeout=20000)
+    expect(page).to_have_title(name + ' — DTH Parts Studio', timeout=20000)
+    page.wait_for_function("!document.querySelector('#dth-content')?.inert", timeout=20000)
 
 with sync_playwright() as p:
     browser = p.chromium.launch(headless=True, args=['--no-sandbox'])
@@ -40,14 +66,26 @@ localStorage.setItem('dth.flow.vehicle.v1',JSON.stringify('yamaha-nvx-v1'));""")
         bag = page.evaluate("localStorage.getItem('dth.flow.bag.v1')")
         assert json.loads(bag)[0]['vehicleId'] == 'yamaha-nvx-v1'
         checks.append('existing add operation stores quantity and per-line vehicle')
+        expect_product(page, 'apex-suspension', 'Apex Coilover')
+        origin = route_snapshot(page, 'coilover-before-recommendation')
         rec.scroll_into_view_if_needed()
         rec.get_by_role('link', name='View Apex Alloy wheel product details').focus()
         page.keyboard.press('Enter')
-        expect(page).to_have_url(BASE + '/products/apex-wheels')
-        expect(page.locator('[data-product-detail] h1')).to_have_text('Apex Alloy wheel')
+        expect_product(page, 'apex-wheels', 'Apex Alloy wheel')
+        wheel = route_snapshot(page, 'wheel-after-keyboard-navigation')
+        assert wheel['routerState']['idx'] == origin['routerState']['idx'] + 1, navigation
+        assert wheel['routerState']['key'] != origin['routerState']['key'], navigation
+        assert wheel['routerState']['usr']['fromShop'] == '/shop', navigation
         assert page.evaluate("localStorage.getItem('dth.flow.bag.v1')") == bag
         page.go_back()
-        expect(page.locator('[data-product-detail] h1')).to_have_text('Apex Coilover')
+        expect_product(page, 'apex-suspension', 'Apex Coilover')
+        expect(rec).to_have_attribute('data-rec-mode', 'build', timeout=20000)
+        expect(rec.locator('[data-rec-id]')).to_have_count(4, timeout=20000)
+        assert rec.locator('[data-rec-id]').evaluate_all('(ns)=>ns.map(n=>n.dataset.recId)') == [
+            'apex-wheels', 'apex-exhausts', 'apex-mirrors', 'apex-brakes']
+        restored = route_snapshot(page, 'coilover-after-browser-back')
+        assert restored['routerState'] == origin['routerState'], navigation
+        assert page.evaluate("localStorage.getItem('dth.flow.bag.v1')") == bag
         checks.append('keyboard product navigation and actual browser Back preserve bag')
         rec.get_by_role('button', name='Change vehicle', exact=True).click()
         dialog = page.locator('dialog[open]')
@@ -92,10 +130,15 @@ localStorage.setItem('dth.flow.vehicle.v1',JSON.stringify('yamaha-nvx-v1'));""")
         expect(page).to_have_url(BASE + '/shop?fit=match&category=suspension')
         checks.append('matching-category destination has explicit, non-stale filters')
         assert not errors, errors
+    except Exception:
+        route_snapshot(page, 'failure')
+        page.screenshot(path=str(OUT / 'failure.png'), full_page=True)
+        (OUT / 'failure.html').write_text(page.content(), encoding='utf-8')
+        raise
     finally:
         (OUT / 'results.json').write_text(json.dumps({
             'scope':'Compiled Flow over HTTP. Image recommendation UX, actual StoreProvider and browser history; no live MongoDB or WebGL/physical-fit certification.',
-            'count':len(checks),'checks':checks,'errors':errors,
+            'count':len(checks),'checks':checks,'errors':errors,'navigation':navigation,
         }, indent=2), encoding='utf-8')
         browser.close()
 print('Recommendation browser checkpoints:', len(checks))

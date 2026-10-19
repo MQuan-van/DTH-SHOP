@@ -144,8 +144,8 @@ with sync_playwright() as playwright:
               all(query.get(key) == [value] for key, value in expected.items()))
         expect(products).to_have_count(2)
         assert set(products.evaluate_all('(nodes) => nodes.map(n => n.dataset.shopId)')) == {'apex-wheels', 'studio-wheels'}
-        check('V1 alternatives contain only Apex and Studio wheels')git diff --check
-git diff --stat
+        check('V1 alternatives contain only Apex and Studio wheels')
+
         assert bag() == before
         check('Showing alternatives never changes the bag')
 

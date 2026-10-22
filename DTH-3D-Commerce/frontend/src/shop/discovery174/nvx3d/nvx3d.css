@@ -1,0 +1,60 @@
+/* Scoped to Build. No global canvas, button, or commerce styles are rewritten. */
+.nvx3d-root { --nvx-ink:#1b303c; --nvx-muted:#657c8b; --nvx-line:#dbe5ea; --nvx-accent:#398caf; margin:0 0 32px; color:var(--nvx-ink); }
+.nvx3d-root *, .nvx3d-root *::before, .nvx3d-root *::after { box-sizing:border-box; }
+.nvx3d-root button { font:inherit; cursor:pointer; }
+.nvx3d-root button:disabled { cursor:default; opacity:.45; }
+.nvx3d-root button:focus-visible, .nvx3d-swipe:focus-visible { outline:3px solid var(--nvx-accent); outline-offset:4px; }
+.nvx3d-root .nvx3d-selector { margin-bottom:20px; }
+.nvx3d-root .nvx3d-selector button { position:relative; overflow:hidden; transition:background .22s,border-color .22s,box-shadow .22s; }
+.nvx3d-root .nvx3d-selector button[aria-pressed="true"] { background:#edf6fa; border-color:#79a8bd; box-shadow:inset 0 -3px 0 var(--nvx-accent); }
+.nvx3d-studio { overflow:hidden; border:1px solid var(--nvx-line); border-radius:22px; background:#f3f7f9; isolation:isolate; }
+.nvx3d-stage-header { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:27px 34px 10px; }
+.nvx3d-stage-header h2 { margin:6px 0 0; font-size:clamp(28px,3vw,42px); letter-spacing:-.045em; font-weight:650; line-height:1.1; }
+.nvx3d-eyebrow { font-size:10px; font-weight:650; letter-spacing:.19em; color:var(--nvx-muted); }
+.nvx3d-model-badge { flex-shrink:0; border:1px solid #cadce5; border-radius:30px; padding:8px 12px; color:#42788d; font-size:9px; letter-spacing:.16em; }
+.nvx3d-viewport { position:relative; height:clamp(340px,44vw,620px); overflow:hidden; background:radial-gradient(ellipse at 50% 42%,#fff 0%,#f2f7f9 55%,#edf3f6 100%); }
+.nvx3d-watermark { position:absolute; left:50%; top:45%; transform:translate(-50%,-50%); font-size:clamp(120px,22vw,330px); font-weight:800; line-height:1; letter-spacing:-.08em; color:#e7eff3; user-select:none; pointer-events:none; }
+.nvx3d-canvas-host { position:absolute; inset:0; z-index:1; }
+.nvx3d-canvas-host canvas { display:block; width:100%; height:100%; touch-action:none; cursor:grab; }
+.nvx3d-canvas-host canvas:active { cursor:grabbing; }
+.nvx3d-overlay { position:absolute; inset:0; z-index:3; display:grid; place-items:center; padding:26px; background:rgba(243,248,251,.4); pointer-events:none; }
+.nvx3d-overlay--empty { background:transparent; }
+.nvx3d-status-card { max-width:520px; text-align:center; overflow-wrap:anywhere; }
+.nvx3d-status-card h3 { margin:12px 0; font-size:clamp(23px,3vw,36px); line-height:1.15; letter-spacing:-.035em; }
+.nvx3d-status-card p { margin:12px 0; color:var(--nvx-muted); font-size:14px; line-height:1.7; }
+.nvx3d-status-card small { display:block; margin-top:10px; color:var(--nvx-muted); font-size:12px; line-height:1.7; }
+.nvx3d-status-card button { pointer-events:auto; min-height:44px; padding:10px 20px; border:1px solid var(--nvx-ink); border-radius:8px; color:#fff; background:var(--nvx-ink); }
+.nvx3d-coming { animation:nvx3d-placeholder-in .48s cubic-bezier(.2,.7,.2,1) both; }
+.nvx3d-spinner { display:block; width:28px; height:28px; margin:0 auto 15px; border:2px solid #cfdee5; border-top-color:#398caf; border-radius:50%; animation:nvx3d-spin 1s linear infinite; }
+.nvx3d-corner-label { position:absolute; left:34px; bottom:22px; z-index:2; font-size:9px; letter-spacing:.19em; color:#698797; pointer-events:none; }
+.nvx3d-help { margin:0; padding:12px 24px 16px; text-align:center; color:var(--nvx-muted); font-size:12px; line-height:1.7; }
+.nvx3d-toolbar { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding:0 30px 23px; }
+.nvx3d-button-group { display:flex; flex-wrap:wrap; gap:7px; }
+.nvx3d-button-group button { min-width:44px; min-height:44px; padding:8px 14px; border:1px solid #d3e0e7; border-radius:9px; background:#fff; color:var(--nvx-ink); font-size:12px; transition:border-color .2s,background .2s; }
+.nvx3d-button-group button:not(:disabled):hover { border-color:#81aec2; background:#edf7fb; }
+.nvx3d-version-navigation { display:grid; grid-template-columns:52px minmax(0,1fr) 52px; gap:12px; align-items:center; padding:15px 30px; border-top:1px solid var(--nvx-line); background:rgba(255,255,255,.65); }
+.nvx3d-arrow { width:48px; height:44px; border:1px solid #d3e0e7; border-radius:50%; background:#fff; color:var(--nvx-ink); font-size:20px !important; }
+.nvx3d-swipe { display:flex; align-items:center; justify-content:center; gap:18px; min-height:48px; padding:6px 12px; color:var(--nvx-muted); font-size:12px; border-radius:10px; touch-action:pan-y; user-select:none; cursor:ew-resize; }
+.nvx3d-swipe:hover { background:#edf4f7; }
+.nvx3d-preview-note { margin:0; padding:0 24px 18px; color:var(--nvx-muted); background:rgba(255,255,255,.65); font-size:12px; line-height:1.7; text-align:center; }
+.nvx3d-root[data-motion="off"] .nvx3d-coming, .nvx3d-root[data-motion="off"] .nvx3d-spinner { animation:none; }
+.nvx3d-root[data-motion="off"] button { transition:none; }
+@keyframes nvx3d-placeholder-in { from { opacity:0; transform:translateX(var(--nvx-entry,32px)); } to { opacity:1; transform:translateX(0); } }
+@keyframes nvx3d-spin { to { transform:rotate(360deg); } }
+@media(max-width:760px) {
+  .nvx3d-root .nvx3d-selector { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+  .nvx3d-root .nvx3d-selector button { min-width:0; padding:14px 10px; min-height:88px; display:flex; align-items:flex-start; flex-direction:column; gap:6px; }
+  .nvx3d-root .nvx3d-selector button strong { font-size:17px; }
+  .nvx3d-root .nvx3d-selector button small { font-size:10px; }
+  .nvx3d-root .nvx3d-selector button span { font-size:10px; }
+  .nvx3d-studio { border-radius:16px; }
+  .nvx3d-stage-header { padding:22px 18px 8px; }
+  .nvx3d-model-badge { padding:6px 8px; font-size:8px; }
+  .nvx3d-viewport { height:390px; }
+  .nvx3d-corner-label { left:18px; bottom:16px; }
+  .nvx3d-toolbar { justify-content:center; padding:0 14px 18px; }
+  .nvx3d-version-navigation { grid-template-columns:42px minmax(0,1fr) 42px; padding:10px 12px; gap:5px; }
+  .nvx3d-arrow { width:40px; }
+  .nvx3d-swipe { font-size:11px; gap:7px; padding:4px; text-align:center; }
+}
+@media(prefers-reduced-motion:reduce) { .nvx3d-root * { animation:none !important; transition:none !important; } }

@@ -22,6 +22,7 @@ import ShopPage from './discovery174/DiscoveryPage';
 import ProductImage from './catalog/components/ProductImage';
 import ProductDecisionPage from './product/ProductDecisionPage';
 const StoryPage = lazy(() => import('../experience/story/StoryPage'));
+const AIAssetStudio = lazy(() => import('../experience/admin/ai-assets/AIAssetStudio.jsx'));
 const Viewer3D = lazy(() => import('./Viewer3D'));
 const categoryNames = { suspension: 'Suspension', wheels: 'Wheels', exhausts: 'Exhausts', mirrors: 'Mirrors', brakes: 'Brakes' };
 function Dialog({ title, onClose, children }) {
@@ -1330,7 +1331,7 @@ function Admin() {
   useEffect(() => { if (PREVIEW || user?.role !== 'admin') return; let live = true; loadAdminProducts().then(p => live && setAdminProducts(p)).catch(e => live && setError(e.message)); return () => { live = false; }; }, [user]);
   if (PREVIEW || user?.role !== 'admin') return <section className="dth-container dth-section"><h1>Administrator access required.</h1><p>Use API mode and an explicitly seeded admin account. The API also checks the role on every write.</p><Link to="/account">Go to account</Link></section>;
   async function save(e) { e.preventDefault(); setBusy(true); setError(''); try { await saveProduct(JSON.parse(text)); setAdminProducts(await loadAdminProducts()); await refresh(); setNotice('Catalog record saved.'); } catch (e) { setError(e.message); } finally { setBusy(false); } }
-  return <section className="dth-container dth-section"><p className="dth-eyebrow">CATALOG ADMINISTRATION</p><h1>Manage the collection.</h1><p className="dth-muted">Minimal admin editor: create or update a product by ID. Uploading binary assets is not implemented; put GLB and preview files in the frontend public folders first. Use active:false to hide a product. Keep the ID to edit it again.</p><form className="dth-form" onSubmit={save}><label>Load a product (including inactive)<select defaultValue="" onChange={e => { const product = adminProducts.find(p => p.id === e.target.value); if (product) setText(JSON.stringify(product, null, 2)); }}><option value="" disabled>Choose a product to edit or use as a template</option>{adminProducts.map(p => <option key={p.id} value={p.id}>{p.name}{p.active ? '' : ' (inactive)'}</option>)}</select></label><label>Product record (JSON)<textarea className="dth-code-editor" value={text} onChange={e => setText(e.target.value)} spellCheck={false} required /></label><button className="dth-button dth-primary" disabled={busy}>{busy ? 'Saving…' : 'Save product record'}</button>{error && <p role="alert" className="dth-error">{error}</p>}</form></section>;
+  return <section className="dth-container dth-section"><p className="dth-eyebrow">CATALOG ADMINISTRATION</p><h1>Manage the collection.</h1><p><Link to="/admin/ai-assets" className="dth-button dth-ghost">Open AI Asset Studio ↗</Link></p><p className="dth-muted">Minimal admin editor: create or update a product by ID. Uploading binary assets is not implemented; put GLB and preview files in the frontend public folders first. Use active:false to hide a product. Keep the ID to edit it again.</p><form className="dth-form" onSubmit={save}><label>Load a product (including inactive)<select defaultValue="" onChange={e => { const product = adminProducts.find(p => p.id === e.target.value); if (product) setText(JSON.stringify(product, null, 2)); }}><option value="" disabled>Choose a product to edit or use as a template</option>{adminProducts.map(p => <option key={p.id} value={p.id}>{p.name}{p.active ? '' : ' (inactive)'}</option>)}</select></label><label>Product record (JSON)<textarea className="dth-code-editor" value={text} onChange={e => setText(e.target.value)} spellCheck={false} required /></label><button className="dth-button dth-primary" disabled={busy}>{busy ? 'Saving…' : 'Save product record'}</button>{error && <p role="alert" className="dth-error">{error}</p>}</form></section>;
 }
 function NotFound() { return <div className="dth-empty"><p className="dth-eyebrow">404 / OFF THE GRID</p><h1>This part of the studio is empty.</h1><Link className="dth-button dth-primary" to="/shop">Back to the collection</Link></div>; }
 export default function StoreApp() {
@@ -1357,6 +1358,7 @@ export default function StoreApp() {
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="account" element={<AccountPage />} />
           <Route path="admin" element={<Admin />} />
+          <Route path="admin/ai-assets" element={<Suspense fallback={<div className="dth-empty">Opening AI Asset Studio…</div>}><AIAssetStudio /></Suspense>} />
           <Route path="*" element={<NotFound />} />
         </Route>
     </TransitionRoutes>

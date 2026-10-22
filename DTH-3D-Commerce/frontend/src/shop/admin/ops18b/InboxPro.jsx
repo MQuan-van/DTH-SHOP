@@ -58,11 +58,35 @@ export default function InboxPro(){
       <button type="button" className={s.focusButton} aria-pressed={ui.focus} onClick={()=>ui.setFocus(!ui.focus)}><ProIcon name="focus" size={16}/>{ui.focus?'Exit focus':'Focus inbox'}</button>
     </Topbar>
     <Hero inbox ui={ui} status={support.status}/>
-    <section className={`${calm.inboxLead} ${kinetic.lead}`} data-pro-enter data-inbox-lead aria-label="Support workspace introduction">
+    {/* <section className={`${calm.inboxLead} ${kinetic.lead}`} data-pro-enter data-inbox-lead aria-label="Support workspace introduction">
       <div><span className={calm.leadEyebrow}>SUPPORT / WORKSPACE</span><h2>Every rider. Every detail.</h2><p>Find a conversation, review the context, and reply with confidence.</p></div>
       <div className={kinetic.signal} aria-hidden="true"><i/><i/><i/><i/><i/></div>
-    </section>
-    <div className={`${s.inboxSummary} ${calm.inboxSummary}`} data-inbox-summary aria-label="Queue metrics" data-pro-enter><div><span>Matching conversations<small>All results pages</small></span><Value value={result.data?.total} motion={ui.motion}/></div><div><span>Open<small>Current results page</small></span><Value value={result.data?numbers.open:null} motion={ui.motion}/></div><div><span>Unread conversations<small>Current results page</small></span><Value value={result.data?numbers.unread:null} motion={ui.motion}/></div></div>
+    </section> */}
+    <div className={`${s.inboxSummary} ${calm.inboxSummary}`} data-inbox-summary aria-label="Queue metrics" data-pro-enter><div>
+      {/* <span>Matching conversations
+        <small>
+          All results pages
+        </small>
+      </span> */}
+      {/* <Value value={result.data?.total} motion={ui.motion}/> */}
+    </div>
+    <div>
+      {/* <span>Open
+        <small>
+          Current results page
+        </small>
+       </span> */}
+      {/* <Value value={result.data?numbers.open:null} motion={ui.motion}/> */}
+    </div>
+    <div>
+      {/* <span>Unread conversations
+        <small>
+          Current results page
+        </small>
+      </span> */}
+      {/* <Value value={result.data?numbers.unread:null} motion={ui.motion}/> */}
+    </div>
+    </div>
     <div className={`${s.workspace} ${calm.workspace}`} data-inbox-workspace data-selected={!!id} data-pro-enter>
       <aside className={`${s.queue} ${calm.queue}`} aria-label="Conversation queue"><div className={`${s.queueTop} ${calm.queueTop}`}><div className={calm.queueHeading}><span>SUPPORT QUEUE</span><h2>Conversations</h2></div><span className={calm.queueCount} title="Matching conversations across all pages">{result.data?.total??'—'}</span></div>
         <form className={`${s.queueSearch} ${calm.queueSearch}`} onSubmit={e=>{e.preventDefault();change({q:draft.trim(),page:''},true);}}><label className={s.srOnly} htmlFor="pro-inbox-search">Find customer by email</label><input id="pro-inbox-search" type="search" value={draft} onChange={e=>setDraft(e.target.value)} maxLength={100} placeholder="Search customer email"/><button type="submit" aria-label="Search conversations"><ProIcon name="search" size={17}/></button></form>

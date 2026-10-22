@@ -1,3 +1,4 @@
+import NVXBuildStudio from './nvx3d/NVXBuildStudio.jsx';
 import { Link } from 'react-router-dom';
 import { formatMoney } from '../../../../shared/domain.mjs';
 import { CATEGORY_NAMES, CATEGORY_ORDER, VEHICLE_PHOTOS } from './discovery.config.mjs';
@@ -15,10 +16,13 @@ export default function BuildExperience({ store, query, matches, eligible, selec
   const estimate = validTotal ? draft.reduce((total, item) => total + item.price, 0) : null;
   return <section className="d174-build" ref={root} aria-label="NVX parts build">
     <header className="d174-build-title" data-discovery-enter><div><p className="d174-kicker">YOUR NVX / YOUR CHOICE</p><h1>Choose your next detail.</h1></div><Link className="d174-text-button" to="/account?view=vehicle">My Garage ↗</Link></header>
-    <div className="d174-vehicle-strip" role="group" aria-label="Build vehicle" data-discovery-enter>
-      {vehicles.map((item, index) => <button key={item.id} type="button" aria-pressed={store.vehicleId === item.id} onClick={() => onVehicle(item.id)}><small>0{index + 1}</small><strong>{item.model}</strong><span>{store.vehicleId === item.id ? 'Selected ✓' : 'Select →'}</span></button>)}
-      {!vehicles.length && <p role="status">No NVX is available. Check the catalog before building.</p>}
-    </div>
+    <NVXBuildStudio
+      vehicles={vehicles}
+      vehicleId={store.vehicleId}
+      onVehicle={onVehicle}
+      motion={motion}
+      policy={policy}
+    />
     {!vehicle ? <div className="d174-empty"><h2>Start with your NVX.</h2><p>Choose V1, V2 or V3 to see matching demo parts.</p></div> : <>
       <div className="d174-build-context" data-discovery-enter>
         <figure className={`d174-build-photo ${!photo ? 'd174-missing-photo' : ''}`}>{photo ? <Photo photo={photo} contain={vehicle.id === 'yamaha-nvx-v2'} sizes="(max-width:760px) 100vw, 320px" /> : <span>NVX <b>V3</b><small>Version photo not supplied yet</small></span>}</figure>

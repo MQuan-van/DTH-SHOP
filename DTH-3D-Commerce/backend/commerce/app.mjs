@@ -15,6 +15,7 @@ import { cookieToken, digest, hashPassword, randomToken, rateLimiter, verifyPass
 import { installSupport, isChatMessageRequest } from './support/routes.mjs';
 import { supportModels, purgeCustomerSupport } from './support/models.mjs';
 import { installAdmin } from './admin/routes.mjs';
+import { installAiAssets } from './ai-assets/aiAssets.routes.mjs';
 import { installExperience } from './experience/routes.mjs';
 import { installCart } from './cart/routes.mjs';
 const asyncRoute = handler => (req, res, next) => Promise.resolve(handler(req, res, next)).catch(next);
@@ -74,6 +75,7 @@ export async function makeApp() {
   const supportHub = installSupport(router, { authenticated, admin, sessionFor, origins });
   app.locals.supportHub = supportHub;
   installAdmin(router, { authenticated, admin, writeLimit });
+  app.locals.aiAssetService = installAiAssets(router, { authenticated, admin, writeLimit });
   installExperience(router, { authenticated, admin, writeLimit });
   installCart(router, { Product, Vehicle, vehicleQuery: nvxVehicleQuery });
   installGarage(router, { User, Vehicle, authenticated, writeLimit });

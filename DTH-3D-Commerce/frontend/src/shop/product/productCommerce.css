@@ -1,0 +1,9 @@
+/* Step 20.2: lightweight, scoped commerce status + SKU based color selector. */
+[data-product-detail] .dth-product-commerce { margin-top:18px; padding:16px 18px; border:1px solid #d1e3ed; border-radius:12px; background:#ffffffbd; }
+[data-product-detail] .dth-product-commerce strong { font-size:13px; }
+[data-product-detail] .dth-product-commerce p { margin-top:5px; color:#527083; font-size:12px; line-height:1.5; }
+[data-product-detail] .dth-color-heading { font-size:12px; font-weight:700; margin:14px 0 8px; }
+[data-product-detail] .dth-color-variants { display:flex; flex-wrap:wrap; align-items:center; gap:9px; margin-bottom:14px; }
+[data-product-detail] .dth-color-variants a { display:inline-flex; align-items:center; gap:7px; min-height:37px; padding:5px 9px; color:#294b60; border:1px solid #d2e0e7; border-radius:25px; font-size:12px; text-decoration:none; background:white; }
+[data-product-detail] .dth-color-variants a[aria-current="page"] { border:2px solid #1c73c5; font-weight:700; }
+[data-product-detail] .dth-color-variants i { display:block; width:17px; height:17px; border-radius:100%; box-shadow:0 0 0 1px #9998; }

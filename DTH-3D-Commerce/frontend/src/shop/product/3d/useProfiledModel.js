@@ -1,10 +1,34 @@
+// DTH21.2 product presentation integration
+import { applyPresentation21 } from '../../presentation21/presentationAdapter21.mjs';
 import { useEffect, useRef, useState } from 'react';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { LoadingManager } from 'three';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { bind3DProfile, modelPath } from '../../../../../shared/product3dProfile.mjs';
-import { fetchModelBytes, inspectGLB, sha256Bytes, versionedModelURL } from './modelValidation.mjs';
+// import { fetchModelBytes, inspectGLB, sha256Bytes, versionedModelURL } from './modelValidation.mjs';
+import {
+  fetchModelBytes,
+  inspectGLB,
+  sha256Bytes,
+  versionedModelURL,
+  ASSET_LIMITS
+} from './modelValidation.mjs';
 import { inspectProductGeometry, resolvePresentation } from './profileTransform.mjs';
+const HIGH_FIDELITY_LIMITS = Object.freeze({
+  ...ASSET_LIMITS,
+
+  bytes: 64 * 1024 * 1024,
+  decodedBytes: 256 * 1024 * 1024,
+
+  vertices: 2_000_000,
+  triangles: 1_500_000,
+});
+
+function limitsForModel(url) {
+  return url.startsWith('/models/ai-products/')
+    ? HIGH_FIDELITY_LIMITS
+    : ASSET_LIMITS;
+}
 
 const rawCache=new Map();
 export function clearProfiledModelCache(url){for(const key of rawCache.keys())if(modelPath(key)===modelPath(url))rawCache.delete(key);}
@@ -24,25 +48,49 @@ export function useProfiledModel(product,selection,onFailure) {
     const loader=new GLTFLoader(manager).setMeshoptDecoder(MeshoptDecoder);
     async function run(){let parsed=null;
       try{
-        const request=versionedModelURL(product.modelUrl,selection.candidate);
+        const request=versionedModelURL(
+          product.modelUrl,
+          selection.candidate
+        );
+        const limits = limitsForModel(request);
         let record=rawCache.get(request);
-        if(!record){const bytes=await fetchModelBytes(request,{signal:controller.signal});const preflight=inspectGLB(bytes);const sha256=await sha256Bytes(bytes).catch(()=>null);record={bytes,preflight,sha256};}
+        // if(!record){const bytes=await fetchModelBytes(request,{signal:controller.signal});const preflight=inspectGLB(bytes);const sha256=await sha256Bytes(bytes).catch(()=>null);record={bytes,preflight,sha256};}
+
+        if (!record) {
+          const bytes = await fetchModelBytes(request, {
+            signal: controller.signal,
+            maximum: limits.bytes,
+          });
+
+          const preflight = inspectGLB(bytes, limits);
+
+          const sha256 = await sha256Bytes(bytes)
+            .catch(() => null);
+
+          record = {
+            bytes,
+            preflight,
+            sha256,
+          };
+        }
+
         if(!live)return;
         // Default loader is not shared with Home or Story; their cache is untouched.
         parsed=await loader.parseAsync(record.bytes.buffer.slice(record.bytes.byteOffset,record.bytes.byteOffset+record.bytes.byteLength),'');
         if(!live){disposeProductAsset(parsed);return;}
-        const measured=inspectProductGeometry(parsed.scene);
+        // const measured=inspectProductGeometry(parsed.scene);
+        const measured = inspectProductGeometry(parsed.scene, limits);
         const bound=selection.candidate?bind3DProfile(selection.candidate,product,record.sha256):{status:selection.status,profile:null,reason:selection.reason};
-        const resolved=resolvePresentation(measured,bound);
+        const resolved = applyPresentation21(measured, resolvePresentation(measured, bound), product);
         const report={status:resolved.status,reason:resolved.reason,profileId:resolved.profile?.profileId??null,version:resolved.profile?.version??null,
           provenance:resolved.profile?.provenance??null,sha256:record.sha256,byteLength:record.preflight.byteLength,
           triangles:measured.triangles,vertices:measured.vertices,textures:measured.textures,textureDimensions:record.preflight.textureDimensions,
           warnings:record.preflight.warnings,sourceBounds:resolved.presentation.sourceBounds};
         rawCache.delete(request);rawCache.set(request,record);while(rawCache.size>2)rawCache.delete(rawCache.keys().next().value);
-        owned=parsed;setAsset({url:product.modelUrl,selection,scene:parsed.scene,presentation:resolved.presentation,profile:resolved.profile,report});
+        owned=parsed;setAsset({url:product.modelUrl,selection,measured,scene:parsed.scene,presentation:resolved.presentation,profile:resolved.profile,report});
       }catch(error){if(parsed&&parsed!==owned)disposeProductAsset(parsed);if(live&&error.name!=='AbortError')failure.current(error.message||'Unable to prepare the model.');}
     }
     void run();return()=>{live=false;controller.abort();disposeProductAsset(owned);};
-  },[product.id,product.modelUrl,selection]);
+  },[product.id,product.modelUrl,selection,product.presentation3d]);
   return asset?.url===product.modelUrl&&asset.selection===selection?asset:null;
 }

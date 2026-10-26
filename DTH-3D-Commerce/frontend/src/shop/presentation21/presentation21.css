@@ -1,0 +1,21 @@
+.dth-presentation-view21{position:relative;min-width:0;width:100%;height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 65%,#e2f0f7,transparent 70%),#f2f6f8;border-radius:14px;isolation:isolate}
+.dth-presentation-view21 canvas{display:block;width:100%;height:100%}
+.dth-presentation-view21.is-editor{height:clamp(340px,42vw,610px)}
+.dth-presentation-overlay21{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:28px;text-align:center;font-size:13px;color:#48677b;background:#f2f6f8ee;z-index:2}
+.dth-configured-card21{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.dth-configured-card21 .dth-presentation-view21{border-radius:0;pointer-events:none}
+.dth-card-message21{position:absolute;inset:0;display:grid;place-items:center;font-size:11px;color:#607b8d}
+.dth-editor21{color:#163349;min-width:0}.dth-editor21 h1{font-size:clamp(28px,3vw,42px);line-height:1.1;margin:10px 0;letter-spacing:-.04em}.dth-editor21 h2{font-size:16px;margin:0 0 16px}
+.dth-editor21 .editor21-head{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:24px}.dth-editor21 .editor21-kicker{font-size:10px;letter-spacing:.14em;color:#54788f}
+.dth-editor21 .editor21-layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr);gap:24px;align-items:start}
+.dth-editor21 .editor21-preview{position:sticky;top:20px;min-width:0}.dth-editor21 .editor21-block{border:1px solid #d6e4ee;border-radius:14px;padding:22px;margin-bottom:16px;background:#fff;min-width:0}
+.dth-editor21 .editor21-hint{font-size:12px;line-height:1.7;color:#5b778a;margin:10px 0;overflow-wrap:anywhere}.dth-editor21 .editor21-hint code{font-size:11px}
+.dth-editor21 .editor21-controls{display:flex;flex-wrap:wrap;gap:9px;margin-top:12px}.dth-editor21 button{font:inherit;cursor:pointer;border:1px solid #bfd4e2;border-radius:8px;padding:10px 14px;background:#fff;color:#215674;min-height:42px}.dth-editor21 button:disabled{opacity:.45;cursor:not-allowed}
+.dth-editor21 .editor21-primary{background:#0066cc;border-color:#0066cc;color:#fff}.dth-editor21 .editor21-fields{display:grid;gap:18px}
+.dth-editor21 .editor21-range{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:8px 14px;align-items:center;font-size:12px}.dth-editor21 .editor21-range>span{grid-column:1/-1;font-weight:600}.dth-editor21 .editor21-range input[type=range]{width:100%;min-height:32px;padding:0;border:0;accent-color:#0066cc}.dth-editor21 .editor21-range input[type=number]{width:84px;min-height:38px;border:1px solid #bfd4e2;border-radius:7px;padding:8px;font:inherit}
+.dth-editor21 .editor21-toggle{display:flex;align-items:center;gap:10px;font-size:13px}.dth-editor21 .editor21-toggle input{width:18px;height:18px;accent-color:#0066cc}
+.dth-editor21 .editor21-alert{border:1px solid #a8d4c1;background:#f0faf5;color:#175e43;padding:15px 18px;border-radius:10px;font-size:13px;margin:16px 0}.dth-editor21 .editor21-alert.error{border-color:#e7b7bd;background:#fff5f5;color:#8e2534}.dth-editor21 .editor21-alert.warning{background:#fff9ef;border-color:#e4d0a6;color:#795a20}
+.dth-editor21 .editor21-save{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:18px;border:1px solid #d6e4ee;border-radius:12px;background:#fff;position:sticky;bottom:12px;z-index:3}.dth-editor21 .editor21-save span{margin-right:auto;font-size:12px;color:#5b778a}.dth-editor21 .editor21-links{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;margin:14px 0}.dth-editor21 a{color:#0066cc;text-underline-offset:3px}
+.dth-editor21 :is(a,button,input):focus-visible{outline:2px solid #0066cc;outline-offset:3px}.editor21-launch{display:flex;justify-content:flex-end;margin:0 0 18px;font-size:13px}
+@media(max-width:1000px){.dth-editor21 .editor21-layout{grid-template-columns:1fr}.dth-editor21 .editor21-preview{position:static}.dth-editor21 .editor21-save{position:static}.dth-presentation-view21.is-editor{height:420px}}
+@media(prefers-reduced-motion:reduce){.dth-editor21 *{scroll-behavior:auto!important}}

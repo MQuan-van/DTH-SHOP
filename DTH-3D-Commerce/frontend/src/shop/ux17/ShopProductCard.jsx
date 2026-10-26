@@ -4,6 +4,8 @@ import { vehicleCaption } from '../catalog/fitment/fitment.logic.mjs';
 import { SHOP_CONFIG } from '../catalog/catalog.config.mjs';
 import ProductImage from '../catalog/components/ProductImage';
 import { compactFitLabel, displayPrice, shopReturnFromLocation } from './commerce17.logic.mjs';
+// DTH21.2: same saved orientation and framing as Product Detail.
+import ShopCardModel3D from '../presentation21/ConfiguredCard21.jsx';
 
 export default function ShopProductCard({ product, vehicleId, vehicles, onQuickView, eager, motion = false }) {
   const location = useLocation();
@@ -16,8 +18,13 @@ export default function ShopProductCard({ product, vehicleId, vehicles, onQuickV
   return <article className="ux17-card" data-motion={motion ? 'on' : 'off'} aria-label={product.name}>
     <div className="ux17-card-media">
       <Link to={href} state={{ fromShop }} className="ux17-image-link" aria-label={`View ${product.name} in 3D`}>
-        <ProductImage product={product} eager={eager} className="ux17-card-image" />
+        {/* <ProductImage product={product} eager={eager} className="ux17-card-image" /> */}
       </Link>
+      <ShopCardModel3D
+        key={`${product.id}:${product.modelUrl}`}
+        product={product}
+        motion={motion}
+      />
       <button type="button" className="ux17-quick" aria-label={`Quick view ${product.name}`}
         onClick={event => onQuickView(product.id, event.currentTarget)}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5M7.5 10.5h6m-3-3v6" /></svg>

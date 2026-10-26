@@ -1,0 +1,5 @@
+/* Newly added export and restore controls wrap on narrow admin screens. */
+.dth-ai-publish { flex-wrap: wrap; justify-content: flex-start; }
+.dth-ai-publish button { white-space: normal; }
+.dth-ai-publish button:nth-last-child(2) { background:#17558a; border-color:#17558a; color:white; }
+.dth-ai-publish button:nth-last-child(2):hover { background:#0d4577; }

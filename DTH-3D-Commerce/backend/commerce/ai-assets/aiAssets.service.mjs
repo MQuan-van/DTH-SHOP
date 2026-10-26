@@ -327,6 +327,15 @@ export class AIAssetService {
     }
     return { version, url: `/api/shop/ai-assets/models/${version}.glb?rev=${revision}`, revision, filename: path.basename(file) };
   }
+  async unpublish(version, confirmed) {
+    validateVersion(version);
+    if (confirmed !== true) throw serviceError('Confirm restoring the local NVX model.');
+    const previous = this.published[version];
+    if (!previous) return { version, restored: true };
+    delete this.published[version];
+    try { await this.save(); } catch (e) { this.published[version] = previous; throw e; }
+    return { version, restored: true };
+  }
   manifest() {
     const data = {};
     for (const version of ['v1', 'v2', 'v3']) {

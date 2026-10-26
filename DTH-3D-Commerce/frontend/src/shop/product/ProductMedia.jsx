@@ -1,8 +1,13 @@
+// DTH21.2 product presentation integration
+import { initialSpin21 } from '../../../../shared/productPresentation21.mjs';
+// DTH21.1 presentation settings; existing high-fidelity loader and timeout stay intact.
+// import { DEFAULT_STUDIO21 } from './premium21/studio21.mjs';
+// import ProductStudioTools21 from './premium21/ProductStudioTools21.jsx';
 // DTH Loader 17.2 — deferred graphics startup, existing readiness preserved.
 import { useStartupWebGL } from '../../experience/loader/StartupRenderContext.jsx';
 // DTH Shop Product UX17 — scoped presentation integration.
 import { Component, Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
-import ProductImage from '../catalog/components/ProductImage';
+// import ProductImage from '../catalog/components/ProductImage';
 import { hasWebGL } from '../../experience/interaction/useExperiencePolicy';
 import { PRODUCT_VIEW, validModelUrl } from './productDecision.logic.mjs';
 import { useProductActivity } from './useProductMotion';
@@ -13,6 +18,11 @@ import { useProduct3DProfile } from './3d/useProduct3DProfile';
 import AssetProfileDetails from './3d/AssetProfileDetails';
 import Disclosure from '../ux17/Disclosure';
 const Scene = lazy(() => import('./ProductDecisionScene'));
+const ORIGINAL_STUDIO21 = Object.freeze({
+  preset: 'original',
+  exposure: 1,
+  quality: 'balanced',
+});
 class Boundary extends Component {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
@@ -20,6 +30,8 @@ class Boundary extends Component {
   render() { return this.state.failed ? null : this.props.children; }
 }
 export default function ProductMedia({ product, motion, policy }) {
+  // const [studio21, setStudio21] = useState(() => ({ ...DEFAULT_STUDIO21 }));
+  const studio21 = ORIGINAL_STUDIO21;
   const ref = useRef(null), api = useRef(null), alive = useRef(true), markerRoot = useRef(null);
   const [mode, setMode] = useState('explore'), [selected, setSelected] = useState('');
   const [capabilities, setCapabilities] = useState({effects:false, hotspots:[], reason:''});
@@ -32,9 +44,10 @@ export default function ProductMedia({ product, motion, policy }) {
   const progressChanged=useCallback(value=>setProgress(value),[]);
   const { active, blocked } = useProductActivity(ref);
   const { capable, allow3D } = useStartupWebGL(hasWebGL);
-  const [request, setRequest] = useState(!policy.saveData);
+  // const [request, setRequest] = useState(!policy.saveData);
+  const [request, setRequest] = useState(true);
   const [image, setImage] = useState(false), [ready, setReady] = useState(false), [failed, setFailed] = useState(false);
-  const [inspect, setInspect] = useState(false), [spin, setSpin] = useState(!policy.compact && !policy.reduced && !policy.saveData);
+  const [inspect, setInspect] = useState(false), [spin, setSpin] = useState(() => initialSpin21(product, policy));
   const [attempt, setAttempt] = useState(0), [retrying, setRetrying] = useState(false), [view, setView] = useState('custom');
   const manual = useCallback(() => { setSpin(false); setView('custom'); setSelected(''); }, []);
   const loaded = useCallback(() => { setReady(true); }, []);
@@ -42,10 +55,16 @@ export default function ProductMedia({ product, motion, policy }) {
   const supported = capable !== false && validModelUrl(product.modelUrl);
   const show = allow3D && request && supported && !image && !failed;
   const live = show && ready;
+  useEffect(() => { setSpin(initialSpin21(product, policy)); }, [product.id, product.modelUrl, product.presentation3d?.revision, policy.reduced, policy.compact, policy.saveData]);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
   useEffect(() => {
     if (!show || ready) return;
-    const timer = setTimeout(failure, PRODUCT_VIEW.timeoutMs);
+    // const timer = setTimeout(failure, PRODUCT_VIEW.timeoutMs);
+    const timeoutMs = product.modelUrl.startsWith('/models/ai-products/')
+      ? 60000
+      : PRODUCT_VIEW.timeoutMs;
+
+    const timer = setTimeout(failure, timeoutMs);
     return () => clearTimeout(timer);
   }, [show, ready, attempt, failure]);
   useEffect(() => { if (!motion || policy.compact) setSpin(false); }, [motion, policy.compact]);
@@ -89,24 +108,58 @@ export default function ProductMedia({ product, motion, policy }) {
     if (!Object.hasOwn(keys, event.key)) return;
     event.preventDefault(); command(keys[event.key]);
   }
-  const message = failed ? (assetError || '3D could not load. Image preview is available.')
-    : !supported ? '3D unavailable. Image preview.' : image ? 'Image preview'
-    : !request ? 'Data saver: load 3D when you need it.'
-    : ready ? 'Interactive 3D ready' : 'Loading 3D model…';
+  // const message = failed ? (assetError || '3D could not load. Image preview is available.')
+  //   : !supported ? '3D unavailable. Image preview.' : image ? 'Image preview'
+  //   : !request ? 'Data saver: load 3D when you need it.'
+  //   : ready ? 'Interactive 3D ready' : 'Loading 3D model…';
+  const message = failed
+    ? (assetError || '3D model unavailable. Please retry.')
+    : !supported
+      ? '3D is unavailable on this device.'
+      : !allow3D
+        ? 'Initializing 3D…'
+        : ready
+          ? 'Interactive 3D ready'
+          : 'Loading interactive 3D…';
   return <section ref={ref} className={styles.media} aria-label={`${product.name}: product viewer`} data-product-media
     data-media-state={live ? 'ready' : failed || !supported ? 'fallback' : image || !request ? 'image' : 'loading'}
     data-motion={motion ? 'on' : 'off'} data-study-mode={mode} data-study-progress={progress.toFixed(3)}>
-    <header className={styles.mediaHeader} data-ux17-mediaheader>
+    {/* <header className={styles.mediaHeader} data-ux17-mediaheader>
       <div role="group" aria-label="Product media"><button type="button" disabled={!supported || (show && !failed)} aria-pressed={show} onClick={threeMode}>3D view</button>
         <button type="button" aria-pressed={image || !supported} onClick={imageMode}>Image</button></div>
+    </header> */}
+    <header
+      className={styles.mediaHeader}
+      data-ux17-mediaheader
+    >
+      <span>INTERACTIVE 3D / 360° VIEW</span>
     </header>
     {/* UX17: advanced modes are below the basic view controls. */}
     <div className={styles.stage} data-ux17-stage tabIndex={0} onKeyDown={keyboard} role="group" aria-label="Product view. Arrow keys rotate; plus and minus zoom; Home resets.">
       <div className={styles.stageGrid} data-ux17-decoration aria-hidden="true"/><div className={styles.stageRing} aria-hidden="true"/><div className={styles.stageShadow} aria-hidden="true"/>
-      <div className={styles.poster} aria-hidden={live} data-hidden={live}><ProductImage product={product} eager className={styles.posterImage}/></div>
+      {/* <div className={styles.poster} aria-hidden={live} data-hidden={live}><ProductImage product={product} eager className={styles.posterImage}/></div> */}
+
+      <div
+        className={styles.poster}
+        aria-hidden={live}
+        data-hidden={live}
+        style={{
+          display: 'grid',
+          placeItems: 'center',
+          textAlign: 'center',
+          padding: 24,
+        }}
+      >
+        <p role="status">
+          {failed
+            ? 'Unable to display this 3D model.'
+            : 'Preparing interactive 3D…'}
+        </p>
+      </div>
+
       {show && <div className={styles.canvas} data-ready={ready} data-inspect={inspect} aria-hidden="true">
         <Boundary key={attempt} onFailure={failure}><Suspense fallback={null}>
-          <Scene product={product} api={api} active={active} ready={ready} motion={motion} inspect={inspect}
+          <Scene studio21={studio21} product={product} api={api} active={active} ready={ready} motion={motion} inspect={inspect}
             spin={spin && mode==='explore'} eco={policy.compact || policy.saveData} onManual={manual} onReady={loaded} onFailure={failure}
             mode={mode} capabilities={capabilities} onCapabilities={learned} onProgress={progressChanged}
             effectCommand={effectCommand} lightAngle={lightAngle} markerRoot={markerRoot}
@@ -126,6 +179,15 @@ export default function ProductMedia({ product, motion, policy }) {
       {supported && (failed || !request) && <button type="button" disabled={retrying} onClick={failed ? retry : threeMode}>{retrying ? 'Preparing…' : failed ? 'Retry 3D' : 'Load 3D'}</button>}
     </div>
     {/* UX17: study tools are grouped in the disclosure below. */}
+    {/* <ProductStudioTools21
+      value={studio21}
+      onChange={setStudio21}
+      ready={live}
+      blocked={blocked}
+      eco={policy.compact || policy.saveData}
+      report={assetReport}
+    /> */}
+
     <div className={styles.controlRow} data-ux17-controls role="group" aria-label="3D view controls">
       {[['left','↶','Rotate left'],['right','↷','Rotate right'],['in','+','Zoom in'],['out','−','Zoom out'],['reset','Reset','Reset view']].map(([id,label,title]) =>
         <button type="button" key={id} aria-label={title} title={title} disabled={!live || blocked} onClick={() => command(id)}>{label}</button>)}

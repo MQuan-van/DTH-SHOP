@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useOutletContext } from 'react-router-dom';
 import { formatMoney } from '../../../../shared/domain.mjs';
+import { commerceAvailability } from '../../../../shared/productCommerce.mjs';
+import './productCommerce.css';
 import { useStore } from '../useStore';
 import FitmentStatus from '../catalog/fitment/FitmentStatus';
 import { vehicleCaption } from '../catalog/fitment/fitment.logic.mjs';
@@ -31,6 +33,9 @@ export default function ProductDecisionPage({ product }) {
   const specs = productSpecs(product.specs);
   const compatibleVehicles = store.data.vehicles.filter(v => Array.isArray(product.vehicleIds) && product.vehicleIds.includes(v.id));
   const description = typeof product.description === 'string' ? product.description : '';
+  const commerce = commerceAvailability(product);
+  const variants = product.variantGroup ? store.data.products.filter(item => item.active !== false && item.variantGroup === product.variantGroup)
+    .sort((a,b)=>(a.finish||'').localeCompare(b.finish||'')) : [];
   useProductEntrance(root, motion && active, product.id);
   useScrollReveals19(root, { enabled: motion && !policy.saveData, compact: policy.compact, contentKey: product.id });
   useEffect(() => {
@@ -76,7 +81,7 @@ export default function ProductDecisionPage({ product }) {
     } catch (e) { latch.current = false; setError(e.message || 'Unable to add this product.'); }
   }
   const buttonLabel = !state.available || !state.priceOK ? 'Unavailable' : !state.match.canAdd ? 'Choose matching vehicle'
-    : !state.remaining || state.full ? 'Demo limit reached' : receipt ? 'Added to bag' : 'Add to bag';
+    : !state.remaining || state.full ? commerce.kind === 'in_stock' ? 'Indicative stock limit reached' : 'Demo limit reached' : receipt ? 'Added to bag' : commerce.kind === 'preorder' ? 'Place pre-order (demo)' : 'Add to bag';
   return <section ref={root} className={styles.page} data-product-detail data-scroll19-product data-product-ux="17" data-motion={motion ? 'on' : 'off'}>
     <div className={styles.container} data-ux17-container>
       <nav className={styles.breadcrumb} aria-label="Breadcrumb">
@@ -97,6 +102,8 @@ export default function ProductDecisionPage({ product }) {
             <p className={styles.price} data-ux17-price>{state.priceOK ? formatMoney(product.price) : 'Price unavailable'}<small>Demo price</small></p>
             <div className={styles.finish}><i style={{ backgroundColor: validAccent(product.accent) }} aria-hidden="true"/>
               <div><strong>{product.finish || 'Not specified'}</strong></div></div>
+            {variants.length > 1 && <nav aria-label="Choose product colour"><p className="dth-color-heading">Choose colour / variant</p><div className="dth-color-variants">{variants.map(item => <Link key={item.id} to={`/products/${item.slug}`} state={{ fromShop: returnTo }} aria-current={item.id===product.id?'page':undefined}><i style={{backgroundColor:validAccent(item.accent)}} aria-hidden="true"/>{item.finish} · {formatMoney(item.price)}</Link>)}</div></nav>}
+            {product.availabilityStatus && product.availabilityStatus!=='demo' && <div className="dth-product-commerce" role="status"><strong>{commerce.label}</strong><p>{commerce.detail}</p></div>}
           </div>
           <div className={styles.fitmentPanel} data-product-enter>
             <FitmentStatus product={product} vehicleId={store.vehicleId} vehicles={store.data.vehicles} motion={motion && active}

@@ -1,4 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+// DTH-STORY214 — presentation only; existing store, API and cart retained.
+import { isStoryView214, setShopView214 } from '../story214/story214.logic.mjs';
 import { Link, useLocation, useOutletContext, useSearchParams } from 'react-router-dom';
 import { useStore } from '../useStore';
 import { useExperiencePolicy } from '../../experience/interaction/useExperiencePolicy';
@@ -9,12 +11,14 @@ import BuildExperience from './BuildExperience';
 import '../ux17/commerce17.css';
 import './discovery174.css';
 const CatalogPage = lazy(() => import('../catalog/ShopPage'));
+const StoryShopPage214 = lazy(() => import('../story214/ShopStoryPage214.jsx'));
 
 /** One route, one StoreProvider, one cart. Catalog implementation remains untouched. */
 export default function DiscoveryPage() {
   const store = useStore(), location = useLocation(), { chooseVehicle } = useOutletContext();
   const [params, setParams] = useSearchParams();
   const state = readDiscovery(params), policy = useExperiencePolicy();
+  const storyView214 = isStoryView214(params);
   const [paused, setPaused] = useState(false);
   const motion = !paused && !policy.reduced;
   const modeNav = useRef(null);
@@ -53,9 +57,12 @@ export default function DiscoveryPage() {
         {mode[0].toUpperCase() + mode.slice(1)}<span aria-hidden="true">{mode === 'explore' ? '01' : mode === 'shop' ? '02' : '03'}</span>
       </Link>)}</nav>
       {state.mode !== 'shop' ? <button className="d174-motion-toggle" type="button" aria-pressed={motion} disabled={policy.reduced} onClick={() => setPaused(value => !value)}>{policy.reduced ? 'Reduced motion' : motion ? 'Pause motion' : 'Play motion'}</button>
-        : <div className="d174-layouts" role="group" aria-label="Catalog layout">{LAYOUTS.map(layout => <button key={layout} type="button" aria-pressed={state.layout === layout} onClick={() => setParams(previous => changeLayout(previous, layout), { replace: true })}>{layout[0].toUpperCase() + layout.slice(1)}</button>)}</div>}
+        : <div className="d174-layouts" role="group" aria-label="Shop view">
+            <button type="button" aria-pressed={storyView214} onClick={() => setParams(previous => setShopView214(previous, 'story'))}>Story</button>
+            <button type="button" aria-pressed={!storyView214} onClick={() => setParams(previous => setShopView214(previous, 'grid'))}>Grid</button>
+          </div>}
     </header>
-    {state.mode === 'shop' ? <Suspense fallback={<div className="d174-empty" role="status">Opening catalog…</div>}><CatalogPage /></Suspense>
+    {state.mode === 'shop' ? <Suspense fallback={<div className="d174-empty" role="status">Opening catalog…</div>}>{storyView214 ? <StoryShopPage214 /> : <CatalogPage />}</Suspense>
       : state.mode === 'explore' ? <ExploreExperience products={products} selected={selected} motion={motion} policy={policy} fromShop={fromShop}
         onSelect={onSelect} onMode={onMode} onCategory={onCategory} onBuild={onBuild} onChooseVehicle={chooseVehicle} />
       : <BuildExperience store={store} query={query} matches={matches} eligible={eligible} selected={selected} draft={draft} motion={motion} policy={policy} fromShop={fromShop}

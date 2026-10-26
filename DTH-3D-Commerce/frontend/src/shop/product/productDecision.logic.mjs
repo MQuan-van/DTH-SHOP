@@ -1,4 +1,5 @@
 import { quoteOrder } from '../../../../shared/domain.mjs';
+import { commerceAvailability } from '../../../../shared/productCommerce.mjs';
 import { explainFitment, matchingQuery } from '../catalog/fitment/fitment.logic.mjs';
 
 export const PRODUCT_VIEW = Object.freeze({
@@ -39,13 +40,15 @@ export function purchaseState(product, vehicleId, vehicles, bag) {
   const lines = items.filter(item => item?.productId === product?.id && item?.vehicleId === vehicleId);
   const damaged = lines.some(item => !Number.isSafeInteger(item.quantity) || item.quantity < 1 || item.quantity > 10);
   const inBag = damaged ? 10 : lines.reduce((n, item) => n + item.quantity, 0);
-  const remaining = Math.max(0, 10 - inBag);
+  const commerce = commerceAvailability(product);
+  const allInBag = items.filter(item => item?.productId === product?.id).reduce((sum,item)=>sum+(Number.isSafeInteger(item?.quantity)?item.quantity:0),0);
+  const remaining = Math.max(0, Math.min(10 - inBag, commerce.kind==='in_stock' ? commerce.max-allInBag : 10));
   const full = lines.length === 0 && items.length >= 20;
-  const available = !!product && product.active !== false;
+  const available = !!product && product.active !== false && commerce.orderable;
   const priceOK = validPrice(product?.price);
   const canAdd = available && match.canAdd && priceOK && remaining > 0 && !full && !damaged;
   let reason = '';
-  if (!available) reason = 'This product is no longer available.';
+  if (!available) reason = commerce.kind === 'demo' ? 'This product is no longer available.' : commerce.detail;
   else if (!priceOK) reason = 'Price unavailable. Please check the catalog again.';
   else if (!match.canAdd) reason = match.detail;
   else if (damaged) reason = 'Review this item in your bag before continuing.';

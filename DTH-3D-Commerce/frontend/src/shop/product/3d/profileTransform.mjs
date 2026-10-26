@@ -4,7 +4,8 @@ import { frameDistance, sphereNormalization } from '../inspection.logic.mjs';
 import { ASSET_LIMITS, AssetValidationError } from './modelValidation.mjs';
 
 /** Runtime geometry checks complement preflight; they do not certify real-world measurements. */
-export function inspectProductGeometry(root) {
+//
+export function inspectProductGeometry(root, limits = ASSET_LIMITS) {
   let meshes=0,vertices=0,triangles=0;const textures=new Set();
   root.updateMatrixWorld(true);
   root.traverse(node=>{
@@ -12,8 +13,17 @@ export function inspectProductGeometry(root) {
     const g=node.geometry,p=g?.attributes?.position;
     if(!p || p.itemSize!==3 || node.isSkinnedMesh || node.isInstancedMesh || Object.keys(g.morphAttributes||{}).length)throw new AssetValidationError('geometry','Use a static product model with ordinary triangle meshes.');
     meshes++;vertices+=p.count;triangles+=(g.index?.count??p.count)/3;
-    if(meshes>ASSET_LIMITS.meshes||vertices>ASSET_LIMITS.vertices||triangles>ASSET_LIMITS.triangles)throw new AssetValidationError('complexity','Decoded geometry exceeds the product-viewer budget.');
-    for(let i=0;i<p.count;i++)if(![p.getX(i),p.getY(i),p.getZ(i)].every(n=>Number.isFinite(n)&&Math.abs(n)<=1e9))throw new AssetValidationError('geometry','Model contains invalid vertex coordinates.');
+      if (
+        meshes > limits.meshes ||
+        vertices > limits.vertices ||
+        triangles > limits.triangles
+      )
+      throw new AssetValidationError(
+        'complexity',
+        'Decoded geometry exceeds the product-viewer budget.'
+      );
+    for(let i=0;i<p.count;i++)
+      if(![p.getX(i),p.getY(i),p.getZ(i)].every(n=>Number.isFinite(n)&&Math.abs(n)<=1e9))throw new AssetValidationError('geometry','Model contains invalid vertex coordinates.');
     if(g.index)for(let i=0;i<g.index.count;i++){const n=g.index.getX(i);if(!Number.isSafeInteger(n)||n<0||n>=p.count)throw new AssetValidationError('geometry','Model contains an invalid triangle index.');}
     if(!node.matrixWorld.elements.every(Number.isFinite)||Math.abs(node.matrixWorld.determinant())<1e-30)throw new AssetValidationError('transform','Model has a singular or invalid authored transform.');
     const mats=Array.isArray(node.material)?node.material:[node.material];
@@ -22,8 +32,13 @@ export function inspectProductGeometry(root) {
   });
   if(!meshes||!vertices||!Number.isInteger(triangles))throw new AssetValidationError('geometry','No usable triangle meshes.');
   let pixels=0;for(const texture of textures){const image=texture.image;if(!image)continue;const w=image.width,h=image.height;
-    if(!Number.isFinite(w)||!Number.isFinite(h)||w<=0||h<=0||w>ASSET_LIMITS.textureEdge||h>ASSET_LIMITS.textureEdge)throw new AssetValidationError('texture-size','Texture dimensions exceed the product budget.');pixels+=w*h;}
-  if(pixels>ASSET_LIMITS.texturePixels)throw new AssetValidationError('texture-memory','Decoded textures exceed the pixel budget.');
+    if(!Number.isFinite(w)||!Number.isFinite(h)||w<=0||h<=0||
+    // w>ASSET_LIMITS.textureEdge||h>ASSET_LIMITS.textureEdge)
+    w>limits.textureEdge||h>limits.textureEdge)
+    throw new AssetValidationError('texture-size','Texture dimensions exceed the product budget.');pixels+=w*h;}
+  // if(pixels>ASSET_LIMITS.texturePixels)
+  if(pixels>limits.texturePixels)
+    throw new AssetValidationError('texture-memory','Decoded textures exceed the pixel budget.');
   const box=new THREE.Box3().setFromObject(root,true),sphere=box.getBoundingSphere(new THREE.Sphere());
   if(box.isEmpty()||!Number.isFinite(sphere.radius)||sphere.radius<1e-9||sphere.radius>1e9)throw new AssetValidationError('bounds','Model does not have usable finite bounds.');
   const normalization=sphereNormalization(sphere.center.toArray(),sphere.radius);

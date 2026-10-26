@@ -1,4 +1,5 @@
 import { fitment, InputError, normalizeItems } from './domain.mjs';
+import { commerceAvailability } from './productCommerce.mjs';
 
 const SOURCES = new Set(['api', 'flow', 'preview']);
 const keyFor = line => `${line.productId}:${line.vehicleId}`;
@@ -60,6 +61,8 @@ export function quoteCart(items, products, vehicles, {
   if (!SOURCES.has(source)) throw new InputError('Invalid cart quote source.');
   const productsById = new Map(products.map(product => [product.id, product]));
   const vehiclesById = new Map(vehicles.map(vehicle => [vehicle.id, vehicle]));
+  const totalBySku = new Map();
+  for (const item of clean) totalBySku.set(item.productId, (totalBySku.get(item.productId) || 0) + item.quantity);
   const lines = clean.map(item => {
     const product = productsById.get(item.productId);
     const vehicle = vehiclesById.get(item.vehicleId);
@@ -93,6 +96,10 @@ export function quoteCart(items, products, vehicles, {
         : line.status === 'unknown'
           ? 'Compatibility data is unavailable for this part. Choose a verified demo match.'
           : 'This part does not match the selected demo vehicle. Choose a matching vehicle or remove the part.';
+    }
+    if (line.status === 'compatible' && !commerceAvailability(product, totalBySku.get(item.productId)).orderable) {
+      line.status = 'unavailable';
+      line.issue = 'This colour or item is out of stock in the demo catalog. Review your bag.';
     }
     return line;
   });

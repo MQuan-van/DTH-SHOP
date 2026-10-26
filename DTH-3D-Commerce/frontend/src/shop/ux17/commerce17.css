@@ -122,3 +122,39 @@
  [data-shop-ux="17"] .ux17-card, [data-shop-ux="17"] .ux17-vehicle button, [data-shop-ux="17"] .ux17-categories button { border:1px solid ButtonText; }
  [data-shop-ux="17"] button[aria-pressed="true"] { outline:2px solid Highlight;outline-offset:-3px; }
 }
+/* DTH — Live 3D Shop Cards */
+
+[data-shop-ux="17"] .dth-shop-card-3d {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse at 50% 65%,
+      #e2f0f7 0%,
+      #f2f6f8 70%
+    );
+}
+
+[data-shop-ux="17"] .dth-shop-card-3d canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+[data-shop-ux="17"] .dth-shop-card-3d-status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #607b8d;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+}
+
+[data-shop-ux="17"] .ux17-image-link {
+  overflow: hidden;
+}

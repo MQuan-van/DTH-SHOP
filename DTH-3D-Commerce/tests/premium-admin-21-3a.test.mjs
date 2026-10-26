@@ -1,0 +1,26 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { PREMIUM213, sectionForPath, navHref, pointerPosition, tiltAt, initials, hasUnread } from '../frontend/src/shop/admin/premium213/premium213.logic.mjs';
+const modules=[['','Overview'],['products','Products'],['ai-assets','AI Assets'],['inbox','Inbox']];
+const source=name=>readFile(new URL('../frontend/src/shop/admin/premium213/'+name,import.meta.url),'utf8');
+
+test('root Admin and nested product editor keep their section',()=>{assert.equal(sectionForPath('/admin',modules),'Overview');assert.equal(sectionForPath('/admin/products/x1r-red/3d',modules),'Products');});
+test('query-only navigation does not change the section',()=>assert.equal(sectionForPath('/admin/ai-assets?job=abc#model',modules),'AI Assets'));
+test('unknown section is safe',()=>assert.equal(sectionForPath(null,modules),'Overview'));
+test('nav destinations stay local',()=>{assert.equal(navHref(''),'/admin');assert.equal(navHref('products'),'/admin/products');for(const bad of ['//evil','../x','https://x','inbox?q=x',null])assert.equal(navHref(bad),'/admin');});
+test('centered pointer has no tilt',()=>assert.deepEqual(pointerPosition(50,50,{left:0,top:0,width:100,height:100}),{x:0,y:0}));
+test('pointer coordinates are clamped',()=>assert.deepEqual(pointerPosition(-200,999,{left:0,top:0,width:100,height:100}),{x:-1,y:1}));
+test('invalid rectangles never produce NaN',()=>{for(const r of [null,{}, {left:0,top:0,width:0,height:100}])assert.deepEqual(pointerPosition(10,20,r),{x:0,y:0});});
+test('tilt remains below three degrees',()=>{const t=tiltAt({x:1,y:-1});assert.ok(Math.abs(t.rotateX)<3);assert.ok(Math.abs(t.rotateY)<3);assert.ok(Object.isFrozen(PREMIUM213));});
+test('operator label does not invent an identity',()=>{assert.equal(initials('test@example.test'),'T');assert.equal(initials(null),'A');});
+test('unread badge follows conversations without mutations',()=>{const a=[{unread:0},{unread:2}];assert.equal(hasUnread(a),true);assert.deepEqual(a,[{unread:0},{unread:2}]);assert.equal(hasUnread([]),false);assert.equal(hasUnread(undefined),false);});
+test('new UI never makes API requests or writes browser storage',async()=>{for(const f of ['PremiumOverview213.jsx','PremiumAdminShell213.jsx','usePremiumMotion213.js']){const c=await source(f);assert.doesNotMatch(c,/\bfetch\s*\(|\bstudioRequest\s*\(|localStorage|sessionStorage|dangerouslySetInnerHTML/);}});
+test('Overview keeps simulation labels and real resource callbacks',async()=>{const c=await source('PremiumOverview213.jsx');assert.match(c,/ResourceState resource=\{queue\}/);assert.match(c,/ResourceState resource=\{orders\}/);assert.match(c,/value=\{stats\?\.\[key\]\}/);assert.match(c,/Orders are simulated; no revenue is implied/);assert.doesNotMatch(c,/Keep the studio|Your studio|In control|revenue growth/i);});
+test('Overview has exactly one primary heading',async()=>{const c=await source('PremiumOverview213.jsx');assert.equal((c.match(/<h1[ >]/g)||[]).length,1);});
+test('modal navigation uses native focus isolation and Escape',async()=>{const c=await source('PremiumAdminShell213.jsx');assert.match(c,/\.showModal\(\)/);assert.match(c,/onCancel=/);assert.match(c,/onClose=/);assert.match(c,/\.close\(\)/);assert.match(c,/document\.body\.style\.overflow = overflow/);});
+test('shell retains the child tree, no URL keys or delayed route mounting',async()=>{const c=await source('PremiumAdminShell213.jsx');assert.match(c,/\{children\}/);assert.doesNotMatch(c,/key=\{pathname\}|<Routes|<StoreProvider|setTimeout|setInterval/);});
+test('motion cleans up and respects reduced-motion and pointer type',async()=>{const c=await source('usePremiumMotion213.js');assert.match(c,/prefers-reduced-motion: no-preference/);assert.match(c,/pointer: fine/);assert.match(c,/removeEventListener/);assert.match(c,/context\.revert\(\)/);assert.match(c,/media\.revert\(\)/);assert.match(c,/document\.hidden/);});
+test('actions keep caller props and a stable hit area',async()=>{const c=await source('PremiumAction213.jsx');assert.match(c,/data-premium-magnet-inner/);assert.match(c,/type="button"/);assert.match(c,/\.\.\.props/);assert.doesNotMatch(c,/preventDefault|stopPropagation/);});
+test('no added WebGL renderer or GLB processing in the Admin foundation',async()=>{for(const f of ['PremiumOverview213.jsx','PremiumAdminShell213.jsx','usePremiumMotion213.js'])assert.doesNotMatch(await source(f),/WebGLRenderer|<Canvas|GLTFLoader|\.glb|decimate|Meshopt/);});
+test('CSS is scoped and closed dialogs cannot become visible',async()=>{const c=await source('premium213.css');assert.match(c,/\.p213-drawer:not\(\[open\]\)/);assert.match(c,/prefers-reduced-motion: reduce/);assert.doesNotMatch(c,/(^|\n)\s*(body|html|canvas|\*)\s*\{/);});

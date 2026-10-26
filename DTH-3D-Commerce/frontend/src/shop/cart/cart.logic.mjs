@@ -1,5 +1,6 @@
 import { vehicleLabel as nvxVehicleLabel } from '../../../../shared/nvx.mjs';
 import { fitment } from '../../../../shared/domain.mjs';
+import { commerceAvailability } from '../../../../shared/productCommerce.mjs';
 
 export const CART_LIMITS = Object.freeze({ lines: 20, quantity: 10, maxPrice: 1000000000 });
 const idOK = value => typeof value === 'string' && /^[a-z0-9-]{1,80}$/.test(value);
@@ -27,6 +28,7 @@ function catalogRecord(productId, vehicleId, data) {
   if (!product || product.active === false) return failure('This part is no longer available. Review your bag.');
   if (!validCartPrice(product.price)) return failure('A valid catalog price is required before adding this part.');
   if (fitment(product, vehicleId, vehicles).status !== 'compatible') return failure('Choose a matching demo vehicle before adding this part.');
+  if (!commerceAvailability(product).orderable) return failure('This option is not available for ordering.');
   return { ok: true, product };
 }
 export function addBagLine(bag, productId, vehicleId, quantity, data) {
@@ -38,6 +40,8 @@ export function addBagLine(bag, productId, vehicleId, quantity, data) {
   const existing = clean.find(i => lineKey(i.productId, i.vehicleId) === key);
   if ((!existing && clean.length >= CART_LIMITS.lines) || (existing?.quantity || 0) + quantity > CART_LIMITS.quantity)
     return failure('Demo bag limit reached (20 lines, 10 per part/vehicle).');
+  const totalForProduct = clean.filter(i => i.productId === productId).reduce((sum,i)=>sum+i.quantity,quantity);
+  if (!commerceAvailability(checked.product, totalForProduct).orderable) return failure('Not enough available demo stock for this option.');
   const next = existing ? clean.map(i => lineKey(i.productId, i.vehicleId) === key ? { ...i, quantity: i.quantity + quantity } : i)
     : [...clean, { productId, vehicleId, quantity }];
   return { ok: true, bag: next, key, quantity, name: typeof checked.product.name === 'string' ? checked.product.name : productId };
@@ -47,7 +51,7 @@ export function changeBagQuantity(bag, productId, vehicleId, quantity, data) {
   const key = lineKey(productId, vehicleId), clean = normalizeBag(bag), item = clean.find(i => lineKey(i.productId, i.vehicleId) === key);
   if (!item) return failure('This bag line no longer exists.');
   // Invalidated items may be reduced or removed, never increased.
-  if (quantity > item.quantity) { const checked = catalogRecord(productId, vehicleId, data); if (!checked.ok) return checked; }
+  if (quantity > item.quantity) { const checked = catalogRecord(productId, vehicleId, data); if (!checked.ok) return checked; const total=clean.filter(i=>i.productId===productId).reduce((sum,i)=>sum+i.quantity,quantity-item.quantity); if (!commerceAvailability(checked.product,total).orderable) return failure('Not enough available demo stock for this option.'); }
   return { ok: true, bag: clean.map(i => lineKey(i.productId, i.vehicleId) === key ? { ...i, quantity } : i), key };
 }
 export function removeBagLine(bag, productId, vehicleId) {
@@ -68,10 +72,11 @@ export function describeBag(bag, data, { loading = false, error = '' } = {}) {
     else if (!priceOK) issue = 'Price unavailable';
     else if (match === 'incompatible') issue = 'No match in demo data';
     else if (match !== 'compatible') issue = 'Compatibility not established';
+    else if (!commerceAvailability(product, item.quantity).orderable) issue = 'Availability or demo stock changed';
     return { ...item, key: lineKey(item.productId, item.vehicleId), product, name: typeof product?.name === 'string' ? product.name : item.productId,
       vehicleLabel: vehicle ? `${nvxVehicleLabel(vehicle)}` : `Saved vehicle: ${item.vehicleId} (not in catalog)`,
       match, issue, unitPrice: priceOK ? product.price : null, lineTotal: priceOK ? product.price * item.quantity : null,
-      canIncrease: !issue && item.quantity < CART_LIMITS.quantity };
+      canIncrease: !issue && item.quantity < CART_LIMITS.quantity && commerceAvailability(product, item.quantity+1).orderable };
   });
   const needsReview = lines.some(i => i.issue), count = lines.reduce((n, i) => n + i.quantity, 0);
   return { lines, count, needsReview, subtotal: needsReview ? null : lines.reduce((n, i) => n + i.lineTotal, 0) };

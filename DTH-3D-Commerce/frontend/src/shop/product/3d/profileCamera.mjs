@@ -1,3 +1,5 @@
+// DTH21.2 product presentation integration
+
 import { PRODUCT_VIEW } from '../productDecision.logic.mjs';
 import { automaticCamera, validateCameraPose } from './profileTransform.mjs';
 import { finiteDelta, clamp } from '../advanced/study.logic.mjs';
@@ -7,6 +9,7 @@ const norm=(a,b)=>Math.hypot(...a.map((n,i)=>n-b[i]));
 const clone=v=>v.slice();
 /** One owner for orbit, profile presets and hotspot focus; never lerp through the model centre. */
 export function createProfileInspection(initialDistance) {
+  let turnSeconds21 = PRODUCT_VIEW.secondsPerTurn;
   let config=automaticCamera(),distance=Number.isFinite(initialDistance)&&initialDistance>0?initialDistance:config.referenceDistance;
   let look=clone(config.center),aim=clone(look),moving=false;
   const clearance=()=>config.radius*(2.05/1.35);
@@ -23,6 +26,7 @@ export function createProfileInspection(initialDistance) {
       try{for(const n of ['front','side','rear','detail'])validateCameraPose(next.presets[n],next);}catch{return false;}
       // Copy all data so caller changes cannot move a running camera.
       config={radius:next.radius,center:clone(next.center),referenceDistance:next.referenceDistance,presets:Object.fromEntries(Object.entries(next.presets).map(([k,p])=>[k,{position:clone(p.position),target:clone(p.target)}]))};
+      turnSeconds21 = Number.isFinite(next.secondsPerTurn) && next.secondsPerTurn >= 12 && next.secondsPerTurn <= 120 ? next.secondsPerTurn : PRODUCT_VIEW.secondsPerTurn;
       distance=next.referenceDistance;look=clone(config.presets.front.target);aim=clone(look);current=bound(convert(config.presets.front));target={...current};moving=false;return true;
     },
     sync(p){if(!p||!['theta','phi','radius'].every(k=>Number.isFinite(p[k])))return false;aim=clone(look);current=bound(p);target={...current};moving=false;return true;},
@@ -48,7 +52,7 @@ export function createProfileInspection(initialDistance) {
       if(moving){const alpha=1-Math.exp(-12*delta);look=look.map((x,i)=>x+(aim[i]-x)*alpha);for(const k of ['theta','phi','radius'])current[k]+=(target[k]-current[k])*alpha;
         current.radius=Math.max(current.radius,clearance()+norm(look,config.center));
         if(['theta','phi','radius'].every(k=>Math.abs(target[k]-current[k])<.0002)&&look.every((x,i)=>Math.abs(aim[i]-x)<.0002))this.settle();
-      }else if(spin&&delta>0){current.theta=(current.theta+Math.PI*2*delta/PRODUCT_VIEW.secondsPerTurn)%(Math.PI*2);target={...current};}
+      }else if(spin&&delta>0){current.theta=(current.theta+Math.PI*2*delta/turnSeconds21)%(Math.PI*2);target={...current};}
       return {...current};
     },
   };

@@ -14,7 +14,7 @@ export function installCart(router, { Product, Vehicle, vehicleQuery = ids => ({
     const productIds = [...new Set(items.map(item => item.productId))];
     const vehicleIds = [...new Set(items.map(item => item.vehicleId))];
     const [products, vehicles] = await Promise.all([
-      Product.find({ id: { $in: productIds } }).select('id name price currency active vehicleIds -_id').lean(),
+      Product.find({ id: { $in: productIds } }).select('id name price currency active vehicleIds availabilityStatus stockQty leadTimeDays -_id').lean(),
       Vehicle.find(vehicleQuery(vehicleIds)).select('id make model year -_id').lean(),
     ]);
     const quote = quoteCart(items, products, vehicles, { source: 'api' });

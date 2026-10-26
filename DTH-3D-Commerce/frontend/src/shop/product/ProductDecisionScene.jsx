@@ -1,8 +1,12 @@
+// DTH21.2 product presentation integration
+import { getPresentation21 } from '../../../../shared/productPresentation21.mjs';
+// DTH21.1 product studio integration
+import { studioDpr21 } from './premium21/studio21.mjs';
+import Lighting from './premium21/ProductLighting21.jsx';
 import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { useProfiledModel, clearProfiledModelCache } from './3d/useProfiledModel';
 import { PRODUCT_VIEW } from './productDecision.logic.mjs';
 import { frameDistance } from './inspection.logic.mjs';
@@ -122,34 +126,61 @@ function Asset({ product, onReady, onFailure, onCapabilities, onProgress, mode, 
       }
     }
   });
-  if (!scene || !fit) return null;
-  return <group scale={fit.scale} rotation={fit.rotation} position={fit.center}><group position={fit.offset}><primitive object={scene} dispose={null}/></group></group>;
+  // if (!scene || !fit) return null;
+  // return <group scale={fit.scale} rotation={fit.rotation} position={fit.center}><group position={fit.offset}><primitive object={scene} dispose={null}/></group></group>;
+
+    // if (!scene || !fit) return null;
+
+    // // Correct the orientation of X1R-GT4 only.
+    // // Rotate the original X-oriented model upright.
+    // const correctedRotation = getPresentation21(product) ? fit.rotation : (//   product.id === 'x1r-red'
+    //     ? [
+    //         fit.rotation[0],
+    //         fit.rotation[1],
+    //         // fit.rotation[2] - Math.PI / 2,
+    //         fit.rotation[2] + Math.PI / 2
+    //       ]
+    //     : fit.rotation);
+
+    // return (
+    //   <group
+    //     scale={fit.scale}
+    //     rotation={correctedRotation}
+    //     position={fit.center}
+    //   >
+    //     <group position={fit.offset}>
+    //       <primitive object={scene} dispose={null} />
+    //     </group>
+    //   </group>
+    // );
+
+
+    if (!scene || !fit) return null;
+
+    // Product-specific orientation correction.
+    // Keep the original GLB and its materials unchanged.
+    const correctionZ = getPresentation21(product) ? 0 : (product.id === 'x1r-red'
+        ? THREE.MathUtils.degToRad(-12)
+        : 0);
+
+    return (
+      <group
+        scale={fit.scale}
+        rotation={fit.rotation}
+        position={fit.center}
+      >
+        <group rotation={[0, 0, correctionZ]}>
+          <group position={fit.offset}>
+            <primitive object={scene} dispose={null} />
+          </group>
+        </group>
+      </group>
+    );
+
+
 }
-function Lighting({ onFailure, study, lightAngle }) {
-  const { gl, scene, invalidate } = useThree();
-  const lamp=useRef(null);
-  useEffect(()=>invalidate(),[lightAngle,invalidate]);
-  useFrame(() => { if(!lamp.current)return;const surface=study.current.read().surface;const angle=(Number.isFinite(lightAngle)?lightAngle:0)*Math.PI/180;lamp.current.position.set(-4+Math.sin(angle)*5,5,5+Math.cos(angle)*surface);lamp.current.intensity=2+surface*.35; });
-  useEffect(() => {
-    const prior = scene.environment, priorIntensity = scene.environmentIntensity;
-    let room, generator, target;
-    const lost = event => { event.preventDefault(); onFailure(); };
-    gl.domElement.addEventListener('webglcontextlost', lost);
-    try {
-      room = new RoomEnvironment(); generator = new THREE.PMREMGenerator(gl);
-      target = generator.fromScene(room, .04);
-      scene.environment = target.texture; scene.environmentIntensity = .7;
-      invalidate();
-    } catch (error) { onFailure(error.message || 'Unable to prepare product presentation.'); }
-    finally { room?.dispose(); generator?.dispose(); }
-    return () => {
-      gl.domElement.removeEventListener('webglcontextlost', lost);
-      scene.environment = prior; scene.environmentIntensity = priorIntensity; target?.dispose();
-    };
-  }, [gl, scene, invalidate, onFailure]);
-  return <><ambientLight intensity={.28}/><hemisphereLight args={['#ffffff','#2b343b',.65]}/>
-    <directionalLight ref={lamp} position={[-4,5,5]} intensity={2}/><directionalLight position={[4,1,-3]} intensity={1.25}/></>;
-}
+// DTH21.1: Lighting is provided by the scoped product studio module.
+
 function Controls({ api, active, ready, motion, spin, inspect, onManual, capabilities }) {
   const { gl, camera, size, invalidate } = useThree();
   const control = useRef(null), controller = useRef(createProfileInspection(frameDistance(800,600)));
@@ -202,7 +233,7 @@ function Controls({ api, active, ready, motion, spin, inspect, onManual, capabil
     }
     camera.fov = settings?.fov ?? PRODUCT_VIEW.fov;
     camera.updateProjectionMatrix();
-    controller.current.reframe(frameDistance(size.width, size.height, settings?.radius ?? PRODUCT_VIEW.radius, camera.fov));
+    controller.current.reframe(frameDistance(size.width, size.height, settings?.frameRadius ?? settings?.radius ?? PRODUCT_VIEW.radius, camera.fov));
     const range = controller.current.limits();
     if (control.current) { control.current.minDistance = range.min; control.current.maxDistance = range.max; }
     applyRef.current(); invalidate();
@@ -225,11 +256,11 @@ function Controls({ api, active, ready, motion, spin, inspect, onManual, capabil
 }
 export default function ProductDecisionScene(props) {
   const study=useRef(createStudyClock());
-  return <Canvas dpr={[1, props.eco ? 1 : PRODUCT_VIEW.maxDpr]} frameloop="demand"
+  return <Canvas dpr={studioDpr21(props.studio21, props.eco, PRODUCT_VIEW.maxDpr)} frameloop="demand"
     camera={{ position:[0,0,6], fov:PRODUCT_VIEW.fov, near:.05, far:250 }}
     gl={{ antialias:true, alpha:true, powerPreference:'default' }}
     onCreated={({gl}) => { gl.toneMapping = THREE.NeutralToneMapping; gl.toneMappingExposure = 1; gl.outputColorSpace = THREE.SRGBColorSpace; }}>
-    <Lighting onFailure={props.onFailure} study={study} lightAngle={props.lightAngle}/>
+    <Lighting studio={props.studio21} active={props.active} onFailure={props.onFailure} study={study} lightAngle={props.lightAngle}/>
     <Suspense fallback={null}><Asset {...props} study={study}/></Suspense>
     <Controls {...props}/>
   </Canvas>;

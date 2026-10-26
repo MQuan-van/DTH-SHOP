@@ -5,7 +5,9 @@ const Product = mongoose.model('StoreProduct', new Schema({
   id: { type: String, required: true, unique: true }, slug: { type: String, required: true }, name: { type: String, required: true },
   category: { type: String, required: true }, price: { type: Number, required: true }, currency: { type: String, default: 'VND' },
   description: String, finish: String, accent: String, modelUrl: String, imageUrl: String, vehicleIds: [String],
-  specs: Schema.Types.Mixed, assetLicense: String, featured: Boolean, active: { type: Boolean, default: true }, demoOnly: { type: Boolean, default: true },
+  // DTH21.2: written only by the authenticated 3D setup endpoint.
+  presentation3d: { type: Schema.Types.Mixed, default: undefined },
+  specs: Schema.Types.Mixed, assetLicense: String, featured: Boolean, variantGroup: String, availabilityStatus: String, stockQty: Number, leadTimeDays: Number, active: { type: Boolean, default: true }, demoOnly: { type: Boolean, default: true },
 }, { timestamps: true, collection: 'store_products' }));
 const Vehicle = mongoose.model('StoreVehicle', new Schema({
   id: { type: String, required: true, unique: true }, make: String, model: String, year: Number, demoOnly: { type: Boolean, default: true },

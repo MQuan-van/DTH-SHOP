@@ -1,4 +1,5 @@
 import { AIAssetService } from './aiAssets.service.mjs';
+import { exportAiJobAsProductAssets } from './aiProducts.export.mjs';
 
 const route = fn => (req, res, next) => Promise.resolve(fn(req, res)).catch(error => {
   if (res.headersSent) return next(error);
@@ -50,6 +51,15 @@ export function installAiAssets(router, { authenticated, admin, writeLimit }) {
   })));
   router.post('/admin/ai-assets/jobs/:id/publish', ...guard, writeLimit, route(async (req, res) => ready(async () => {
     const data = await service.publish(guardId(req.params.id), req.body?.version, req.body?.confirmed);
+    res.json({ data });
+  })));
+  router.post('/admin/ai-assets/jobs/:id/export-product', ...guard, writeLimit, route(async (req, res) => ready(async () => {
+    if (req.body?.confirmed !== true) throw Object.assign(new Error('Confirm exporting this GLB for the catalog.'), { status: 400 });
+    const data = await exportAiJobAsProductAssets(service, guardId(req.params.id));
+    res.json({ data });
+  })));
+  router.post('/admin/ai-assets/unpublish', ...guard, writeLimit, route(async (req, res) => ready(async () => {
+    const data = await service.unpublish(req.body?.version, req.body?.confirmed);
     res.json({ data });
   })));
   return service;

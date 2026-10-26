@@ -70,5 +70,18 @@ export function validateProduct(body, vehicles) {
   if (!/^\/models\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+\.glb$/.test(modelUrl)) throw new InputError('Use a local /models/...glb URL.');
   if (!/^\/previews\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+\.(png|jpg|webp)$/.test(imageUrl)) throw new InputError('Use a local /previews/...png, jpg or webp URL.');
   if (!Array.isArray(body.vehicleIds) || !body.vehicleIds.length || body.vehicleIds.length > 30 || body.vehicleIds.some(id => typeof id !== 'string' || !vehicles.some(v => v.id === id))) throw new InputError('Select known demo vehicles.');
-  return { id, slug: id, name: text('name', 100), category, price: body.price, finish: text('finish', 80), description: text('description', 2000), modelUrl, imageUrl, vehicleIds: [...new Set(body.vehicleIds)], currency: 'VND', active: body.active !== false, demoOnly: true, assetLicense: 'Administrator must record asset provenance', specs: { 'Asset purpose': 'Demonstration only' } };
+  const variantGroup = typeof body.variantGroup === 'string' ? body.variantGroup.trim() : '';
+  if (variantGroup && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(variantGroup) || variantGroup.length > 80)
+    throw new InputError('Variant group must be lowercase letters, numbers and hyphens.');
+  const availabilityStatus = body.availabilityStatus || 'demo';
+  if (!['demo', 'in_stock', 'preorder', 'out_of_stock'].includes(availabilityStatus)) throw new InputError('Invalid stock status.');
+  const stockQty = body.stockQty === undefined ? 0 : body.stockQty;
+  const leadTimeDays = body.leadTimeDays === undefined ? 0 : body.leadTimeDays;
+  if (!Number.isSafeInteger(stockQty) || stockQty < 0 || stockQty > 1000000) throw new InputError('Invalid stock quantity.');
+  if (!Number.isSafeInteger(leadTimeDays) || leadTimeDays < 0 || leadTimeDays > 365) throw new InputError('Lead time must be 0–365 days.');
+  if (availabilityStatus === 'in_stock' && stockQty < 1) throw new InputError('In-stock products need at least 1 unit.');
+  if (availabilityStatus === 'preorder' && leadTimeDays < 1) throw new InputError('Preorders need an estimated lead time.');
+  const hasCommerceFields = ['variantGroup', 'availabilityStatus', 'stockQty', 'leadTimeDays'].some(key => Object.hasOwn(body, key));
+  return { id, slug: id, name: text('name', 100), category, price: body.price, finish: text('finish', 80), description: text('description', 2000), modelUrl, imageUrl, vehicleIds: [...new Set(body.vehicleIds)], currency: 'VND', active: body.active !== false, demoOnly: true, assetLicense: 'Administrator must record asset provenance', specs: { 'Asset purpose': 'Demonstration only' },
+    ...(hasCommerceFields ? { variantGroup, availabilityStatus, stockQty, leadTimeDays } : {}) };
 }

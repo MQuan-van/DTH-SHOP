@@ -1,0 +1,17 @@
+/* Scoped to the product viewer; no changes to Home, Story or the NVX build viewer. */
+.dth-studio21{margin:12px 0 16px;padding:16px;border:1px solid #ccdde5;border-radius:12px;background:#ffffffbd;color:#132936}
+.dth-studio21-heading{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.dth-studio21-heading>span{font-size:10px;font-weight:650;letter-spacing:.12em}
+.dth-studio21-heading>small{font-size:10px;color:#526a7b}
+.dth-studio21-presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.dth-studio21 button,.dth-studio21 select{font:inherit;min-height:40px;border:1px solid #bfd2dc;border-radius:8px;color:#163349;background:#fff;font-size:12px;padding:8px 14px;cursor:pointer}
+.dth-studio21-presets button[aria-pressed=true]{color:#0056ac;background:#edf6ff;border-color:#6eafe1}
+.dth-studio21-fields{display:grid;grid-template-columns:minmax(140px,1fr) minmax(120px,.8fr) auto;align-items:end;gap:16px}
+.dth-studio21-fields label{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;font-size:11px;color:#526a7b}
+.dth-studio21-fields input{width:100%;min-height:24px;accent-color:#0066cc;cursor:pointer;margin:0}
+.dth-studio21-fields select{width:100%;min-width:0}
+.dth-studio21 :is(button,input,select):focus-visible{outline:2px solid #0066cc;outline-offset:3px}
+.dth-studio21 :disabled{opacity:.5;cursor:not-allowed}
+.dth-studio21 .dth-studio21-note{font-size:10px;line-height:1.7;color:#526a7b;margin:12px 0 0}
+.dth-studio21 .dth-studio21-stats{font-size:10px;color:#526a7b;margin:12px 0 0;padding-top:10px;border-top:1px solid #e4edf2;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+@media(max-width:620px){.dth-studio21-fields{grid-template-columns:1fr}.dth-studio21-reset{justify-self:start}.dth-studio21-presets button{flex:1}}

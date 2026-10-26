@@ -1,5 +1,5 @@
 * text=auto
-*.glb binary
+*.glb filter=lfs diff=lfs merge=lfs -text
 *.png binary
 *.jpg binary
 *.jpeg binary

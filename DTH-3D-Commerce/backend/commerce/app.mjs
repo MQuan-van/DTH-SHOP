@@ -1,3 +1,5 @@
+// DTH21.2 product presentation integration
+import { installProductPresentation21 } from './presentation21/routes.mjs';
 import { installGarage } from './garage/routes.mjs';
 import { publicGarageUser } from '../../shared/garage.mjs';
 import { nvxVehicleQuery } from '../../shared/nvx.mjs';
@@ -75,6 +77,7 @@ export async function makeApp() {
   const supportHub = installSupport(router, { authenticated, admin, sessionFor, origins });
   app.locals.supportHub = supportHub;
   installAdmin(router, { authenticated, admin, writeLimit });
+  installProductPresentation21(router, { Product, authenticated, admin, writeLimit });
   app.locals.aiAssetService = installAiAssets(router, { authenticated, admin, writeLimit });
   installExperience(router, { authenticated, admin, writeLimit });
   installCart(router, { Product, Vehicle, vehicleQuery: nvxVehicleQuery });

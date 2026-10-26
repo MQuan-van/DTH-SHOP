@@ -1,18 +1,20 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../../../shop/useStore';
 import { studioRequest, studioUrl, MODE } from '../../../shop/api';
 import './ai-asset-studio.css';
+import './ai-product-export.css';
 
 const Preview3D = lazy(() => import('./AIModelPreview.jsx'));
 const prefix = '/admin/ai-assets';
 const terminal = new Set(['FAILED', 'CANCELED', 'SUCCEEDED', 'UNCERTAIN']);
 const fmtSize = n => `${(n / 1024 / 1024).toFixed(2)} MB`;
 const isActive = s => ['SUBMITTING', 'PENDING', 'IN_PROGRESS', 'QUEUED'].includes(s);
-const fmtDate = date => { try { return new Date(date).toLocaleString('vi-VN'); } catch { return ''; } };
+const fmtDate = date => { try { return new Date(date).toLocaleString('en-GB'); } catch { return ''; } };
 
 export default function AIAssetStudio() {
   const { user } = useStore();
+  const navigate = useNavigate();
   const [status, setStatus] = useState(null), [images, setImages] = useState([]), [jobs, setJobs] = useState([]);
   const [selected, setSelected] = useState([]), [target, setTarget] = useState('v3');
   const [previewId, setPreviewId] = useState('');
@@ -55,22 +57,32 @@ export default function AIAssetStudio() {
   async function generate() {
     if (!selected.length || busy) return;
     const named = selected.map(id => images.find(item => item.id === id)?.name).filter(Boolean);
-    const message = `Gửi ${named.length} ảnh đến Meshy để tạo mô hình GLB?\n\n${named.join('\n')}\n\nTác vụ có thể tiêu Meshy credits. Ảnh phải là các góc của CÙNG một đối tượng. Không tự động thử lại nếu có lỗi kết nối.`;
+    const message = `Send ${named.length} reference image(s) to Meshy to generate a GLB model?\n\n${named.join('\n')}\n\nThis may consume Meshy credits. All images must show the SAME object. Do not resubmit automatically after a connection error.`;
     if (!window.confirm(message)) return;
     const job = await action(`${prefix}/jobs`, { imageIds: selected, confirmed: true });
-    if (job) { setSelected([]); setNotice(`Đã đưa tác vụ vào hàng đợi (${job.id.slice(0, 8)}). Đang gửi ảnh đến Meshy…`); }
+    if (job) { setSelected([]); setNotice(`Task queued (${job.id.slice(0, 8)}). Sending reference images to Meshy…`); }
   }
   async function publish(job) {
     if (busy) return;
-    if (!window.confirm(`Xuất bản mô hình từ task ${job.id.slice(0, 8)} cho Yamaha NVX ${target.toUpperCase()}?\n\nMẫu mới sẽ thay thế mẫu đã publish cho phiên bản này. Bạn có thể publish lại một task cũ để quay về mẫu trước.`)) return;
+    if (!window.confirm(`Publish the model from task ${job.id.slice(0, 8)} for Yamaha NVX ${target.toUpperCase()}?\n\nThis replaces the published model for this NVX version. Only use a complete vehicle model here, not a part. You can republish an earlier task to restore a previous model.`)) return;
     const updated = await action(`${prefix}/jobs/${job.id}/publish`, { version: target, confirmed: true });
-    if (updated) setNotice(`Đã publish NVX ${target.toUpperCase()}! Mở Shop → Build, chọn xe và tải lại trang để xem model mới.`);
+    if (updated) setNotice(`NVX ${target.toUpperCase()} published. Open Shop → Build, select this version and refresh to see the model.`);
+  }
+  async function exportProduct(job) {
+    if (!window.confirm('Export the GLB and preview image to the product library? This does not create a new Meshy task or consume generation credits. The product stays HIDDEN until you save it with Visible in shop enabled.')) return;
+    const result = await action(`${prefix}/jobs/${job.id}/export-product`, { confirmed: true });
+    if (result) navigate('/admin/products/new', { state: { aiProductDraft: result } });
+  }
+  async function restoreOriginal() {
+    if (!window.confirm(`Restore the original GLB for NVX ${target.toUpperCase()}? This removes only the published Build link. It does NOT delete the Meshy file.`)) return;
+    const result = await action(`${prefix}/unpublish`, { version: target, confirmed: true });
+    if (result) setNotice(`Original NVX ${target.toUpperCase()} model link restored. Refresh Shop → Build to see it.`);
   }
   async function check(job) {
     const updated = await action(`${prefix}/jobs/${job.id}/check`, {});
-    if (updated) setNotice(`Đã cập nhật trạng thái task ${job.id.slice(0, 8)}.`);
+    if (updated) setNotice(`Task ${job.id.slice(0, 8)} status updated.`);
   }
-  if (MODE !== 'api' || user?.role !== 'admin') return <section className="dth-ai-assets"><h1>Administrator access required.</h1><p>Đăng nhập bằng tài khoản Admin và bật API mode để dùng Meshy.</p><Link to="/account">Back to account ↗</Link></section>;
+  if (MODE !== 'api' || user?.role !== 'admin') return <section className="dth-ai-assets"><h1>Administrator access required.</h1><p>Sign in with an administrator account and use API mode to access Meshy.</p><Link to="/account">Back to account ↗</Link></section>;
 
   const running = jobs.some(job => isActive(job.status));
   return <section className="dth-ai-assets">
@@ -112,7 +124,7 @@ export default function AIAssetStudio() {
               {job.modelAvailable && <button type="button" onClick={() => setPreviewId(value => value === job.id ? '' : job.id)}>{previewId === job.id ? 'Hide preview' : 'Preview GLB 360°'}</button>}
             </div>
             {previewId === job.id && job.modelAvailable && <div className="dth-ai-preview"><Suspense fallback={<p>Loading 3D preview…</p>}><Preview3D jobId={job.id} /></Suspense></div>}
-            {job.modelAvailable && <div className="dth-ai-publish"><label>Publish model to <select aria-label="Select NVX version" value={target} onChange={e => setTarget(e.target.value)}><option value="v1">NVX V1</option><option value="v2">NVX V2</option><option value="v3">NVX V3</option></select></label><button type="button" disabled={busy} onClick={() => publish(job)}>Publish to Build →</button></div>}
+            {job.modelAvailable && <div className="dth-ai-publish"><label>Publish model to <select aria-label="Select NVX version" value={target} onChange={e => setTarget(e.target.value)}><option value="v1">NVX V1</option><option value="v2">NVX V2</option><option value="v3">NVX V3</option></select></label><button type="button" disabled={busy} onClick={() => publish(job)}>Publish to Build →</button><button type="button" disabled={busy} onClick={() => exportProduct(job)}>Create Shop Product ↗</button><button type="button" disabled={busy} onClick={restoreOriginal}>Restore original NVX</button></div>}
             {(job.publishedTo || []).length > 0 && <p className="dth-ai-published">Previously published for {job.publishedTo.map(v => v.toUpperCase()).join(', ')}.</p>}
           </article>)}</div>}
         </section>

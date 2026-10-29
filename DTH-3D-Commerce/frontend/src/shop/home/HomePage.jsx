@@ -2,7 +2,7 @@ import { lazy, Suspense, useLayoutEffect, useState } from 'react';
 import { CINEMATIC_CONFIG } from '../../experience/motion/motion.config.mjs';
 import { usePublishedExperience } from '../../experience/home/usePublishedExperience';
 import { useStore } from '../useStore.jsx';
-import { useOutletContext } from 'react-router-dom';
+import { useOutletContext, useLocation } from 'react-router-dom';
 import { HOME_CONFIG, enabledSections } from './home.config.mjs';
 import { useReducedMotion } from './hooks/useStudioMotion.js';
 import HeroSection from './sections/Hero/HeroSection.jsx';
@@ -12,6 +12,8 @@ import FeaturedSection from './sections/Featured/FeaturedSection.jsx';
 import FitmentSection from './sections/Fitment/FitmentSection.jsx';
 import './home.tokens.css';
 const CinematicHome = lazy(() => import('../../experience/home/CinematicHome'));
+// DTH Studio Atelier 22H.1
+const StudioAtelier22H = lazy(() => import('../../experience/studio22h2/StudioAtelier22H2.jsx'));
 const SECTION_COMPONENTS = { hero: HeroSection, workflow: WorkflowSection, categories: CategoriesSection, featured: FeaturedSection, fitment: FitmentSection };
 function LegacyHomePage() {
   const { data } = useStore();
@@ -34,7 +36,9 @@ function LegacyHomePage() {
   </div>;
 }
 export default function HomePage() {
+  const location22H = useLocation();
+  const StudioView22H = new URLSearchParams(location22H.search).get('studio') === 'classic' ? CinematicHome : StudioAtelier22H;
   const experience=usePublishedExperience();
   if(experience.loading)return <div className="dth-empty" role="status">Opening the product studio…</div>;
-  return CINEMATIC_CONFIG.enabled && experience.config.enabled ? <Suspense fallback={<div className="dth-empty" role="status">Opening the product studio…</div>}><CinematicHome config={experience.config} version={experience.version} binding={experience.binding} /></Suspense> : <LegacyHomePage />;
+  return CINEMATIC_CONFIG.enabled && experience.config.enabled ? <Suspense fallback={<div className="dth-empty" role="status">Opening the product studio…</div>}><StudioView22H config={experience.config} version={experience.version} binding={experience.binding} /></Suspense> : <LegacyHomePage />;
 }

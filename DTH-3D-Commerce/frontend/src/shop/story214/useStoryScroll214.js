@@ -1,7 +1,9 @@
+// DTH21.5.1: patched
 import { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { STORY214 } from './story214.config.mjs';
+import { CHAPTER2151 } from './verticalMotion215.mjs';
 import { chapterIndex214 } from './story214.logic.mjs';
 gsap.registerPlugin(ScrollTrigger);
 /** Native scroll; no wheel interception, global snap, or scroll-lock. */
@@ -20,7 +22,10 @@ export function useStoryScroll214({root,runway,stage,bar,clock,count,signature,m
     }
     measure();
     const topOffset=()=>parseFloat(style.getPropertyValue('--story214-header'))+header.getBoundingClientRect().height+10;
-    const duration=()=>Math.max(1,el.offsetHeight-panel.offsetHeight);
+    // DTH21.5.1: allow the native sticky stage to remain on the last model
+    // for an additional 1.15 viewport-heights after the ScrollTrigger reaches 100%.
+    // The runway is taller by the SAME CSS --story215-tail value.
+    const duration=()=>Math.max(1,el.offsetHeight-panel.offsetHeight-Math.round(window.innerHeight*CHAPTER2151.exitViewport));
     const proxy={position:clock.read().position};
     ctx=gsap.context(()=>{
       if(count>1){

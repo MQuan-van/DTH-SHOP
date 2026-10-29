@@ -1,0 +1,118 @@
+/* DTH 21.5 — White / vertical. Scoped to Story; original GLB shading stays untouched. */
+.dth-story214[data-story-skin="vertical-215"] {
+  --story214-ink:#132632; --story214-muted:#647783; --story214-line:#e6ecef;
+  background:#fff; color:var(--story214-ink);
+}
+/* Preserve the Story sticky fix. Do not turn body into a nested scroll container. */
+html[data-dth-store="true"]:has(.dth-story214[data-story-skin="vertical-215"]),
+html[data-dth-store="true"] body:has(.dth-story214[data-story-skin="vertical-215"]) {overflow-x:clip;overflow-y:visible}
+.d174-root:has(.dth-story214[data-story-skin="vertical-215"]) {background:#fff}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-heading {border:0;padding-top:28px;padding-bottom:26px}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-heading h1 {font-weight:650;letter-spacing:-.06em}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-bar {background:rgba(255,255,255,.96);border-color:#e6ecef;backdrop-filter:blur(12px);box-shadow:0 6px 20px #13263203}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-categories button {border-radius:7px;font-weight:500;transition:background .18s,color .18s}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-categories button[aria-pressed="true"] {background:#142e3d;border-color:#142e3d;color:white}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-progress {display:none}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-stage {width:min(1680px,100%);background:#fff;grid-template-columns:minmax(0,1.45fr) minmax(320px,.9fr);grid-template-rows:minmax(0,1fr) 62px}
+.dth215-atmosphere {position:absolute;inset:0 0 62px;z-index:0;pointer-events:none;overflow:hidden;user-select:none}
+.dth215-category-backdrop {position:absolute;inset:5% 3% auto 6%;height:clamp(80px,14vw,215px)}
+.dth215-category-backdrop span {position:absolute;inset:0;display:block;white-space:nowrap;color:#edf0f2;font-family:Inter,'Arial',sans-serif;font-size:clamp(68px,12.5vw,196px);font-weight:850;line-height:.88;letter-spacing:-.075em;transform-origin:left top;will-change:transform,opacity}
+.dth-story214[data-story-skin="vertical-215"] .dth215-light-path {position:absolute;top:3%;bottom:5%;left:1.4%;width:7%;height:92%;overflow:visible}
+.dth215-track,.dth215-trail,.dth215-core {fill:none;vector-effect:non-scaling-stroke;stroke-linecap:round}
+.dth215-track {stroke:#dce8ee;stroke-width:1}
+.dth215-trail {stroke:#34bcf4;stroke-width:5;opacity:.56}
+.dth215-core {stroke:#188bd7;stroke-width:1.6}
+.dth215-halo {fill:#5bcbff;opacity:.16}
+.dth215-light {fill:#159fe9}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-model-space {background:none;z-index:1;margin-left:5%}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-ring {display:none}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-ground {left:30%;right:25%;bottom:7%;height:16px;background:#10273711;filter:blur(12px)}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-canvas {inset:4% 1% 4%;mask-image:linear-gradient(to bottom,transparent 0%,#000 14%,#000 86%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,transparent 0%,#000 14%,#000 86%,transparent 100%)}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-copy-space {z-index:2;mask-image:linear-gradient(transparent,#000 9%,#000 91%,transparent);-webkit-mask-image:linear-gradient(transparent,#000 9%,#000 91%,transparent)}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-copy {padding:68px clamp(26px,3.8vw,72px) 38px 26px}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-copy-inner {max-width:510px}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-category {display:none}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-copy h2 {font-size:clamp(34px,3.7vw,67px);line-height:1.01;letter-spacing:-.055em;font-weight:680;max-width:13ch;margin-bottom:25px;text-wrap:balance}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-finish {font-size:12px;letter-spacing:.015em;margin-bottom:32px}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-price {font-size:clamp(24px,2.15vw,36px);font-weight:600;letter-spacing:-.045em}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-fit {border-color:#e7ecef;padding-top:20px;max-width:440px}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-primary {background:#12394d;border-color:#12394d;border-radius:8px;min-height:54px;width:min(100%,260px);box-shadow:0 6px 18px #133b4d0b}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-primary:hover {background:#075c88;border-color:#075c88;box-shadow:0 9px 24px #075c881a}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-primary:active {transform:translateY(1px)}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-stage-footer {z-index:2;border-color:#e5ecef;margin-inline:6%;font-size:11px;background:#fff}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-stage-footer>span {letter-spacing:.1em}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-original {font-size:9px;letter-spacing:.04em;color:#81929c;left:5%;bottom:8px}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-model-status p,
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-graphics-error p {background:rgba(255,255,255,.94);border:1px solid #e8edf0}
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-fine {background:#fff}
+@media(min-width:701px) and (max-height:720px) {
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-copy {padding-block:25px}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-copy h2 {font-size:clamp(30px,3.2vw,48px);margin-bottom:15px}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-finish {margin-bottom:17px}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-fit {padding-top:12px;margin-bottom:15px}
+}
+@media(max-width:1100px) and (min-width:701px) {
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-stage {grid-template-columns:minmax(0,1.1fr) minmax(280px,1fr)}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-copy {padding-left:12px;padding-right:26px}
+ .dth215-category-backdrop span {font-size:12vw}
+}
+@media(max-width:700px) {
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-stage {grid-template-columns:1fr;grid-template-rows:minmax(125px,36%) minmax(0,1fr) 46px}
+ .dth215-atmosphere {bottom:46px}
+ .dth215-category-backdrop {top:4%;left:6%;right:3%;height:75px}
+ .dth215-category-backdrop span {font-size:clamp(40px,11.6vw,76px);letter-spacing:-.07em}
+ .dth-story214[data-story-skin="vertical-215"] .dth215-light-path {left:1%;width:7%;height:94%;top:3%}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-model-space {margin-left:6%}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-canvas {inset:0 2%}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-copy {padding:9px 22px 12px 36px;align-items:flex-start}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-copy h2 {font-size:clamp(28px,7.9vw,40px);max-width:100%;line-height:1.03;margin-bottom:14px}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-finish {font-size:11px;margin-bottom:15px}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-price {font-size:27px;margin-bottom:8px}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-availability {font-size:10px;margin-bottom:9px}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-fit {font-size:10px;margin-bottom:13px;padding-top:10px}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-primary {width:190px;min-height:46px;font-size:11px;padding:11px 16px}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-stage-footer {margin-inline:22px 16px;gap:8px}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-original {font-size:8px;bottom:0}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-copy-space {mask-image:none;-webkit-mask-image:none}
+}
+@media(prefers-reduced-motion:reduce) {
+ .dth215-category-backdrop span {will-change:auto}
+ .dth-story214[data-story-skin="vertical-215"] .dth-story214-primary {transition:none}
+}
+
+/* DTH21.5.1: patched */
+/* More time for each chapter and a long, stationary final frame before the footer.
+   Native sticky and real document scrolling are preserved; no wheel hijacking or snap. */
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-runway {
+  height:calc(max(520px,100svh - var(--story214-header) - var(--story214-bar) - 10px) + var(--story214-steps)*var(--story214-segment) + var(--story215-tail,115svh));
+}
+/* The category word is stationary in its own visual layer. */
+.dth-story214[data-story-skin="vertical-215"] .dth215-category-backdrop span {
+  transform:none!important;will-change:opacity;
+}
+/* Subtle chapter stops: highlighted only when a product becomes primary. */
+.dth-story214[data-story-skin="vertical-215"] .dth215-milestone {
+  fill:#fff;stroke:#9bc7df;stroke-width:1.5;vector-effect:non-scaling-stroke;
+  transition:fill .25s,stroke .25s;
+}
+.dth-story214[data-story-skin="vertical-215"] .dth215-milestone.is-active {fill:#2aa8e6;stroke:#fff}
+/* Restore full visibility of the product title: let opacity/y from the clock do the fading. */
+.dth-story214[data-story-skin="vertical-215"] .dth-story214-copy-space {
+  mask-image:none;-webkit-mask-image:none;
+}
+@media(max-width:700px) {
+  .dth-story214[data-story-skin="vertical-215"] .dth-story214-runway {
+    height:calc(max(380px,100svh - var(--story214-header) - var(--story214-bar) - 10px) + var(--story214-steps)*var(--story214-segment) + var(--story215-tail,115svh));
+  }
+}
+@media(min-width:701px) and (max-height:710px) {
+  .dth-story214[data-story-skin="vertical-215"] .dth-story214-stage {
+    height:max(420px,calc(100svh - var(--story214-header) - var(--story214-bar) - 10px));
+  }
+  .dth-story214[data-story-skin="vertical-215"] .dth-story214-runway {
+    height:calc(max(420px,100svh - var(--story214-header) - var(--story214-bar) - 10px) + var(--story214-steps)*var(--story214-segment) + var(--story215-tail,115svh));
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .dth-story214[data-story-skin="vertical-215"] .dth215-milestone {transition:none}
+}

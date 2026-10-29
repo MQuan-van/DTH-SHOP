@@ -1,3 +1,4 @@
+import DTHNavigation22A from './design22a/DTHNavigation22A';
 // DTH ACCESS181 — login gate before storefront catalog rendering.
 import AccessBoundary181 from '../experience/access181/AccessBoundary181';
 import TransitionRoutes from '../experience/journey/TransitionRoutes';
@@ -44,21 +45,9 @@ function Shell() {
   return <div className="dth-store">
     <a className="dth-skip" href="#dth-content">Skip to content</a>
     <div className="dth-demo-banner">FYP DEMONSTRATOR <span>Illustrative 3D assets · Synthetic fitment · No real payments</span><b data-flow={FLOW}>{FLOW ? 'FLOW DEMO / NO DATABASE' : PREVIEW ? 'LOCAL PREVIEW' : 'MONGODB / API MODE'}</b></div>
-    <header className="dth-header">
-      <Link to="/" className="dth-brand" aria-label="DTH store home"><span className="dth-brand-symbol">///</span><span>DTH<span className="dth-brand-sub">PARTS STUDIO</span></span></Link>
-      <nav className="dth-navigation" aria-label="Main navigation">
-        <NavLink to="/" end>Studio</NavLink>
-        <NavLink to="/story">Story</NavLink>
-        <NavLink to="/shop">Shop parts</NavLink>
-        <NavLink to="/account">My account</NavLink>
-      </nav>
-      <div className="dth-header-tools"><button className="dth-vehicle-button" onClick={() => setVehicleOpen(true)} disabled={store.loading || !!store.error}><Icon name="vehicle" /><span>{vehicle ? `${nvxVehicleLabel(vehicle)}` : 'Select your vehicle'}</span><span className="dth-lime">＋</span></button><Link to="/account" className="dth-icon-button" aria-label="Your account"><Icon name="user" /></Link><Link to="/bag" className="dth-bag-button" aria-label={`Shopping bag, ${count} items`} aria-haspopup="dialog" aria-controls="dth-cart-drawer"
-        onClick={event => {
-          if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-          if (location.pathname === '/bag') return;
-          event.preventDefault(); store.openCart(event.currentTarget);
-        }}><Icon name="bag" /><span>{count}</span></Link></div>
-    </header>
+    {/* DTH-ONE-22A:HEADER */}
+    <DTHNavigation22A vehicle={vehicle} count={count} disabled={store.loading || !!store.error}
+      onChooseVehicle={() => setVehicleOpen(true)} openCart={store.openCart} />
     <main id="dth-content" tabIndex={-1}>
       {store.loading ? <div className="dth-empty">Loading the studio…</div> : store.error ? <div className="dth-empty"><h1>We could not load the store.</h1><p role="alert">{store.error}</p><button className="dth-button dth-primary" onClick={store.refresh}>Try again</button><p>Check the API, MongoDB and the seed step. API mode never silently switches to preview data.</p></div> : <Outlet context={{ chooseVehicle: () => setVehicleOpen(true) }} />}
     </main>

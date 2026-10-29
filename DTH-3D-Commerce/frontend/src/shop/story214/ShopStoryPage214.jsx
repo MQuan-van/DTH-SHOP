@@ -1,3 +1,4 @@
+/* DTH21.5.1: patched */
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useOutletContext, useSearchParams } from 'react-router-dom';
 import { formatMoney, fitment } from '../../../../shared/domain.mjs';
@@ -15,6 +16,10 @@ import { createStoryClock214, returnToChapter214 } from './story214.logic.mjs';
 import { useStoryScroll214 } from './useStoryScroll214';
 import { STORY214 } from './story214.config.mjs';
 import './story214.css';
+// DTH21.5 vertical presentation layer
+import './vertical215.css';
+import StoryAtmosphere215 from './StoryAtmosphere215.jsx';
+import { copyMotion215, CHAPTER2151 } from './verticalMotion215.mjs';
 const StoryScene214=lazy(()=>import('./StoryScene214.jsx'));
 const pad=n=>String(n).padStart(2,'0');
 
@@ -59,10 +64,12 @@ export default function ShopStoryPage214() {
     const paint=frame=>{
       if(frame.primary!==lastPrimary.current){lastPrimary.current=frame.primary;setCurrent(Math.max(0,frame.primary));}
       for(const [index,node] of copies.current){
-        const isLeft=index===frame.left,isRight=index===frame.right&&frame.right!==frame.left;
-        const opacity=isLeft?1-frame.mix:isRight?frame.mix:0,shift=isLeft?-30*frame.mix:isRight?30*(1-frame.mix):30;
-        node.style.opacity=String(opacity);node.style.transform=`translate3d(0,${motion?shift:0}px,0)`;
-        const active=index===frame.primary;node.inert=!active;node.setAttribute('aria-hidden',String(!active));node.style.pointerEvents=active?'auto':'none';
+        const visual = copyMotion215(frame, index, motion);
+        node.style.opacity = String(visual.opacity);
+        node.style.transform = `translate3d(0,${visual.y}px,0)`;
+        node.inert = !visual.active;
+        node.setAttribute('aria-hidden', String(!visual.active));
+        node.style.pointerEvents = visual.active ? 'auto' : 'none';
       }
       if(line.current)line.current.style.transform=`scaleX(${products.length>1?frame.position/(products.length-1):1})`;
     };
@@ -74,8 +81,9 @@ export default function ShopStoryPage214() {
   const vehicle=store.data.vehicles.find(v=>v.id===store.vehicleId),active=products[Math.min(current,Math.max(0,products.length-1))];
   const status=active&&statuses[active.id]?.url===active.modelUrl?statuses[active.id]:null;
   const filterProps={query,counts,ceiling,vehicle,vehicleId:store.vehicleId,onPatch:change,onChooseVehicle:openVehicle,onReset:reset};
-  const runwayStyle={'--story214-steps':Math.max(0,products.length-1),'--story214-segment':`${STORY214.segmentViewport*100}svh`};
-  return <section ref={root} className="dth-story214" data-story-shop="21.4" data-motion={motion?'on':'off'}>
+  // DTH21.5.1: separate scroll-length from the final, stationary product hold.
+  const runwayStyle={'--story214-steps':Math.max(0,products.length-1),'--story214-segment':`${Math.max(STORY214.segmentViewport, CHAPTER2151.segmentViewport)*100}svh`,'--story215-tail':`${CHAPTER2151.exitViewport*100}svh`};
+  return <section ref={root} className="dth-story214" data-story-shop="21.4" data-story-skin="vertical-215" data-motion={motion?'on':'off'}>
     <div className="dth-story214-heading"><h1>Parts<span>.</span></h1><span>{products.length} {products.length===1?'part':'parts'}</span>
       <form onSubmit={e=>{e.preventDefault();change({q:search});}} role="search"><label className="dth-story214-sr" htmlFor="story214-search">Search parts</label><input id="story214-search" type="search" placeholder="Find your next detail" value={search} maxLength={160} onChange={e=>setSearch(e.target.value)}/><button type="submit" aria-label="Search parts">↗</button></form>
     </div>
@@ -91,6 +99,7 @@ export default function ShopStoryPage214() {
     </div>
     {products.length?<div ref={runway} className="dth-story214-runway" style={runwayStyle}>
       <div ref={stage} className="dth-story214-stage">
+        <StoryAtmosphere215 clock={clock} products={products} motion={motion}/>
         <div className="dth-story214-model-space">
           <div className="dth-story214-ring" aria-hidden="true"/><div className="dth-story214-ground" aria-hidden="true"/>
           <Suspense fallback={<div className="dth-story214-model-status">Preparing 3D…</div>}><StoryScene214 products={products} clock={clock} compact={policy.compact} motion={motion} onStatus={onStatus} api={sceneApi}/></Suspense>

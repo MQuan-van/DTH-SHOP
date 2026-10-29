@@ -1,3 +1,4 @@
+import AccountOne22A from '../account22a/AccountOne22A';
 import { MODE } from '../api';
 import { signInDestination } from '../../experience/journey/journey.logic.mjs';
 import useLoginCinematic from './login/useLoginCinematic';
@@ -192,6 +193,21 @@ function MemberArea() {
     finally { logoutLock.current = false; if (live.current) setLoggingOut(false); }
   }
   const openOrder = id => go('orders', { ...(view === 'orders' ? Object.fromEntries(params) : {}), view: 'orders', order: id });
+  // DTH-ONE-22A:MEMBER:START
+  // Existing fetch/auth/order handlers above stay authoritative. New layout only consumes them.
+  if (params.get('account') !== 'classic') {
+    const member22A = { store, view, orderId, page, search, draft, setDraft, records, error,
+      loggingOut, signOut, exitError, go, openOrder, heading,
+      retry: () => setRetry(n => n + 1), onDelete: () => setRemove(true) };
+    return <>
+      <AccountOne22A member={member22A} orderDetail={orderId
+        ? <OrderDetail key={orderId} id={orderId} onBack={() => {
+            const next = new URLSearchParams(params); next.delete('order'); setParams(next);
+          }} /> : null} />
+      {remove && <DeleteDialog onClose={() => setRemove(false)} />}
+    </>;
+  }
+  // DTH-ONE-22A:MEMBER:END
   return <div className={s.memberLayout}>
     <aside className={s.sidebar}>
       {/* Step16: keep the member navigation quiet; the auth illustration is unchanged. */}
@@ -227,7 +243,7 @@ function MemberArea() {
 function AccountContent() {
   const store = useStore();
   useEffect(() => { const previous = document.title; document.title = 'Account — DTH Parts Studio'; return () => { document.title = previous; }; }, []);
-  return <section className={`dth-container ${s.root}`}>
+  return <section className={`dth-container ${s.root}`} data-account-shell={store.user ? 'one' : undefined}>
     {FLOW && !store.user && <div className="dth-flow-note" role="note"><strong>UI rehearsal — not real authentication.</strong><br />Sign in: <code>demo@dth.test</code> · <code>DthFlow2026!</code><br />To try registration, use another fictitious <code>@dth.test</code> email and the same published password. Do not enter real credentials.</div>}
     {store.authLoading ? <Busy label="Checking your session…" /> : store.authError ? <div className={s.preview}><h1>Session unavailable.</h1><Notice error>{store.authError}</Notice><button className={s.primary} onClick={store.retrySession}>Try again</button></div> : PREVIEW ? <div className={s.preview}><h1>Your account.</h1><p>Accounts and saved orders are available in API mode.</p><Link className={s.primary} to="/shop">Explore parts<Icon name="arrow" /></Link></div> : store.user ? <MemberArea key={store.user.id} /> : <AuthForm />}
   </section>;

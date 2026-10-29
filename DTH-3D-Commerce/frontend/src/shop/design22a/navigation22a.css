@@ -1,0 +1,39 @@
+/* Specific to the ONE shell; outranks old route-header treatments without touching their content. */
+html[data-dth-store] .dth-store header.dth-header.dth-one-header{position:sticky;top:0;z-index:40;display:grid;grid-template-columns:minmax(150px,1fr) auto minmax(230px,1fr);align-items:center;gap:28px;width:100%;max-width:none;min-height:96px;margin:0 auto;padding:20px 41px;border:0;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:blur(16px);color:var(--one-ink);font-family:var(--one-font);line-height:1.4;isolation:isolate}
+html[data-dth-store] .dth-store header.dth-header.dth-one-header::before{content:"";position:absolute;inset:8px 16px;z-index:-1;border:1px solid #c9d5e4b8;border-radius:15px;background:linear-gradient(105deg,#fffffff5,#f8fbfff0);box-shadow:0 8px 34px #142b4410,0 1px 0 #fff inset;pointer-events:none}
+html[data-dth-store] .dth-store .dth-one-header *{box-sizing:border-box;font-family:var(--one-font)}
+html[data-dth-store] .dth-store .dth-one-header a{color:var(--one-ink);text-decoration:none}
+.dth-one-header .one-brand{min-height:44px;display:inline-flex;align-items:center;gap:12px;width:max-content;line-height:1;font-size:29px;font-weight:800;letter-spacing:-1.5px}
+.dth-one-header .one-brand-mark{display:flex;gap:4px;align-items:center;width:31px;height:36px;transform:skewX(-22deg);margin-left:5px;margin-right:3px;flex:none}.one-brand-mark>i{display:block;height:32px;width:6px;background:#439abc}.one-brand-mark>i:nth-child(2){background:#55a8c7}.one-brand-mark>i:nth-child(3){background:#82bfd4}
+.dth-one-header .one-brand small{display:block;font-size:7px;line-height:1.6;letter-spacing:2.8px;margin-top:5px;font-weight:750;color:#456275}
+.dth-one-header .one-nav{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;isolation:isolate}
+html[data-dth-store] .dth-store .dth-one-header .one-nav>a{position:relative;display:flex;align-items:center;justify-content:center;min-height:48px;padding:10px 18px;font-size:14px;font-weight:650;letter-spacing:-.015em;color:#52677b;border-radius:8px;transition:color .18s ease,background .18s ease}
+html[data-dth-store] .dth-store .dth-one-header .one-nav>a:is(:hover,:focus-visible){color:#1645ad;background:#2c6be809}
+html[data-dth-store] .dth-store .dth-one-header .one-nav>a[aria-current=page]{color:#123664;font-weight:800}
+.one-nav-trace{position:absolute;top:0;left:0;height:2px;border-radius:3px;background:linear-gradient(90deg,#2866ec,#74cfe6);pointer-events:none;width:0;opacity:0;z-index:1}
+.dth-one-header .one-header-tools{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+html[data-dth-store] .dth-store .dth-one-header :is(button,.one-icon-action){display:inline-flex;align-items:center;justify-content:center;min-height:44px;border:1px solid #c9d7e6a6;border-radius:9px;background:#ffffff80;color:#234662;box-shadow:none;font-size:12px;font-weight:650;cursor:pointer;padding:9px 11px;transition:background .18s,border-color .18s,box-shadow .18s}
+html[data-dth-store] .dth-store .dth-one-header :is(button,.one-icon-action):hover:not(:disabled){background:#eff6ff;border-color:#8eb5e6;box-shadow:0 3px 12px #275acd0a}
+html[data-dth-store] .dth-store .dth-one-header :is(button,.one-icon-action):active:not(:disabled){background:#e4eeff}
+.dth-one-header .one-vehicle{gap:9px;white-space:nowrap}
+.dth-one-header .one-vehicle span{max-width:155px;overflow:hidden;text-overflow:ellipsis}
+.dth-one-header .one-vehicle i{display:block;width:5px;height:5px;border:solid #5883af;border-width:0 1px 1px 0;transform:rotate(45deg);margin-left:6px;margin-top:-4px}
+.dth-one-header svg{width:19px;height:19px;flex:none}
+.dth-one-header .one-icon-action{min-width:44px}
+.dth-one-header .one-bag{gap:8px}
+.dth-one-header .one-bag>span{min-width:20px;height:20px;padding-inline:5px;display:grid;place-items:center;border-radius:20px;background:var(--one-blue);color:white;font-size:10px;font-variant-numeric:tabular-nums}
+html[data-dth-store] .dth-store .dth-one-header .one-menu{display:none}
+html[data-dth-store] .dth-store .dth-one-header :is(a,button):focus-visible{outline:2px solid var(--one-focus);outline-offset:4px}
+html[data-dth-store] .dth-store .dth-one-header button:disabled{opacity:.55;cursor:not-allowed}
+/* A unified, restrained footer; the project disclosures are retained. */
+html[data-dth-store] .dth-store:has(.dth-one-header) footer.dth-footer{font-family:var(--one-font);background:#eff4f8;color:#587084;border-top:1px solid #d2dfe9;padding:35px max(24px,4vw) 26px}
+html[data-dth-store] .dth-store:has(.dth-one-header) .dth-footer-brand{color:#1d3b52;font-size:26px}
+html[data-dth-store] .dth-store:has(.dth-one-header) .dth-footer>p{color:#5c7083;font-size:12px;line-height:1.6}
+html[data-dth-store] .dth-store:has(.dth-one-header) .dth-footer>div{border-color:#cedce6;color:#5e7286;font-size:11px;margin-top:25px;padding-top:20px}
+@media(max-width:1150px){html[data-dth-store] .dth-store header.dth-header.dth-one-header{grid-template-columns:auto 1fr auto;gap:14px;padding-inline:33px}.dth-one-header .one-nav{gap:0}html[data-dth-store] .dth-store .dth-one-header .one-nav>a{padding-inline:12px}.dth-one-header .one-vehicle span{max-width:100px}.dth-one-header .one-header-tools{gap:6px}.dth-one-header .one-account-link{display:none!important}}
+@media(max-width:850px) and (min-width:721px){.dth-one-header .one-vehicle span{display:none}.dth-one-header .one-vehicle i{display:none}.dth-one-header .one-brand{font-size:26px}.dth-one-header .one-brand-mark{font-size:34px}}
+@media(max-width:720px){html[data-dth-store] .dth-store header.dth-header.dth-one-header{grid-template-columns:1fr auto;min-height:86px;gap:10px;top:0;width:100%;padding:18px 24px;margin:0 auto;border-radius:0}.dth-one-header .one-brand{font-size:25px;gap:10px}.dth-one-header .one-brand-mark{font-size:33px}.dth-one-header .one-brand small{font-size:6px;letter-spacing:2.3px}.dth-one-header .one-vehicle span,.dth-one-header .one-vehicle i{display:none}.dth-one-header .one-header-tools{grid-column:2;grid-row:1;gap:6px}.dth-one-header .one-nav{display:none;grid-column:1/-1;grid-row:2;justify-content:stretch;border-top:1px solid #d9e4ec;padding-top:7px}.dth-one-header[data-menu-open=true] .one-nav{display:flex}.dth-one-header .one-nav>a{flex:1;padding-inline:8px!important;min-width:0;font-size:13px!important}html[data-dth-store] .dth-store .dth-one-header .one-menu{display:inline-flex;padding:9px;min-width:44px}.dth-one-header .one-bag>span{font-size:10px}.dth-one-header .one-vehicle{min-width:44px}.dth-one-header .one-nav-trace{height:2px}}
+@media(max-width:360px){.dth-one-header .one-brand small{display:none}.dth-one-header .one-header-tools{gap:4px}html[data-dth-store] .dth-store .dth-one-header :is(button,.one-icon-action){padding-inline:8px}.dth-one-header .one-brand{gap:6px;font-size:23px}}
+@media(prefers-reduced-motion:reduce){.dth-one-header *{transition:none!important;animation:none!important}}
+
+@media(max-width:720px){html[data-dth-store] .dth-store header.dth-header.dth-one-header::before{inset:8px 10px;border-radius:13px}.dth-one-header .one-brand-mark{width:25px;gap:3px;height:32px}.one-brand-mark>i{width:5px;height:28px}}

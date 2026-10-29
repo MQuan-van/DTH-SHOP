@@ -11,7 +11,8 @@ import { inspectProductGeometry } from '../product/3d/profileTransform.mjs';
 import { presentationFromBounds21 } from '../presentation21/presentationMath21.mjs';
 import { getPresentation21, defaultPresentation21, isPresentationModel21 } from '../../../../shared/productPresentation21.mjs';
 import { STORY214, quality214 } from './story214.config.mjs';
-import { camera214 } from './story214.logic.mjs';
+// DTH21.5: vertical travel uses camera-up, not world-X.
+import { verticalCamera215, verticalPlacement215 } from './verticalMotion215.mjs';
 import { createByteCache214, disposeStoryAsset214 } from './byteCache214.mjs';
 
 class StoryBoundary214 extends Component {
@@ -44,7 +45,7 @@ function CameraRig214({clock,settings,motion,rig}) {
   useEffect(()=>{const update=()=>{if(!document.hidden)invalidate();};document.addEventListener('visibilitychange',update);invalidate();return()=>document.removeEventListener('visibilitychange',update);},[invalidate]);
   useFrame(()=>{
     const frame=clock.read();if(frame.left<0)return;
-    const pose=camera214(frame,settings[frame.left],settings[frame.right],size.width,size.height,motion);
+    const pose=verticalCamera215(frame,settings[frame.left],settings[frame.right],size.width,size.height,motion);
     rig.current=pose;camera.up.set(0,1,0);camera.position.fromArray(pose.position);camera.lookAt(0,0,0);camera.updateMatrixWorld();
   },-2);
   return null;
@@ -75,11 +76,11 @@ function Asset214({product,index,settings,cache,limits,clock,rig,onStatus}) {
   useEffect(()=>{invalidate();},[fit,invalidate]);
   useFrame(()=>{
     const group=outer.current,pose=rig.current;if(!group||!pose)return;
-    const f=clock.read(),left=index===f.left,right=index===f.right&&f.right!==f.left;
-    group.visible=left?(f.mix<.9999):right&&f.mix>.0001;if(!group.visible)return;
-    const travel=left?pose.outgoing:pose.incoming,weight=left?1-f.mix:f.mix;
-    group.position.set(pose.right[0]*travel,.12*(1-weight),pose.right[2]*travel);
-    group.scale.setScalar(.94+.06*weight);
+    const placement = verticalPlacement215(clock.read(), index, pose);
+    group.visible = placement.visible;
+    if (!group.visible) return;
+    group.position.fromArray(placement.position);
+    group.scale.setScalar(placement.scale);
   },-1);
   if(!owned||!fit)return null;
   return <group ref={outer} visible={false}><group scale={fit.scale} rotation={fit.rotation} position={fit.center}>

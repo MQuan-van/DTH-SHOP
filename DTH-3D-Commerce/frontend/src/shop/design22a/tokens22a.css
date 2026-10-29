@@ -1,0 +1,4 @@
+/* One font request for the shared shell + Account. Existing brand/logo assets remain unchanged.
+   No font binary is distributed. If offline, the metric-friendly local fallbacks stay readable. */
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;650;700;750;800&display=swap');
+:root{--one-font:'Manrope','Segoe UI',Arial,sans-serif;--one-paper:#f6f9fc;--one-ink:#162a3d;--one-muted:#596d7f;--one-blue:#245bdf;--one-blue-dark:#1746b9;--one-cyan:#69c9e8;--one-line:#cfdae4;--one-focus:#184fc6;--one-ease:cubic-bezier(.22,1,.36,1)}

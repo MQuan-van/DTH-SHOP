@@ -196,7 +196,7 @@ export function StoryHero({ product }) {
   </>;
 }
 
-export default function StoryPage() {
+export function LegacyStoryPage22S() {
   const { data } = useStore();
   const product = selectStoryProduct(data.products);
   return <StoryEditorial>{product
@@ -207,3 +207,6 @@ export default function StoryPage() {
       </div></section>
   }</StoryEditorial>;
 }
+
+// DTH_STORY22S_INTEGRATION_V1
+export { default } from '../story22s/StoryReborn22S.jsx';

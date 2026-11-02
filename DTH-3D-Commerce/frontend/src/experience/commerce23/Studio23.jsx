@@ -12,6 +12,7 @@ import StoryPhoto22S from '../story22s/StoryPhoto22S.jsx';
 import StudioIcon from '../studio22h2/StudioIcons22H2.jsx';
 import { CATEGORIES22H2, catalog22H2, playable22H2, choose22H2, bindProduct22H2, gallery22H2, categoryLabel22H2, href22H2, swatch22H2, createSignal22H2 } from '../studio22h2/studio22h2.logic.mjs';
 import { useShell22H2, useStageLease22H2, useStudioEffects22H2, useProductEntrance22H2 } from '../studio22h2/useStudioEffects22H2.js';
+import { filterStudioSuspension22H2 } from '../studio22h2/studioSuspensionCatalog.mjs';
 import '../studio22h2/studio22h2.css';
 import '../story22s/story22s.css';
 import './commerce23.css';
@@ -34,7 +35,7 @@ export default function Studio23({ config, version = 0, binding }) {
   const store = useStore(), outlet = useOutletContext(), policy = useExperiencePolicy(), covered = useIntroCover(), startup = useStartupAllowed();
   const root = useRef(null), hero = useRef(null), garage = useRef(null), sceneLayer = useRef(null), api = useRef(null), inspectButton = useRef(null);
   const signal = useMemo(createSignal22H2, []); useSceneInputGate(signal); useShell22H2(root);
-  const catalog = useMemo(() => catalog22H2(store.data?.products), [store.data?.products]);
+  const catalog = useMemo(() => filterStudioSuspension22H2(catalog22H2(store.data?.products)), [store.data?.products]);
   const candidates = useMemo(() => playable22H2(catalog), [catalog]);
   const [selected, setSelected] = useState(''), [mode, setMode] = useState('overview'), [readyKey, setReadyKey] = useState(''), [pickState, setPickState] = useState('');
   const record = choose22H2(candidates, selected, config?.productId);

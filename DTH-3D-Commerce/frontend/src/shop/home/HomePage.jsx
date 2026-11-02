@@ -13,7 +13,7 @@ import FitmentSection from './sections/Fitment/FitmentSection.jsx';
 import './home.tokens.css';
 const CinematicHome = lazy(() => import('../../experience/home/CinematicHome'));
 // DTH Studio Atelier 22H.1
-const StudioAtelier22H = lazy(() => import('../../experience/studio22h2/StudioAtelier22H2.jsx'));
+const StudioAtelier22H = lazy(() => import('../../experience/commerce23/Studio23.jsx'));
 const SECTION_COMPONENTS = { hero: HeroSection, workflow: WorkflowSection, categories: CategoriesSection, featured: FeaturedSection, fitment: FitmentSection };
 function LegacyHomePage() {
   const { data } = useStore();

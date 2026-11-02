@@ -1,3 +1,4 @@
+import DiscoveryHeader23 from '../../experience/commerce23/DiscoveryHeader23';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 // DTH-STORY214 — presentation only; existing store, API and cart retained.
 import { isStoryView214, setShopView214 } from '../story214/story214.logic.mjs';
@@ -6,8 +7,8 @@ import { useStore } from '../useStore';
 import { useExperiencePolicy } from '../../experience/interaction/useExperiencePolicy';
 import { getPriceCeiling, readShopQuery, selectShopProducts, patchShopQuery, resetShopFilters } from '../catalog/catalog.logic.mjs';
 import { MODES, LAYOUTS, readDiscovery, changeMode, changeLayout, changeSpotlight, discoveryHref, selectSpotlight, buildProducts, nvxChoices, buildContextKey, sanitizeDraft, pinProduct } from './discovery.logic.mjs';
-import ExploreExperience from './ExploreExperience';
-import BuildExperience from './BuildExperience';
+import { ExploreRedirect23 as ExploreExperience } from '../../experience/commerce23/DiscoveryHeader23';
+import BuildExperience from '../../experience/commerce23/BuildExperience23';
 import '../ux17/commerce17.css';
 import './discovery174.css';
 const CatalogPage = lazy(() => import('../catalog/ShopPage'));
@@ -51,17 +52,9 @@ export default function DiscoveryPage() {
   }
   function onRemove(id) { setDraft(previous => previous.key === key ? { key, ids: previous.ids.filter(item => item !== id) } : { key, ids: [] }); }
   return <div className="d174-root" data-discovery-shell data-mode={state.mode} data-layout={state.layout} data-motion={motion ? 'on' : 'off'}>
-    <header className="d174-mode-bar" ref={modeNav}>
-      <Link className="d174-home-mark" to="/">DTH <span>PARTS ATELIER</span></Link>
-      <nav className="d174-mode-nav" aria-label="Shop experience">{MODES.map(mode => <Link key={mode} to={discoveryHref(changeMode(params, mode))} aria-current={state.mode === mode ? 'page' : undefined}>
-        {mode[0].toUpperCase() + mode.slice(1)}<span aria-hidden="true">{mode === 'explore' ? '01' : mode === 'shop' ? '02' : '03'}</span>
-      </Link>)}</nav>
-      {state.mode !== 'shop' ? <button className="d174-motion-toggle" type="button" aria-pressed={motion} disabled={policy.reduced} onClick={() => setPaused(value => !value)}>{policy.reduced ? 'Reduced motion' : motion ? 'Pause motion' : 'Play motion'}</button>
-        : <div className="d174-layouts" role="group" aria-label="Shop view">
-            <button type="button" aria-pressed={storyView214} onClick={() => setParams(previous => setShopView214(previous, 'story'))}>Story</button>
-            <button type="button" aria-pressed={!storyView214} onClick={() => setParams(previous => setShopView214(previous, 'grid'))}>Grid</button>
-          </div>}
-    </header>
+    {/* DTH-SPATIAL23:DISCOVERY */}
+    <DiscoveryHeader23 mode={state.mode} story={storyView214}
+      onView={view => setParams(previous => setShopView214(previous, view))} />
     {state.mode === 'shop' ? <Suspense fallback={<div className="d174-empty" role="status">Opening catalog…</div>}>{storyView214 ? <StoryShopPage214 /> : <CatalogPage />}</Suspense>
       : state.mode === 'explore' ? <ExploreExperience products={products} selected={selected} motion={motion} policy={policy} fromShop={fromShop}
         onSelect={onSelect} onMode={onMode} onCategory={onCategory} onBuild={onBuild} onChooseVehicle={chooseVehicle} />

@@ -4,7 +4,7 @@ import { useStore } from '../useStore';
 import { MODE, studioRequest } from '../api';
 import { useSupport } from './SupportProvider';
 import ChatThread from './ChatThread';
-export default function SupportWidget(){
+export function LegacySupportWidget232(){
   const store=useStore(),support=useSupport(),location=useLocation();
   const [open,setOpen]=useState(false),[thread,setThread]=useState(''),[error,setError]=useState(''),[retry,setRetry]=useState(0);
   const close=useRef(null),trigger=useRef(null);
@@ -26,3 +26,6 @@ export default function SupportWidget(){
     <button ref={trigger} className="dth-support-launcher" aria-expanded={open} aria-label={open?'Hide support':'Open support'} onClick={()=>open?hide():setOpen(true)}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M20 11.5a8 8 0 0 1-8 8H5l-3 2v-10a9 9 0 0 1 18 0Z"/><path d="M7 10h9M7 14h6"/></svg><span>Support</span>{unread>0&&<b>{unread>99?'99+':unread}</b>}</button>
   </div>;
 }
+
+// DTH-REFINEMENT232:SUPPORT
+export { default } from '../../experience/refinement232/Support232';

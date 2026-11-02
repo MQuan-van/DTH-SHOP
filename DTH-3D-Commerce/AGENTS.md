@@ -64,3 +64,32 @@ scripts or audits merely because the instruction file was read.
 - Run logic tests, installer conflict/rollback tests, frontend build, then actual browser/GLB checks. Syntax checks and static layout screenshots are not runtime/FPS proof.
 - Extra Ultra shader, surface-detail lens and cross-route shared WebGL transitions are NOT shipped in 22A.1. Add only after benchmarking this baseline.
 <!-- DTH-ONE-22A:END -->
+
+<!-- DTH-SPATIAL23:START -->
+## Spatial Commerce 23.1 — evidence before decoration
+- Entry modules: frontend/src/experience/commerce23. Read docs/DTH-SPATIAL23-DESIGN.md and docs/DTH-SPATIAL23-SKILLS.md.
+- Existing auth, garage revision/identity guards, orders, filters, prices, cart and Node/Mongo API contracts remain authoritative. This step changes presentation adapters only.
+- Build uses the existing page-only shortlist; do not describe it as an account-saved configuration. No physical compatibility or fitting certification is implied.
+- A hotspot exists ONLY when a profile bound to the exact vehicle ID, asset URL, GLB SHA-256, orientation and normalization space supplies it. Never infer a semantic part from an arbitrary triangle or put V3 geometry under V1/V2.
+- Local admin authoring marks the real model and exports JSON. It does not write to the API. Profiles live in public/models/nvx/focus and must be re-authored when model bytes change.
+- Native wheel scrolling, bounded target/framing, one camera owner, input/dialog gates, interrupted transitions and finite render work are requirements, not optional polish.
+- Keep source GLB geometry, materials, limits and Admin presentation untouched. Visual replacement/mounting needs separately verified assets and is NOT shipped here.
+- Navigation has one shared non-floating surface, with dark/light contrast variants. Do not layer older per-page header overrides on top of it.
+- Explore is retired via a compatible redirect. Shop filters, Showcase/Catalog choice and existing /shop?mode=build links stay valid.
+- Read the relevant installed frontend-design, UI/UX, GSAP and Three.js/3DViz guidance. A skill read is not a script run or proof of visual quality.
+- Test code/math/installer independently from actual React/WebGL, GLB and FPS. Record unavailable checks honestly. Never use a placeholder render to certify the production scene.
+<!-- DTH-SPATIAL23:END -->
+
+<!-- DTH-REFINEMENT232:START -->
+## Motion Atelier 23.2 — recovered package
+- Scope: frontend/src/experience/refinement232. The failed previous link was not a shipped artifact; this is the reconstructed package.
+- Keep auth submit/session handlers, original ChatThread messaging, catalog, shopping cart, GLB and hotspot mapping unchanged.
+- Read applicable frontend-design, emil-design-eng, GSAP React/performance and UI guidelines; do not equate read guidance to a completed visual audit.
+- Build confirmation opens only after the parent shortlist contains the requested product, in the same account/vehicle context. A failure timer may report missing acknowledgement, never fabricate success.
+- Shortlists are page-local and are not orders or account-saved configurations. Replacing one category must be described as replacement.
+- Dialogs are dismissible, centered for Build, focus-contained, keyboard usable and never auto-dismiss a decision. Preserve reduced motion and close on identity changes.
+- Admin Support goes to Inbox; customer Support uses the existing ChatThread and API. No fake online staff, AI replies, or fake message sending.
+- Login backdrop uses existing photography. Form handlers and identity-epoch guards stay authoritative; no authentication timers.
+- Hide only the site footer on Build. Keep build total and honest demo disclosure. Do not hide error toasts globally.
+- Report pure tests, installer tests, static layouts, JSX syntax, real React/GLB and production build separately.
+<!-- DTH-REFINEMENT232:END -->

@@ -1,4 +1,4 @@
-import DTHNavigation22A from './design22a/DTHNavigation22A';
+import DTHNavigation22A from '../experience/commerce23/DTHNavigation23';
 // DTH ACCESS181 — login gate before storefront catalog rendering.
 import AccessBoundary181 from '../experience/access181/AccessBoundary181';
 import TransitionRoutes from '../experience/journey/TransitionRoutes';

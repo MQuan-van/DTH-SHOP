@@ -209,4 +209,4 @@ export function LegacyStoryPage22S() {
 }
 
 // DTH_STORY22S_INTEGRATION_V1
-export { default } from '../story22s/StoryReborn22S.jsx';
+export { default } from '../commerce23/Story23.jsx';

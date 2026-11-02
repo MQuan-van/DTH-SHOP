@@ -1,0 +1,122 @@
+/* 23.2 rebuild. All selectors scoped; no global button, field or canvas reset. */
+:root{--r232-ease:cubic-bezier(.22,1,.36,1)}
+html[data-build-workspace232=true] .dth-store>footer.dth-footer{display:none!important}
+html[data-dth23] .c23-header .r232-account-access{display:inline-flex;align-items:center;gap:10px;min-height:46px;padding:5px 12px 5px 5px;border:1px solid #6f9caf38;border-radius:24px;text-decoration:none;color:inherit;font:650 13px/1.3 var(--c23-font);transition:background .18s,border-color .18s}
+.c23-header .r232-account-access:hover{background:#69c7e112;border-color:#77b5ce80}
+.c23-header .r232-account-access[aria-current=page]{border-color:#3b94bf99;background:#53b6dd14}
+.r232-member-avatar{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:#87d1e924;color:inherit;font-weight:750;flex:none}
+.r232-member-avatar svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.5}
+html[data-dth23] .aa22 .aa22-identity{gap:12px;align-items:center;min-height:64px}
+html[data-dth23] .aa22 .aa22-avatar{border-radius:12px;box-shadow:0 6px 20px #337aa116;background:linear-gradient(135deg,#ecf8fd,#c7e7f2);color:#19445f}
+html[data-dth23] .aa22 .aa22-identity strong{font-size:17px;letter-spacing:-.035em}
+html[data-dth23] .aa22 .aa22-identity span[title]{font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.c23-build[data-refinement232] .c23-parts-panel{padding:28px 22px;background:linear-gradient(150deg,#102e3d9c,#061b2780)}
+.c23-build[data-refinement232] .c23-panel-title>span{font-size:22px;letter-spacing:-.035em}
+.c23-build[data-refinement232] .c23-part-row{display:grid;grid-template-columns:88px minmax(0,1fr);column-gap:18px;align-items:start;margin:12px 0;padding:18px 0 22px;border-bottom:1px solid #8db2c827;position:relative}
+.c23-build[data-refinement232] .c23-part-row[data-pinned=true]{border-color:#80cae877}
+.c23-build[data-refinement232] .c23-part-image{width:88px;height:100px;display:grid;place-items:center;overflow:hidden;border-radius:10px;border:1px solid #a0c4d424;background:radial-gradient(ellipse at 50% 35%,#355969,#15303f 75%);padding:8px;transition:box-shadow .2s,transform .2s}
+.c23-build[data-refinement232] .c23-part-image:hover{box-shadow:0 8px 25px #0003;transform:translateY(-2px)}
+.c23-build[data-refinement232] .c23-part-image img{width:100%;height:100%;object-fit:contain}
+.c23-build[data-refinement232] .c23-part-copy{min-width:0;display:flex;flex-direction:column;align-items:stretch}
+.c23-build[data-refinement232] .c23-part-copy h3{margin:0 0 7px;font-size:16px;line-height:1.35;letter-spacing:-.025em;color:#eef7fa;overflow-wrap:anywhere}
+.c23-build[data-refinement232] .c23-part-copy>p{margin:0 0 10px;font-size:12px;line-height:1.5;color:#b1c9d4}
+.c23-build[data-refinement232] .c23-part-copy>strong{font-size:17px;font-variant-numeric:tabular-nums;line-height:1.4;color:#f5fbff}
+.c23-build[data-refinement232] .r232-part-actions{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(62px,.75fr);gap:8px;width:100%;margin-top:15px;align-items:stretch}
+.c23-build[data-refinement232] .r232-part-actions :is(button,a){display:flex;align-items:center;justify-content:center;min-width:0;min-height:44px;height:auto;padding:9px 10px;margin:0;border-radius:6px;border:1px solid #8eb7ca55;text-align:center;font:650 12px/1.35 var(--c23-font);text-decoration:none;white-space:normal;box-sizing:border-box;color:#d9eef7;background:#8cb7cb0a;transition:background .18s,border-color .18s,transform .12s}
+.c23-build[data-refinement232] .r232-part-actions button{background:#e5f6ff;color:#11394e;border-color:#d5edfa}
+.c23-build[data-refinement232] .c23-part-row[data-pinned=true] .r232-part-actions button{background:#80d3b51c;color:#b0ebd4;border-color:#8dd6be55}
+.c23-build[data-refinement232] .r232-part-actions :is(button,a):hover:not(:disabled){border-color:#a5e5ff;filter:brightness(1.08)}
+.c23-build[data-refinement232] .r232-part-actions :is(button,a):active:not(:disabled){transform:scale(.98)}
+.c23-build[data-refinement232] .r232-part-actions button:disabled{opacity:.55;cursor:wait}
+.r232-build-error{padding:12px 16px;border:1px solid #d8a777;color:#ffe0bf;font-size:14px}
+.r232-dialog{box-sizing:border-box;inset:0;margin:auto;width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:28px;border:1px solid #779aa73f;border-radius:18px;overflow:auto;background:linear-gradient(145deg,#173140,#0b202e 80%);color:#eff8fc;font:400 15px/1.55 var(--one-font,'Segoe UI',sans-serif);box-shadow:0 28px 110px #0008;color-scheme:dark}
+.r232-dialog:not([open]){display:none}
+.r232-dialog *{box-sizing:border-box}
+.r232-dialog::backdrop{background:#020e19b8;backdrop-filter:blur(6px)}
+.r232-dialog .r232-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0 0 20px;margin:0;border:0;border-bottom:1px solid #a0c8d629;background:none}
+.r232-dialog .r232-dialog-head h2{font-size:24px;font-weight:650;line-height:1.2;letter-spacing:-.04em;margin:0;color:inherit}
+.r232-dialog .r232-close{display:grid;place-items:center;width:44px;min-width:44px;height:44px;min-height:44px;padding:11px;border-radius:50%;border:1px solid #adcbd633;background:transparent;color:inherit;cursor:pointer;transition:background .18s}
+.r232-close svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5}
+.r232-dialog .r232-close:hover{background:#c0e9f11a}
+.r232-confirm-product{display:grid;grid-template-columns:140px minmax(0,1fr);align-items:center;gap:24px;margin:25px 0}
+.r232-confirm-art{height:158px;display:grid;place-items:center;border-radius:12px;background:radial-gradient(ellipse at 50% 40%,#426371,#193442 80%);padding:12px;overflow:hidden}
+.r232-confirm-art img{height:100%;width:100%;object-fit:contain}
+.r232-confirm-product h3{font-size:24px;line-height:1.2;letter-spacing:-.035em;margin:10px 0 8px;overflow-wrap:anywhere}
+.r232-confirm-product p{font-size:13px;color:#b3cbd6;margin:0 0 12px}
+.r232-confirm-product strong{font-size:18px;font-variant-numeric:tabular-nums}
+.r232-success{display:flex;gap:6px;align-items:center;font-size:12px;color:#99dfc4}
+.r232-success svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.5}
+.r232-replacement{padding:12px 14px;margin:12px 0;border-radius:8px;background:#c6e3ef09;font-size:13px;color:#c3d9e4}
+.r232-fine{font-size:12px;line-height:1.7;color:#aac3d1;margin:15px 0 23px}
+.r232-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.r232-dialog .r232-action,.r232-support-state .r232-action{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;min-height:46px;border-radius:7px;border:1px solid #d9f2ff;background:#e4f5ff;color:#123147;font:650 13px/1.4 var(--one-font,'Segoe UI',sans-serif);cursor:pointer;text-decoration:none;text-align:center;transition:background .18s,transform .12s}
+.r232-dialog .r232-action:hover{background:#fff}
+.r232-dialog .r232-action:active{transform:scale(.98)}
+.r232-dialog .r232-secondary{background:transparent;color:#d1eaf7;border-color:#94bbcd66}
+.r232-dialog .r232-secondary:hover{background:#8ecde41a}
+.r232-dialog :is(button,a,input,textarea):focus-visible,.r232-account-access:focus-visible{outline:2px solid #80d6ff;outline-offset:3px}
+/* Client opens directly into ChatThread; admin opens the actual Inbox route. */
+.dth-support-widget.r232-support-widget{right:max(20px,env(safe-area-inset-right));bottom:max(20px,env(safe-area-inset-bottom));z-index:70}
+.r232-support-widget .r232-support-trigger{display:flex;align-items:center;gap:9px;min-height:48px;padding:11px 17px;border:1px solid #65bbdf66;border-radius:15px;background:#12374b;color:#e9f8ff;box-shadow:0 10px 32px #00162440;font:650 13px/1.4 var(--one-font,'Segoe UI',sans-serif);cursor:pointer;text-decoration:none;transition:box-shadow .2s,background .2s}
+.r232-support-trigger svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.5}
+.r232-support-trigger b{font-size:11px;border-radius:20px;padding:2px 7px;background:#e3f7ff;color:#12374b}
+.r232-support-trigger:hover{background:#1a485e;box-shadow:0 10px 38px #00162460}
+.r232-dialog.r232-support-panel.dth-support-panel{position:fixed;inset:0 20px 20px auto;margin:auto 0 0;width:min(440px,calc(100vw - 32px));height:min(690px,calc(100dvh - 40px));max-height:calc(100dvh - 40px);display:flex;flex-direction:column;padding:0;transform-origin:bottom right;background:#0c2433;border-radius:18px;color:#eef8fc;animation:none;overflow:hidden}
+.r232-support-panel.r232-dialog>.r232-dialog-head{padding:16px 19px;flex:none}
+.r232-support-panel .r232-dialog-head h2{font-size:21px}
+.r232-support-panel.r232-dialog>.dth-chat{flex:1;min-height:0;overflow:hidden;color:#19364b;font-family:var(--one-font,'Segoe UI',sans-serif)}
+.r232-support-panel .dth-chat-messages{background:#f3f8fb;min-height:100px;padding:20px 18px}
+.r232-support-panel .dth-chat-connection{background:#eef6fa;padding:10px 17px;font-size:11px}
+.r232-support-panel .dth-chat-bubble{border-radius:14px 14px 14px 4px;background:white}
+.r232-support-panel .dth-chat-message[data-own=true] .dth-chat-bubble{background:#123e5b;border-color:#123e5b;border-radius:14px 14px 4px 14px;color:white}
+.r232-support-panel .dth-chat-composer{padding:12px;background:#fff}
+.r232-support-panel .dth-chat-composer textarea{min-height:70px;resize:none;font-size:14px;border-radius:10px}
+.r232-support-panel .dth-chat-empty-icon{display:none}
+.r232-support-panel .dth-chat-empty{padding:24px 12px}
+.r232-support-panel .dth-chat-empty h3{font-size:22px}
+.r232-support-panel .dth-chat-actions small{display:none}
+.r232-support-panel .dth-chat-send{margin-left:auto;background:#154b70;border-color:#154b70;min-height:42px}
+.r232-chat-topics{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.r232-support-panel .r232-chat-topics button{font-size:11px;min-height:32px;padding:6px 9px;border-radius:6px;border-color:#c9dce6;background:#f5fafc}
+.r232-support-state{flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:32px;gap:16px;background:linear-gradient(140deg,#173c50,#0b2231);color:#c7e1ed}
+.r232-support-state>svg{width:38px;height:38px;fill:none;stroke:#81c8e6;stroke-width:1.25}
+.r232-support-state h3{font-size:29px;line-height:1.15;letter-spacing:-.04em;margin:0;color:white}
+.r232-support-state p{font-size:14px;line-height:1.7;margin:0}
+.r232-loading{width:22px;height:22px;border:2px solid #bde4f055;border-top-color:#c1eaff;border-radius:50%;animation:r232-spin .8s linear infinite}
+@keyframes r232-spin{to{transform:rotate(360deg)}}
+/* Existing access submit, registration and session guards are not replaced. */
+.dth-access181[data-access232]{position:relative;isolation:isolate;min-height:100svh;background:#071e2c!important;overflow:hidden;color:#e9f6fc;font-family:var(--one-font,'Segoe UI',sans-serif)}
+.dth-access181[data-access232] .dth-access181-atmosphere{display:none}
+.dth-access181[data-access232] .dth-access181-top{position:relative;z-index:2;max-width:1440px;margin:0 auto;padding:25px 4vw;border:0}
+.dth-access181[data-access232] .dth-access181-toplinks>span,.dth-access181[data-access232] .dth-access181-toplinks button>span{display:none}
+.dth-access181[data-access232] .dth-access181-layout{position:relative;z-index:1;display:grid;grid-template-columns:1fr;justify-items:center;align-items:center;min-height:calc(100svh - 150px);max-width:none;gap:0;padding:35px 24px 55px;margin:0;overflow:visible}
+.dth-access181[data-access232] .dth-access181-stage{position:absolute;inset:-130px -30px -100px;min-height:0;height:auto;z-index:-1;border:0;pointer-events:none;display:block!important}
+.dth-access181[data-access232] :is(.dth-access181-stagehead,.dth-access181-statement,.dth-access181-stagetail){display:none!important}
+.r232-access-photo{position:absolute;inset:0;overflow:hidden;background:#071e2c}
+.r232-access-photo .s22-photo,.r232-access-photo img{display:block;width:100%;height:100%;position:absolute;inset:0;object-fit:cover;object-position:56% 50%;filter:saturate(.65) brightness(.72)}
+.r232-access-veil{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,#061d2a0a,#041621b0 80%),linear-gradient(90deg,#04182380,#0a26394a,#04182380)}
+.dth-access181[data-access232] .dth-access181-card{position:relative;width:min(100%,452px);max-width:452px;padding:36px 38px;margin:0;border-radius:16px;background:#f8fcfff2;box-shadow:0 28px 90px #0006,0 1px 0 #fff8 inset;border:1px solid #e3f5ff77;backdrop-filter:blur(18px);color:#143044}
+.dth-access181[data-access232] .dth-access181-cardtop{margin-bottom:22px;justify-content:flex-end}
+.dth-access181[data-access232] .dth-access181-cardtop>span:first-child{display:none}
+.dth-access181[data-access232][data-mode=api] .dth-access181-cardtop{display:none}
+.dth-access181[data-access232] .dth-access181-card h1{font-size:clamp(36px,3.5vw,48px);line-height:1.03;letter-spacing:-.06em;white-space:normal;max-width:340px;margin:0 0 17px}
+.dth-access181[data-access232] .dth-access181-lead{font-size:14px;line-height:1.6;color:#526d80;margin-bottom:26px}
+.dth-access181[data-access232] .dth-access181-field{margin-bottom:18px}
+.dth-access181[data-access232] .dth-access181-field label{font-size:12px;color:#36556a;margin-bottom:7px;font-weight:650}
+.dth-access181[data-access232] .dth-access181-field input{height:48px;background:#fff9;border:1px solid #c8d9e3;border-radius:7px;font-size:15px;padding:12px;color:#17374a;box-shadow:none}
+.dth-access181[data-access232] .dth-access181-field input:focus{border-color:#3d91bf;outline:2px solid #89c6e23b;outline-offset:2px;background:white}
+.dth-access181[data-access232] .dth-access181-password input{padding-right:60px}
+.dth-access181[data-access232] .dth-access181-submit{display:flex;align-items:center;justify-content:center;min-height:48px;width:100%;margin-top:10px;padding:13px 20px;border-radius:7px;border:1px solid #174f6d;background:#154963;color:#fff;font-weight:650;transition:background .18s,box-shadow .18s,transform .12s}
+.dth-access181[data-access232] .dth-access181-submit:hover:not(:disabled){background:#1c6489;box-shadow:0 6px 20px #174d6c2e}
+.dth-access181[data-access232] .dth-access181-submit:active:not(:disabled){transform:scale(.99)}
+.dth-access181[data-access232] .dth-access181-submit>span:last-child:not(:first-child){display:none}
+.dth-access181[data-access232] .dth-access181-switch{font-size:12px;margin-top:22px}
+.dth-access181[data-access232] .dth-access181-fine{font-size:10px;margin-top:24px;padding-top:18px;border-top:1px solid #ccdae3}
+.dth-access181[data-access232] .dth-access181-fine>span{display:none}
+.dth-access181[data-access232] .dth-access181-footer{position:relative;z-index:2;border-top:1px solid #bdd9e329;color:#b7ced8;padding:18px 4vw;margin:0 auto;max-width:1440px}
+@media(min-width:1000px){.c23-build[data-refinement232] .c23-build-workspace[data-has-panel=true]{grid-template-columns:minmax(0,1fr) minmax(350px,27%)}}
+@media(max-width:1050px){.c23-header .r232-member-label{display:none}html[data-dth23] .c23-header .r232-account-access{padding:5px;min-width:44px}.c23-build[data-refinement232] .c23-parts-panel{padding-inline:18px}}
+@media(max-width:600px){.r232-dialog{padding:22px;border-radius:14px}.r232-dialog .r232-dialog-head h2{font-size:22px}.r232-confirm-product{grid-template-columns:95px minmax(0,1fr);gap:16px}.r232-confirm-art{height:120px;padding:8px}.r232-confirm-product h3{font-size:21px}.r232-confirm-actions{grid-template-columns:1fr}.r232-dialog.r232-support-panel.dth-support-panel{inset:10px;margin:auto;width:calc(100vw - 20px);height:calc(100dvh - 20px);max-height:calc(100dvh - 20px)}.dth-support-widget.r232-support-widget{right:12px;bottom:12px}.dth-access181[data-access232] .dth-access181-layout{padding:22px 18px 35px;min-height:calc(100svh - 135px)}.dth-access181[data-access232] .dth-access181-card{padding:28px 24px}.dth-access181[data-access232] .dth-access181-top{padding:20px 24px}.dth-access181[data-access232] .dth-access181-footer>span:nth-child(2){display:none}.r232-access-photo img{object-position:45% 50%}}
+@media(prefers-reduced-motion:reduce){.r232-dialog *,.r232-account-access,.r232-support-trigger,.dth-access181[data-access232] *,.c23-build[data-refinement232] *{animation:none!important;transition:none!important}.r232-access-photo{transform:none!important}}
+
+.r232-dialog.r232-support-panel.dth-support-panel:not([open]){display:none}

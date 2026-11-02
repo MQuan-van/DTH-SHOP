@@ -1,4 +1,4 @@
-import AccountOne22A from '../account22a/AccountOne22A';
+import AccountOne22A from '../../experience/commerce23/Account23';
 import { MODE } from '../api';
 import { signInDestination } from '../../experience/journey/journey.logic.mjs';
 import useLoginCinematic from './login/useLoginCinematic';

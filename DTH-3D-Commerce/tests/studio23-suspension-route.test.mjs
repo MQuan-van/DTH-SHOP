@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { categoryId } from '../shared/categories.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
@@ -11,14 +12,14 @@ import { filterStudioSuspension22H2 } from '../frontend/src/experience/studio22h
 
 const source = relativePath => readFileSync(new URL('../' + relativePath, import.meta.url), 'utf8');
 
-test('The real Home route renders commerce23/Studio23 rather than StudioAtelier22H2', () => {
+test('Home retains commerce23/Studio23 as the precision rollback', () => {
   assert.match(
     source('frontend/src/shop/home/HomePage.jsx'),
     /import\(['"]\.\.\/\.\.\/experience\/commerce23\/Studio23\.jsx['"]\)/
   );
 });
 
-test('Active Studio23 applies Suspension policy before model selection and gallery', () => {
+test('Rollback Studio23 applies Suspension policy before model selection and gallery', () => {
   const jsx = source('frontend/src/experience/commerce23/Studio23.jsx');
   assert.match(jsx, /import\s+\{\s*filterStudioSuspension22H2\s*\}\s+from\s+['"]\.\.\/studio22h2\/studioSuspensionCatalog\.mjs['"]/);
   assert.match(jsx, /const catalog\s*=\s*useMemo\(\(\)\s*=>\s*filterStudioSuspension22H2\(catalog22H2\(store\.data\?\.products\)\)/);
@@ -51,7 +52,7 @@ test('Without an uploaded Suspension, Studio23 does not re-introduce demo models
   const input = products.filter(p => p.id !== 'ohlins-ttx');
   const candidates = playable22H2(filterStudioSuspension22H2(catalog22H2(input)));
   assert.equal(candidates.some(p => p.category === 'suspension'), false);
-  assert.equal(choose22H2(candidates, '', 'apex').category, 'wheels');
+  assert.equal(choose22H2(candidates, '', 'apex').category, 'rims');
   assert.deepEqual(candidates.map(p => p.id), ['wheels-demo', 'brakes-demo', 'exhaust-demo', 'mirror-demo']);
 });
 
@@ -60,8 +61,8 @@ test('Gallery is filtered but all other categories and original catalog stay unc
   const filtered = filterStudioSuspension22H2(catalog22H2(products));
   const gallery = gallery22H2(filtered, 'ohlins-ttx');
   assert.equal(gallery.some(p => p.category === 'suspension' && p.id !== 'ohlins-ttx'), false);
-  for (const category of ['wheels', 'brakes', 'exhausts', 'mirrors']) {
-    assert.equal(filtered.filter(p => p.category === category).length, products.filter(p => p.category === category).length);
+  for (const category of ['rims', 'tires', 'brakes', 'exhausts', 'mirrors']) {
+    assert.equal(filtered.filter(p => p.category === category).length, products.filter(p => categoryId(p.category) === category).length);
   }
   assert.deepEqual(products, copy);
 });

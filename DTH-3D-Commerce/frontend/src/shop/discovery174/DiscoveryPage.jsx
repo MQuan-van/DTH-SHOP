@@ -11,6 +11,7 @@ import { ExploreRedirect23 as ExploreExperience } from '../../experience/commerc
 import BuildExperience from '../../experience/commerce23/BuildExperience23';
 import '../ux17/commerce17.css';
 import './discovery174.css';
+import './premium-shop.css';
 const CatalogPage = lazy(() => import('../catalog/ShopPage'));
 const StoryShopPage214 = lazy(() => import('../story214/ShopStoryPage214.jsx'));
 
@@ -51,7 +52,7 @@ export default function DiscoveryPage() {
     store.setNotice('Build list updated. Your bag has not changed.');
   }
   function onRemove(id) { setDraft(previous => previous.key === key ? { key, ids: previous.ids.filter(item => item !== id) } : { key, ids: [] }); }
-  return <div className="d174-root" data-discovery-shell data-mode={state.mode} data-layout={state.layout} data-motion={motion ? 'on' : 'off'}>
+  return <div className="d174-root p24-discovery" data-discovery-shell data-mode={state.mode} data-layout={state.layout} data-motion={motion ? 'on' : 'off'}>
     {/* DTH-SPATIAL23:DISCOVERY */}
     <DiscoveryHeader23 mode={state.mode} story={storyView214}
       onView={view => setParams(previous => setShopView214(previous, view))} />

@@ -6,10 +6,7 @@ export const PRODUCT_VIEW = Object.freeze({
   radius: 1.35, fov: 36, padding: 1.16, maxDpr: 1.5,
   secondsPerTurn: 32, transitionSeconds: 0.48, timeoutMs: 18000,
 });
-export const CATEGORY_LABELS = Object.freeze({
-  suspension: 'Suspension', wheels: 'Wheels', exhausts: 'Exhausts',
-  mirrors: 'Mirrors', brakes: 'Brakes',
-});
+export { CATEGORY_LABELS } from '../../../../shared/categories.mjs';
 const list = value => Array.isArray(value) ? value : [];
 export const validPrice = value => Number.isSafeInteger(value) && value > 0 && value <= 1000000000;
 export const validAccent = value => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : '#647888';

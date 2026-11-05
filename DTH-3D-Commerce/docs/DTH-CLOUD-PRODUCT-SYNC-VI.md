@@ -133,6 +133,7 @@ Mở `/admin/products/ohlins` và `/` (Studio), kiểm tra Ohlins TTX và các s
 
 ## 8. Kiểm tra an toàn khi trục trặc
 
+- `querySrv ECONNREFUSED` / `queryTxt ECONNREFUSED`: DNS hiện tại không trả lời truy vấn SRV/TXT của Atlas. Ngày 04/11/2026, Node trên PC dùng DNS `127.0.0.1` bị refused; cùng URI ping Atlas thành công qua `1.1.1.1`/`8.8.8.8`. Backend hỗ trợ opt-in `MONGO_DNS_SERVERS=1.1.1.1,8.8.8.8` trong `backend/.env`. Chỉ áp dụng với URI `mongodb+srv://`, thay resolver trong tiến trình Node dùng config này, không đổi DNS Windows, không thay URI/mật khẩu. Để trống/xóa dòng này để dùng DNS hệ thống. Restart backend sau khi sửa `.env` vì Node watch không theo dõi file đó. Không tự chuyển sang MongoDB local hoặc seed dữ liệu.
 - `MongoServerSelectionError`: kiểm tra IP Access List của PC/laptop, internet, cluster đang hoạt động và network TLS.
 - `AuthenticationFailed`: database user/password hoặc password chưa percent-encode.
 - `PLAN BLOCKED`: Atlas có dữ liệu catalog hoặc PC không có sản phẩm. Không xóa từ xa để vượt guard.
@@ -142,6 +143,7 @@ Mở `/admin/products/ohlins` và `/` (Studio), kiểm tra Ohlins TTX và các s
 
 ## Tham khảo
 
+- https://nodejs.org/api/dns.html#dnssetserversservers
 - https://www.mongodb.com/docs/atlas/tutorial/deploy-free-tier-cluster/
 - https://www.mongodb.com/docs/atlas/compass-connection/
 - https://www.mongodb.com/docs/atlas/driver-connection/

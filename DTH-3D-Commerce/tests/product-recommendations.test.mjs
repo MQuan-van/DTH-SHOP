@@ -86,7 +86,7 @@ test('invalid current price has a deterministic name/ID fallback',()=>{
 test('one product per build category, stable category order',()=>{
   const pool=CATEGORIES.flatMap(cat=>[item(`${cat}-b`,{category:cat}),item(`${cat}-a`,{category:cat})]);
   const r=run({products:pool});assert.equal(new Set(r.items.map(p=>p.category)).size,4);
-  assert.deepEqual(r.items.map(p=>p.category),CATEGORIES.filter(c=>c!=='suspension'));
+  assert.deepEqual(r.items.map(p=>p.category),CATEGORIES.filter(c=>c!=='suspension').slice(0,4));
 });
 test('fewer than four eligible categories never fills with unrelated items',()=>{
   const r=run({products:[item('a',{category:'wheels'}),item('b',{category:'wheels'})]});
@@ -124,7 +124,7 @@ test('unsafe Back locations are rejected',()=>{
   for(const p of ['https://evil.test/shop','//evil.test/shop','/shopper','/shop/../admin','/shop\\bad',null])assert.equal(recommendationLinkState(p).fromShop,'/shop');
 });
 test('browse link explicitly requests vehicle matches without stale search filters',()=>{
-  assert.equal(recommendationBrowseHref('alternatives','wheels'),'/shop?fit=match&category=wheels');
+  assert.equal(recommendationBrowseHref('alternatives','wheels'),'/shop?fit=match&category=rims');
   assert.equal(recommendationBrowseHref('build','wheels'),'/shop?fit=match');
   assert.equal(recommendationBrowseHref('unknown','brakes'),'/shop?fit=match&category=brakes');
   assert.equal(recommendationBrowseHref('unknown-vehicle','wheels'),'/shop');

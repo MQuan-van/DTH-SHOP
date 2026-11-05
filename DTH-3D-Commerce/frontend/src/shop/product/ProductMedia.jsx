@@ -173,7 +173,7 @@ export default function ProductMedia({ product, motion, policy }) {
       </div>}
       {/* UX17: the model remains the visual focus. */}
       {live && <div className={styles.stageAction}><button type="button" aria-pressed={inspect} onClick={() => { setSpin(false); setInspect(value => !value); }}>
-        {inspect ? 'Done inspecting' : 'Drag to inspect'} <span aria-hidden="true">↗</span></button></div>}
+        {inspect ? 'Done inspecting' : 'Drag to inspect'}</button></div>}
     </div>
     <div className={styles.viewStatus}><span role="status">{message}</span>
       {supported && (failed || !request) && <button type="button" disabled={retrying} onClick={failed ? retry : threeMode}>{retrying ? 'Preparing…' : failed ? 'Retry 3D' : 'Load 3D'}</button>}

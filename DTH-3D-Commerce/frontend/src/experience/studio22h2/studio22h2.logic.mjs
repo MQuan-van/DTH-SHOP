@@ -1,6 +1,7 @@
 /** Studio 22H.2. Pure camera/presentation functions, no catalogue mutations. */
+import { categoryId, normalizeProductCategory } from '../../../../shared/categories.mjs';
 export const CATEGORIES22H2 = Object.freeze([
-  ['suspension', 'Suspension'], ['wheels', 'Wheels'], ['brakes', 'Brakes'],
+  ['suspension', 'Suspension'], ['rims', 'Rims'], ['tires', 'Tires'], ['brakes', 'Brakes'],
   ['exhausts', 'Exhausts'], ['mirrors', 'Mirrors'],
 ].map(([id, label]) => Object.freeze({ id, label })));
 export const MODES22H2 = Object.freeze(['overview', 'pick', 'orbit']);
@@ -8,13 +9,13 @@ const ids = new Set(CATEGORIES22H2.map(v => v.id));
 const validId = v => typeof v === 'string' && v.length <= 80 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(v);
 const vec = v => Array.isArray(v) && v.length === 3 && v.every(Number.isFinite);
 export const clamp22H2 = (v, a, b) => Math.max(a, Math.min(b, Number.isFinite(v) ? v : a));
-export const categoryLabel22H2 = id => CATEGORIES22H2.find(c => c.id === id)?.label || 'Parts';
+export const categoryLabel22H2 = id => CATEGORIES22H2.find(c => c.id === categoryId(id))?.label || 'Parts';
 export const href22H2 = p => validId(p?.slug) ? `/products/${p.slug}` : '';
 export const modelPath22H2 = v => typeof v === 'string' && v.length <= 512 && /^\/models\/(?:[\w-]+\/)*[\w-]+\.glb$/.test(v.split(/[?#]/)[0]) ? v.split(/[?#]/)[0] : '';
 export const swatch22H2 = v => typeof v === 'string' && /^#[a-f\d]{6}$/i.test(v) ? v : '#a7c8e1';
 export function catalog22H2(values) {
   const seen = new Set();
-  return (Array.isArray(values) ? values : []).filter(p => {
+  return (Array.isArray(values) ? values : []).map(normalizeProductCategory).filter(p => {
     if (!p || p.active === false || !validId(p.id) || !href22H2(p) || !ids.has(p.category) || seen.has(p.id)) return false;
     seen.add(p.id); return true;
   });

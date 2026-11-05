@@ -10,6 +10,7 @@ import { SHOP_CONFIG } from '../catalog/catalog.config.mjs';
 import { getPriceCeiling, readShopQuery, selectShopProducts, patchShopQuery, resetShopFilters } from '../catalog/catalog.logic.mjs';
 import FilterPanel from '../catalog/components/FilterPanel';
 import ShopDialog from '../catalog/components/ShopDialog';
+import ShopIcon from '../catalog/components/ShopIcon';
 import { compactFitLabel, displayPrice } from '../ux17/commerce17.logic.mjs';
 import { vehicleCaption } from '../catalog/fitment/fitment.logic.mjs';
 import { createStoryClock214, returnToChapter214 } from './story214.logic.mjs';
@@ -36,8 +37,8 @@ function ProductCopy214({product,vehicleId,vehicles,fromShop,onChooseVehicle,ind
       <p className="dth-story214-availability">{availability.label}</p>
       <p className="dth-story214-fit" data-status={match.status}>{compactFitLabel(match.status,vehicleCaption(vehicle))}</p>
       <div className="dth-story214-actions">
-        {href?<Link to={href} state={{fromShop}} className="dth-story214-primary"><span>View details</span><span aria-hidden="true">↗</span></Link>:<span>Product link unavailable</span>}
-        <button type="button" className="dth-story214-text-button" onClick={onChooseVehicle}>{vehicleId?'Change vehicle':'Check fit'}<span aria-hidden="true">↗</span></button>
+        {href?<Link to={href} state={{fromShop}} className="dth-story214-primary"><span>View details</span></Link>:<span>Product link unavailable</span>}
+        <button type="button" className="dth-story214-text-button" onClick={onChooseVehicle}>{vehicleId?'Change vehicle':'Check fit'}</button>
       </div>
     </div>
   </article>;
@@ -85,14 +86,14 @@ export default function ShopStoryPage214() {
   const runwayStyle={'--story214-steps':Math.max(0,products.length-1),'--story214-segment':`${Math.max(STORY214.segmentViewport, CHAPTER2151.segmentViewport)*100}svh`,'--story215-tail':`${CHAPTER2151.exitViewport*100}svh`};
   return <section ref={root} className="dth-story214" data-story-shop="21.4" data-story-skin="vertical-215" data-motion={motion?'on':'off'}>
     <div className="dth-story214-heading"><h1>Parts<span>.</span></h1><span>{products.length} {products.length===1?'part':'parts'}</span>
-      <form onSubmit={e=>{e.preventDefault();change({q:search});}} role="search"><label className="dth-story214-sr" htmlFor="story214-search">Search parts</label><input id="story214-search" type="search" placeholder="Find your next detail" value={search} maxLength={160} onChange={e=>setSearch(e.target.value)}/><button type="submit" aria-label="Search parts">↗</button></form>
+      <form onSubmit={e=>{e.preventDefault();change({q:search});}} role="search"><label className="dth-story214-sr" htmlFor="story214-search">Search parts</label><input id="story214-search" type="search" placeholder="Find your next detail…" value={search} maxLength={160} onChange={e=>setSearch(e.target.value)}/><button type="submit" aria-label="Search parts"><ShopIcon name="search"/></button></form>
     </div>
     <div ref={bar} className="dth-story214-bar">
       <nav aria-label="Part categories" className="dth-story214-categories">
         <button type="button" aria-pressed={!query.categories.length} onClick={()=>change({category:[]})}>All</button>
         {SHOP_CONFIG.categories.map(c=><button type="button" key={c.id} aria-pressed={query.categories.includes(c.id)} onClick={()=>change({category:[c.id]})}>{c.label}<small>{counts[c.id]||0}</small></button>)}
       </nav>
-      <div className="dth-story214-bar-actions"><button type="button" onClick={openVehicle} className="dth-story214-vehicle">{vehicle?vehicleCaption(vehicle):'Your NVX'}<span aria-hidden="true">↗</span></button>
+      <div className="dth-story214-bar-actions"><button type="button" onClick={openVehicle} className="dth-story214-vehicle">{vehicle?vehicleCaption(vehicle):'Your NVX'}</button>
         <button type="button" ref={filterTrigger} onClick={()=>setFilters(true)} aria-haspopup="dialog">Filters</button>
         <button type="button" aria-pressed={motion} disabled={policy.reduced} onClick={()=>setPaused(v=>!v)}>{policy.reduced?'Reduced motion':motion?'Pause motion':'Play motion'}</button></div>
       <div className="dth-story214-progress" aria-hidden="true"><i ref={line}/></div>
@@ -117,6 +118,6 @@ export default function ShopStoryPage214() {
     <p className="dth-story214-fine">Demo prices and vehicle mappings. No real payment or shipment.</p>
     {filters&&<ShopDialog title="Refine parts" onClose={()=>setFilters(false)} restoreFocus={filterTrigger.current} motion={motion} duration={240} className="dth-story214-filter-dialog"><div className="dth-story214-filters"><FilterPanel {...filterProps}/>
       <label className="dth-story214-sort">Sort by<select aria-label="Sort parts" value={query.sort} onChange={e=>change({sort:e.target.value})}><option value="featured">Featured</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="name">Name: A–Z</option></select></label>
-      <button type="button" className="dth-story214-primary" onClick={()=>setFilters(false)}>Show {products.length} parts <span aria-hidden="true">↗</span></button></div></ShopDialog>}
+      <button type="button" className="dth-story214-primary" onClick={()=>setFilters(false)}>Show {products.length} parts</button></div></ShopDialog>}
   </section>;
 }

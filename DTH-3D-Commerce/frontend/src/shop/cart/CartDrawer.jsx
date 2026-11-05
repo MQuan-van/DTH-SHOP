@@ -1,3 +1,4 @@
+import { categoryLabel } from '../../../../shared/categories.mjs';
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { formatMoney } from '../../../../shared/domain.mjs';
@@ -79,7 +80,7 @@ export default function CartDrawer() {
     <div className={styles.scrim} data-cart-scrim aria-hidden="true" onClick={dismiss}/>
     <section className={styles.panel} data-cart-panel>
       <header className={styles.header}>
-        <div className={styles.topline}><span>DTH / YOUR NEXT BUILD</span>
+        <div className={styles.topline}><span>Your selection</span>
           <button type="button" className={styles.close} data-cart-close onClick={dismiss} aria-label="Close bag">×</button></div>
         <div className={styles.titleRow}><h2 id={titleId} ref={heading} tabIndex={-1}>Your bag<span>.</span></h2>
           <span className={styles.count}>{summary.count.toString().padStart(2, '0')} <small>{summary.count === 1 ? 'ITEM' : 'ITEMS'}</small></span></div>
@@ -98,7 +99,7 @@ export default function CartDrawer() {
                 : <span className={styles.missing}>Image<br/>unavailable</span>}
             </Link>
             <div className={styles.itemInfo}>
-              <div className={styles.itemMeta}><span>{typeof row.product?.category === 'string' ? row.product.category : 'PART'}</span>
+              <div className={styles.itemMeta}><span>{categoryLabel(row.product?.category)}</span>
                 {request?.added?.key === row.key && <span className={styles.latest}>JUST ADDED</span>}</div>
               <h3>{row.product?.slug ? <Link to={`/products/${row.product.slug}`} onClick={follow}>{row.name}</Link> : row.name}</h3>
               <p className={styles.vehicle}>{row.vehicleLabel}</p>
@@ -118,9 +119,9 @@ export default function CartDrawer() {
           </li>)}</ul>
         </> : <div className={styles.empty}>
           <div className={styles.emptyMark} aria-hidden="true"><i/><b>0</b></div>
-          <p className={styles.eyebrow}>ROOM FOR YOUR NEXT IDEA</p><h3>Your next build starts here.</h3>
+          <h3>Your bag is empty.</h3>
           <p>Explore the collection and choose a matching demo vehicle before adding a part.</p>
-          <Link className={styles.textLink} to="/shop" onClick={follow}>Explore parts <span aria-hidden="true">↗</span></Link>
+          <Link className={styles.textLink} to="/shop" onClick={follow}>Explore parts</Link>
         </div>}
         {error && <p className={styles.error} role="alert">{error}</p>}
         <p className={styles.srOnly} role="status" aria-live="polite" aria-atomic="true">{feedback}</p>
@@ -130,9 +131,9 @@ export default function CartDrawer() {
           <div className={styles.total}><span>Catalog subtotal</span><strong data-cart-subtotal>{summary.subtotal === null ? 'Review needed' : formatMoney(summary.subtotal)}</strong></div>
           <p className={styles.fine}>{summary.needsReview ? 'Some items need attention. Open your bag to review them.'
             : 'Based on the loaded catalog. Prices and fitment are checked again when the order is submitted.'}</p>
-          <Link className={styles.primary} to="/bag" onClick={follow}>{summary.needsReview ? 'Review your bag' : 'Review bag & checkout'}<span aria-hidden="true">↗</span></Link>
+          <Link className={styles.primary} to="/bag" onClick={follow}>{summary.needsReview ? 'Review your bag' : 'Review bag & checkout'}</Link>
         </>}
-        <button type="button" className={styles.continue} onClick={dismiss}>Continue exploring <span aria-hidden="true">→</span></button>
+        <button type="button" className={styles.continue} onClick={dismiss}>Continue exploring</button>
         <p className={styles.disclaimer}>DEMONSTRATION ONLY · NO PAYMENT OR SHIPMENT<br/>Limits: 10 per part/vehicle · 20 bag lines. Not stock availability.</p>
       </footer>
     </section>

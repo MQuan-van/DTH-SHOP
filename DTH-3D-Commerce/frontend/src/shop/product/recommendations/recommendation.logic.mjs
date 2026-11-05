@@ -1,4 +1,5 @@
 import { CATEGORIES } from '../../../../../shared/domain.mjs';
+import { categoryId, isCategory } from '../../../../../shared/categories.mjs';
 import { explainFitment } from '../../catalog/fitment/fitment.logic.mjs';
 import { safeShopReturn, validPrice } from '../productDecision.logic.mjs';
 
@@ -14,7 +15,7 @@ const limitOf = value => Number.isSafeInteger(value) ? Math.min(RECOMMENDATION_L
 export function isRecommendationProduct(product) {
   return !!(record(product) && validKey(product.id) && validKey(product.slug)
     && typeof product.name === 'string' && product.name.trim().length > 0
-    && product.name.length <= 200 && CATEGORIES.includes(product.category)
+    && product.name.length <= 200 && isCategory(product.category)
     && product.active !== false && validPrice(product.price)
     && (product.currency === undefined || product.currency === 'VND'));
 }
@@ -38,7 +39,7 @@ export function selectProductRecommendations({ currentProduct, products, vehicle
   const vehicleMatches = typeof vehicleId === 'string' && vehicleId
     ? vehicleRows.filter(vehicle => vehicle.id === vehicleId) : [];
   const base = { mode: 'unselected', matchStatus: 'unselected', vehicle: null,
-    category: CATEGORIES.includes(currentProduct?.category) ? currentProduct.category : null,
+    category: isCategory(currentProduct?.category) ? categoryId(currentProduct.category) : null,
     items: [], candidateCount: 0 };
   if (!vehicleId) return base;
   if (vehicleMatches.length !== 1) return { ...base, mode: 'unknown-vehicle', matchStatus: 'unknown' };
@@ -58,14 +59,14 @@ export function selectProductRecommendations({ currentProduct, products, vehicle
   const candidates = rows.filter(row => isRecommendationProduct(row)
     && row.id !== currentProduct.id && row.slug !== currentProduct.slug
     && ids.get(row.id) === 1 && slugs.get(row.slug) === 1
-    && (mode === 'build' ? row.category !== base.category : row.category === base.category)
+    && (mode === 'build' ? categoryId(row.category) !== base.category : categoryId(row.category) === base.category)
     && explainFitment(row, vehicleId, vehicleRows).status === 'compatible');
   let items;
   if (mode === 'build') {
     // Rank within each category; never compare a brake price against a wheel
     // price to decide which category deserves to be shown first.
     items = CATEGORIES.filter(category => category !== base.category)
-      .map(category => rankRecommendations(candidates.filter(item => item.category === category), currentProduct.price)[0])
+      .map(category => rankRecommendations(candidates.filter(item => categoryId(item.category) === category), currentProduct.price)[0])
       .filter(Boolean).slice(0, limitOf(limit));
   } else items = rankRecommendations(candidates, currentProduct.price).slice(0, limitOf(limit));
   return { ...base, mode, matchStatus, vehicle, items, candidateCount: candidates.length };
@@ -83,7 +84,7 @@ export function recommendationProductHref(product) {
 export function recommendationBrowseHref(mode, category) {
   if (!['build', 'alternatives', 'unknown'].includes(mode)) return '/shop';
   const params = new URLSearchParams({ fit: 'match' });
-  if (mode !== 'build' && CATEGORIES.includes(category)) params.set('category', category);
+  if (mode !== 'build' && isCategory(category)) params.set('category', categoryId(category));
   return `/shop?${params.toString()}`;
 }
 

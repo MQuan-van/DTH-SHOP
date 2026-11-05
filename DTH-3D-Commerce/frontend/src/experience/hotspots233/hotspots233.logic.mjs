@@ -4,14 +4,19 @@ export const STEP233 = '23.3';
 export const SLOTS233 = Object.freeze([
   ['suspension-rear','suspension','Rear suspension'],
   ['suspension-front','suspension','Front suspension'],
-  ['wheels-front','wheels','Front wheel'], ['wheels-rear','wheels','Rear wheel'],
+  ['rims-front','rims','Front rim'], ['rims-rear','rims','Rear rim'],
+  ['tires-front','tires','Front tire'], ['tires-rear','tires','Rear tire'],
   ['brakes-front','brakes','Front brake'], ['brakes-rear','brakes','Rear brake'],
   ['exhaust','exhausts','Exhaust'], ['mirror-left','mirrors','Left mirror'], ['mirror-right','mirrors','Right mirror'],
-  // Legacy category-level anchors retain their original meaning. A generic wheel is NOT relabelled front/rear.
-  ['suspension','suspension','Suspension'], ['wheels','wheels','Wheels'], ['brakes','brakes','Brakes'],
+  ['suspension','suspension','Suspension'], ['rims','rims','Rims'], ['tires','tires','Tires'], ['brakes','brakes','Brakes'],
   ['exhausts','exhausts','Exhaust'], ['mirrors','mirrors','Mirrors'],
 ].map(([id,category,label])=>Object.freeze({id,category,label})));
-export const slot233 = id => SLOTS233.find(s=>s.id===id) || null;
+// Existing assembly points are retained for import/export, never guessed as rim/tire surfaces.
+export const LEGACY_WHEEL_SLOTS233 = Object.freeze([
+  ['wheels-front','Front assembly · recalibrate'], ['wheels-rear','Rear assembly · recalibrate'],
+  ['wheels','Assembly · recalibrate'],
+].map(([id,label])=>Object.freeze({id,category:'wheels',label,legacy:true})));
+export const slot233 = id => SLOTS233.find(s=>s.id===id) || LEGACY_WHEEL_SLOTS233.find(s=>s.id===id) || null;
 export const vector233 = v => Array.isArray(v)&&v.length===3&&v.every(n=>typeof n==='number'&&Number.isFinite(n));
 const distance=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
 const fail=message=>{throw new Error(message);};
@@ -25,7 +30,7 @@ export function validateProfile233(input,spec,hash,{bounds}={}) {
   }
   const base=emptyProfile233(spec,hash);
   if(!input||Array.isArray(input)||input.schemaVersion!==2||input.coordinateSpace!==base.coordinateSpace||input.vehicleId!==spec.id||input.assetFile!==spec.file||input.sha256!==hash||!vector233(input.rotation)||input.rotation.some((n,i)=>n!==base.rotation[i])) fail('Profile identity does not match this exact GLB and orientation.');
-  if(!input.anchors||typeof input.anchors!=='object'||Array.isArray(input.anchors)||Object.keys(input.anchors).length>14) fail('Invalid hotspot collection.');
+  if(!input.anchors||typeof input.anchors!=='object'||Array.isArray(input.anchors)||Object.keys(input.anchors).length>SLOTS233.length+LEGACY_WHEEL_SLOTS233.length) fail('Invalid hotspot collection.');
   if(bounds&&(!vector233(bounds.min)||!vector233(bounds.max)||bounds.min.some((n,i)=>n>bounds.max[i])))fail('Invalid model bounds.');
   for(const [id,a] of Object.entries(input.anchors)) {
     if(!slot233(id)||!a||a.confirmed!==true||!vector233(a.point)||a.point.some(n=>Math.abs(n)>8)||!vector233(a.normal))fail('A hotspot is invalid or has not been confirmed.');
@@ -41,14 +46,14 @@ export function validateProfile233(input,spec,hash,{bounds}={}) {
   return base;
 }
 export function resolveSlot233(profile,category,preferred='') {
-  if(profile?.anchors?.[preferred]&&slot233(preferred)?.category===category)return preferred;
+  if(profile?.anchors?.[preferred]&&!slot233(preferred)?.legacy&&slot233(preferred)?.category===category)return preferred;
   return SLOTS233.find(s=>s.category===category&&profile?.anchors?.[s.id])?.id || '';
 }
 /** Match a real visible surface hit to an authored neighbourhood, not to a guessed mesh name. */
 export function pickSlot233(point,profile,visibleIds) {
   if(!vector233(point))return null;
   const visible=new Set(visibleIds||[]);
-  const choices=Object.entries(profile?.anchors||{}).filter(([id])=>visible.has(id)).map(([id,a])=>({id,score:distance(point,a.point)/a.pickRadius})).filter(a=>a.score<=1).sort((a,b)=>a.score-b.score);
+  const choices=Object.entries(profile?.anchors||{}).filter(([id])=>visible.has(id)&&slot233(id)&&!slot233(id).legacy).map(([id,a])=>({id,score:distance(point,a.point)/a.pickRadius})).filter(a=>a.score<=1).sort((a,b)=>a.score-b.score);
   if(!choices.length)return null;
   if(choices[1]&&choices[0].score>.82*choices[1].score)return null; // ambiguous overlap: use the explicit labels
   return choices[0].id;
@@ -80,7 +85,7 @@ export function journey233(from,to,bounds) {
 export function layout233(points,width,height,{active='',previousSides={}}={}) {
   if(!Number.isFinite(width)||!Number.isFinite(height)||width<240||height<210)return [];
   const small=width<600,labelWidth=small?112:140,margin=12,top=56,bottom=Math.max(top,height-100),gap=small?48:56;
-  let list=points.filter(p=>p.visible&&slot233(p.id)&&[p.x,p.y].every(Number.isFinite)&&p.x>=0&&p.x<=width&&p.y>=0&&p.y<=height).map(p=>({...p}));
+  let list=points.filter(p=>p.visible&&slot233(p.id)&&!slot233(p.id).legacy&&[p.x,p.y].every(Number.isFinite)&&p.x>=0&&p.x<=width&&p.y>=0&&p.y<=height).map(p=>({...p}));
   if(active&&list.some(p=>p.id===active))list=list.filter(p=>p.id===active);
   if(small&&list.length>3)list=list.slice(0,3); // the separate keyboard selector always exposes every authored point
   const result=[];

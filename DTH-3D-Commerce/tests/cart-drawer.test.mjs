@@ -51,5 +51,15 @@ test('snapshots are immutable and cannot be changed from consumers',()=>{const s
 test('failed transactions do not mutate buffer identity',()=>{const state=createCartState([item(10)]),old=state.read();state.add(a.id,'street-155',1,data);assert.equal(state.read(),old);});
 test('new drawer contains no GLB renderer or auto checkout call',async()=>{const s=await read('frontend/src/shop/cart/CartDrawer.jsx');assert.doesNotMatch(s,/from ['"](?:three|@react-three)|createOrder\s*\(/);assert.match(s,/to="\/bag"/);assert.match(s,/data-cart-dialog/);});
 test('store retains loader readiness and uses synchronous cart hook',async()=>{const s=await read('frontend/src/shop/useStore.jsx');assert.match(s,/useCartState\(readCart\)/);assert.match(s,/cartRequest, openCart, closeCart/);assert.match(s,/if \(!result\.ok\)/);});
-test('header retains bag href, keyboard and modified-click fallback',async()=>{const s=await read('frontend/src/shop/StoreApp.jsx');assert.match(s,/aria-controls="dth-cart-drawer"/);assert.match(s,/store\.openCart\(event\.currentTarget\)/);assert.match(s,/<CartDrawer \/>/);});
+test('header retains bag href, keyboard and modified-click fallback',async()=>{
+  const shell=await read('frontend/src/shop/StoreApp.jsx');
+  const navigation=await read('frontend/src/experience/commerce23/DTHNavigation23.jsx');
+  assert.match(shell,/<DTHNavigation22A\b[\s\S]*?openCart=\{store\.openCart\}/);
+  assert.match(shell,/<CartDrawer \/>/);
+  assert.match(navigation,/<Link to="\/bag"[^>]*onClick=\{bag\}/);
+  assert.match(navigation,/aria-controls="dth-cart-drawer"/);
+  assert.match(navigation,/e\.button!==0\|\|e\.ctrlKey\|\|e\.metaKey\|\|e\.shiftKey\|\|e\.altKey/);
+  assert.match(navigation,/location\.pathname==='\/bag'/);
+  assert.match(navigation,/e\.preventDefault\(\);openCart\(e\.currentTarget\)/);
+});
 test('QuickView closes only after successful add with a latch',async()=>{const s=await read('frontend/src/shop/catalog/components/QuickView.jsx');assert.match(s,/if \(cartAddPending\.current\) return/);assert.match(s,/cartAddPending\.current = true/);assert.match(s,/shared cart waits/);});

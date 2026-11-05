@@ -773,7 +773,6 @@ export default function QuickView({
                     onClick={event => follow(event, '/bag')}
                   >
                     View bag
-                    <ShopIcon name="arrow" />
                   </Link>
                 </>
               )}
@@ -794,7 +793,6 @@ export default function QuickView({
             >
               <ShopIcon name="cube" />
               Open product &amp; 3D
-              <ShopIcon name="arrowUp" />
             </Link>
 
             <p className={styles.demoFinePrint}>

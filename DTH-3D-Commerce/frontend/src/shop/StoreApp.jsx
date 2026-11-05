@@ -1,3 +1,4 @@
+import { CATEGORY_LABELS as categoryNames } from '../../../shared/categories.mjs';
 import DTHNavigation22A from '../experience/commerce23/DTHNavigation23';
 // DTH ACCESS181 — login gate before storefront catalog rendering.
 import AccessBoundary181 from '../experience/access181/AccessBoundary181';
@@ -25,7 +26,7 @@ import ProductDecisionPage from './product/ProductDecisionPage';
 const StoryPage = lazy(() => import('../experience/story/StoryPage'));
 const AIAssetStudio = lazy(() => import('../experience/admin/ai-assets/AIAssetStudio.jsx'));
 const Viewer3D = lazy(() => import('./Viewer3D'));
-const categoryNames = { suspension: 'Suspension', wheels: 'Wheels', exhausts: 'Exhausts', mirrors: 'Mirrors', brakes: 'Brakes' };
+
 function Dialog({ title, onClose, children }) {
   const ref = useRef(null);
   useEffect(() => { const el = ref.current; el.showModal(); return () => { if (el.open) el.close(); }; }, []);
@@ -51,7 +52,7 @@ function Shell() {
     <main id="dth-content" tabIndex={-1}>
       {store.loading ? <div className="dth-empty">Loading the studio…</div> : store.error ? <div className="dth-empty"><h1>We could not load the store.</h1><p role="alert">{store.error}</p><button className="dth-button dth-primary" onClick={store.refresh}>Try again</button><p>Check the API, MongoDB and the seed step. API mode never silently switches to preview data.</p></div> : <Outlet context={{ chooseVehicle: () => setVehicleOpen(true) }} />}
     </main>
-    <footer className="dth-footer"><Link to="/" className="dth-footer-brand">DTH<span> / PARTS STUDIO</span></Link><p>Inspect the design. Check the demo fit. Explore with confidence.</p><div><span>COMP1682 · Final Year Project</span><span>Demo models are not installation guidance.</span></div></footer>
+    <footer className="dth-footer p24-footer"><div className="p24-footer-top"><Link to="/" className="dth-footer-brand">DTH<span> / PARTS STUDIO</span></Link><nav className="p24-footer-links" aria-label="Footer navigation"><Link to="/shop?mode=build">Build your NVX</Link><Link to="/shop">Shop parts</Link><Link to="/story">The riders</Link></nav></div><p>Inspect the detail. Find your next part.</p><div><span>COMP1682 · Final Year Project</span><span>Demo models are not installation guidance.</span></div></footer>
     <div className={`dth-toast ${store.notice ? 'is-visible' : ''}`} role="status" aria-live="polite">{store.notice}</div>
     {vehicleOpen && <VehiclePicker onClose={() => setVehicleOpen(false)} />}
     <CartDrawer />

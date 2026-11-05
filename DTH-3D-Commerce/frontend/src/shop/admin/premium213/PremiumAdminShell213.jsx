@@ -25,7 +25,9 @@ function Navigation({ modules, unread, onNavigate }) {
         if (!active || element.getBoundingClientRect().width === 0) { mark.style.opacity = '0'; return; }
         const box = element.getBoundingClientRect(), target = active.getBoundingClientRect();
         tween?.kill();
-        const values = { y: target.top - box.top, height: target.height, opacity: 1 };
+        // The indicator has a fixed measured height; only its transform moves between rows.
+        gsap.set(mark, { height: target.height });
+        const values = { y: target.top - box.top, opacity: 1 };
         if (ctx.conditions.reduced || !mark.dataset.positioned) gsap.set(mark, values);
         else tween = gsap.to(mark, { ...values, duration: .32, ease: 'power3.out', overwrite: true });
         mark.dataset.positioned = 'true';
@@ -71,7 +73,7 @@ export default function PremiumAdminShell213({ modules, user, support, children 
     if (closing.current || !dialog.current?.open) return;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) { closeNow(); return; }
     closing.current = true;
-    closeTween.current = gsap.to(dialog.current, { x: -24, opacity: 0, duration: .16, ease: 'power2.in', onComplete: closeNow });
+    closeTween.current = gsap.to(dialog.current, { x: -24, opacity: 0, duration: .16, ease: 'power2.out', onComplete: closeNow });
   }, [closeNow]);
   useLayoutEffect(() => {
     if (!drawerOpen || !dialog.current) return undefined;
@@ -97,12 +99,12 @@ export default function PremiumAdminShell213({ modules, user, support, children 
   useEffect(() => { closeNow(); }, [pathname, closeNow]);
   useEffect(() => () => { closeTween.current?.kill(); }, []);
 
-  return <section ref={root} className="dth-admin dth-premium213" data-ops18="true" data-ops18b="true" data-premium-admin="21.3A">
+  return <section ref={root} className="dth-admin dth-premium213" data-ops18="true" data-ops18b="true" data-premium-admin="21.3A" data-premium-surface="24">
     <a className="p213-skip" href="#p213-content">Skip to content</a>
     <aside className="p213-sidebar" aria-label="Admin workspace">
       <Link className="p213-brand" to="/admin" aria-label="DTH Admin overview"><span className="p213-brand-mark">DTH</span><small>Admin</small></Link>
       <Navigation modules={modules} unread={unread}/>
-      <Link className="p213-sidebar-store" to="/shop"><span>Open storefront</span><PremiumIcon213 name="diagonal" size={17}/></Link>
+      <Link className="p213-sidebar-store" to="/shop"><span>Open storefront</span></Link>
       <Operator user={user}/>
     </aside>
     <div className="p213-workspace">
@@ -113,7 +115,7 @@ export default function PremiumAdminShell213({ modules, user, support, children 
           <Link to="/admin">Admin</Link><span aria-hidden="true">/</span><span>{section}</span>
         </div>
         <div className="p213-top-actions"><span className="p213-connection" data-live={support?.status === 'live'} role="status"><i/>{connectionLabel(support?.status)}</span>
-          <PremiumAction213 to="/shop" className="p213-view-site">View site <PremiumIcon213 name="diagonal" size={15}/></PremiumAction213>
+          <PremiumAction213 to="/shop" className="p213-view-site">View site </PremiumAction213>
         </div>
       </header>
       <main id="p213-content" className="dth-admin-main p213-main" tabIndex={-1}>
@@ -127,7 +129,7 @@ export default function PremiumAdminShell213({ modules, user, support, children 
       <div className="p213-drawer-heading"><Link to="/admin" className="p213-brand" onClick={closeNow}><span className="p213-brand-mark">DTH</span></Link>
         <button type="button" className="p213-close" autoFocus onClick={closeDrawer} aria-label="Close navigation"><PremiumIcon213 name="close"/></button></div>
       <Navigation modules={modules} unread={unread} onNavigate={closeNow}/>
-      <Link className="p213-sidebar-store" to="/shop" onClick={closeNow}>Open storefront <PremiumIcon213 name="diagonal" size={17}/></Link>
+      <Link className="p213-sidebar-store" to="/shop" onClick={closeNow}>Open storefront </Link>
       <Operator user={user} onNavigate={closeNow}/>
     </dialog>
   </section>;

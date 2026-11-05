@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import AppLoaderGate from './experience/loader/AppLoaderGate';
 import './index.css';
+import './experience/premium24/premium24.css';
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element in index.html.');
 createRoot(root).render(<StrictMode><BrowserRouter><AppLoaderGate><App /></AppLoaderGate></BrowserRouter></StrictMode>);

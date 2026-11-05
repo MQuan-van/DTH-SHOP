@@ -1,3 +1,4 @@
+import { CATEGORY_LABELS as categories } from '../../../../shared/categories.mjs';
 // DTH Loader 17.2 — deferred graphics startup, existing readiness preserved.
 import { useStartupWebGL } from '../loader/StartupRenderContext.jsx';
 import { Component, Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -18,7 +19,7 @@ import { useStageActivity } from '../../shop/home/hooks/useStudioMotion';
 import styles from './CinematicHome.module.css';
 import './experience-controls.css';
 const CinematicScene = lazy(() => import('../world/CinematicScene'));
-const categories = { suspension: 'Suspension', wheels: 'Wheels', exhausts: 'Exhausts', mirrors: 'Mirrors', brakes: 'Brakes' };
+
 
 class SceneBoundary extends Component {
   state = { failed: false };
@@ -166,7 +167,13 @@ function Story({ product, chooseVehicle, config, motion, setMotion }) {
         <span>DTH / PARTS IN PERSPECTIVE</span>
         <div className={styles.preferences}>
           <button type="button" onClick={toggleMotion} disabled={policy.reduced} aria-pressed={animated} aria-label={animated ? 'Pause cinematic motion' : 'Enable cinematic motion'}>{animated ? 'Ⅱ Motion' : policy.reduced ? 'Reduced motion' : '▶ Motion'}</button>
-          <label><span className={styles.srOnly}>Rendering quality</span><select value={quality} onChange={e => { setQuality(e.target.value); setSlow(false); }}><option value="auto">Auto quality</option><option value="eco">Eco quality</option></select></label>
+          <label><span className={styles.srOnly}>Rendering quality</span>
+            <select value={quality} onChange={e => { setQuality(e.target.value); setSlow(false); }}>
+            <option value="auto">Auto quality</option>
+            <option value="eco">Eco quality</option>
+            </select>
+          </label>
+
           <a href="#dth-collection">Skip to parts ↓</a>
         </div>
       </div>

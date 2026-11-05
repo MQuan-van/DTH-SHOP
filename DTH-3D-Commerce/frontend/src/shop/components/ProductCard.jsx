@@ -1,8 +1,9 @@
+import { CATEGORY_LABELS as categoryNames } from '../../../../shared/categories.mjs';
 import { Link } from 'react-router-dom';
 import { fitment, formatMoney } from '../../../../shared/domain.mjs';
 import { useStore } from '../useStore.jsx';
 import Icon from './StoreIcon.jsx';
-const categoryNames = { suspension: 'Suspension', wheels: 'Wheels', exhausts: 'Exhausts', mirrors: 'Mirrors', brakes: 'Brakes' };
+
 export default function ProductCard({ product }) {
   const { vehicleId, data } = useStore();
   const match = fitment(product, vehicleId, data.vehicles);

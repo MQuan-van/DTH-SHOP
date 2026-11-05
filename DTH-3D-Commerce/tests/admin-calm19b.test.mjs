@@ -14,7 +14,7 @@ test('Admin hero no longer mounts 3D Mechanism or imports a WebGL scene',async()
 test('Inbox always offers a direct Overview link and website Home link',async()=>{
   const body=await file('InboxPro.jsx');
   assert.match(body,/<Link\s+className=\{calm\.backToOverview\}\s+to="\/admin"/);
-  assert.match(body,/<Link\s+className=\{calm\.siteHome\}\s+to="\/"/);
+  assert.match(body,/<Link\s+className=\{calm\.siteHome\}[^>]*\s+to="\/"/);
   const topbar=body.slice(body.indexOf('<Topbar label="Inbox"'),body.indexOf('</Topbar>'));
   assert.match(topbar,/Back to Admin overview/);
   assert.doesNotMatch(topbar,/Focus inbox/);

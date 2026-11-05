@@ -21,6 +21,6 @@ export const MOODS = Object.freeze([
 ]);
 // Only these two versions are identified in filenames supplied by the owner.
 export const VEHICLE_PHOTOS = Object.freeze({ 'yamaha-nvx-v1': PHOTOS.street, 'yamaha-nvx-v2': PHOTOS.titanium });
-export const CATEGORY_NAMES = Object.freeze({ wheels: 'Wheels', brakes: 'Brakes', suspension: 'Suspension', exhausts: 'Exhausts', mirrors: 'Mirrors' });
-export const CATEGORY_ORDER = Object.freeze(['wheels', 'brakes', 'suspension', 'exhausts', 'mirrors']);
+export { CATEGORY_LABELS as CATEGORY_NAMES } from '../../../../shared/categories.mjs';
+export const CATEGORY_ORDER = Object.freeze(['rims', 'tires', 'brakes', 'suspension', 'exhausts', 'mirrors']);
 export const DISCOVERY_MOTION = Object.freeze({ enterMs: 440, staggerMs: 45, parallaxPx: 7, ease: 'cubic-bezier(.16,1,.3,1)' });

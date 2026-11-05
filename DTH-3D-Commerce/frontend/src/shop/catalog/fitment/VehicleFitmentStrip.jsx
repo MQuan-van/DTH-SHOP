@@ -34,7 +34,7 @@ export default function VehicleFitmentStrip({ products, vehicles, vehicleId, que
       </div>
       <div className={styles.vehicleActions}>
         <button type="button" className={styles.choose} onClick={onChooseVehicle}>
-          {vehicleId ? 'Change vehicle' : 'Select vehicle'} <span aria-hidden="true">↗</span>
+          {vehicleId ? 'Change vehicle' : 'Select vehicle'}
         </button>
         {vehicleId && <button type="button" className={styles.clear} onClick={onClearVehicle}>Clear vehicle</button>}
       </div>

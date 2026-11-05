@@ -1,4 +1,5 @@
 import { CATEGORIES, fitment } from '../../../../shared/domain.mjs';
+import { categoryId, categorySearchText } from '../../../../shared/categories.mjs';
 
 export function getPriceCeiling(products, step = 50000) {
   const prices = products.filter(p => p.active !== false && Number.isFinite(p.price) && p.price >= 0).map(p => p.price);
@@ -6,7 +7,7 @@ export function getPriceCeiling(products, step = 50000) {
 }
 export function readShopQuery(input, ceiling) {
   const params = new URLSearchParams(input);
-  const categories = [...new Set(params.getAll('category').flatMap(v => v.split(',')))].filter(v => CATEGORIES.includes(v));
+  const categories = [...new Set(params.getAll('category').flatMap(v => v.split(',')).map(categoryId))].filter(v => CATEGORIES.includes(v));
   const rawMax = params.get('max');
   const number = rawMax !== null && rawMax.trim() !== '' ? Number(rawMax) : NaN;
   const maxPrice = Number.isFinite(number) ? Math.min(ceiling, Math.max(0, Math.floor(number))) : ceiling;
@@ -40,8 +41,8 @@ export function selectShopProducts(products, vehicles, vehicleId, query, { ignor
   const terms = query.search.toLowerCase().split(/\s+/u).filter(Boolean);
   const items = products.filter(p => {
     if (p.active === false || !Number.isFinite(p.price) || p.price < 0 || p.price > query.maxPrice) return false;
-    if (!ignoreCategories && query.categories.length && !query.categories.includes(p.category)) return false;
-    const haystack = `${p.name || ''} ${p.category || ''} ${p.finish || ''} ${p.id || ''}`.toLowerCase();
+    if (!ignoreCategories && query.categories.length && !query.categories.map(categoryId).includes(categoryId(p.category))) return false;
+    const haystack = `${p.name || ''} ${categorySearchText(p.category)} ${p.finish || ''} ${p.id || ''}`.toLowerCase();
     if (!terms.every(term => haystack.includes(term))) return false;
     return query.fit !== 'match' || !vehicleId || fitment(p, vehicleId, vehicles).status === 'compatible';
   });

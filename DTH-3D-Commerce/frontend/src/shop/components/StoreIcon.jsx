@@ -1,8 +1,9 @@
 export default function Icon({ name, ...props }) {
   const paths = {
     bag: <><path d="M5 7h14l1 14H4L5 7Z" /><path d="M8 8V6a4 4 0 0 1 8 0v2" /></>,
-    vehicle: <><path d="m4 10 2-5h12l2 5M3 10h18v8H3zM6 18v3m12-3v3M6 14h2m8 0h2" /></>,
+    vehicle: <><circle cx="5" cy="17" r="3" /><circle cx="19" cy="17" r="3" /><path d="m5 17 5-8h4l5 8M8 12h7l-4 5H5m9-8-1-4h4M7 8h4" /></>,
     arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
+    back: <path d="M19 12H5m6-6-6 6 6 6" />,
     search: <><circle cx="10" cy="10" r="6" /><path d="m15 15 6 6" /></>,
     cube: <><path d="m12 2 9 5v10l-9 5-9-5V7zM3 7l9 5 9-5m-9 5v10m-5-17 10 6" /></>,
     check: <path d="m5 12 4 4L19 6" />,

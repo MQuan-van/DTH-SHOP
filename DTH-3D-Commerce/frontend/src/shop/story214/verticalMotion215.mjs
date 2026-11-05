@@ -1,3 +1,4 @@
+import { categoryLabel } from '../../../../shared/categories.mjs';
 /* DTH21.5.1: patched */
 /** Step 21.5: presentation-only, deterministic in scroll position. */
 import { camera214, clamp214, smooth214 } from './story214.logic.mjs';
@@ -59,8 +60,7 @@ export function trail215(progress, length) {
   return { end, span, start: end - span, core, coreStart: end - core };
 }
 
-const WORDS215 = Object.freeze({ suspension: 'SUSPENSION', wheels: 'WHEELS', exhausts: 'EXHAUSTS', mirrors: 'MIRRORS', brakes: 'BRAKES' });
-export function categoryWord215(product) { return WORDS215[product?.category] || 'PARTS'; }
+export function categoryWord215(product) { return categoryLabel(product?.category).toUpperCase(); }
 
 export function atmosphere215(frame, products, motion = true) {
   const first = categoryWord215(products[frame.left]);

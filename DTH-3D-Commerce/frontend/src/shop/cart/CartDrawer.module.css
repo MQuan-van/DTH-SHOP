@@ -72,6 +72,57 @@
 .missing { display:grid; place-content:center; height:100%; text-align:center; font-size:11px; color:var(--cart-muted); }
 .error { padding:12px; color:#8b321b; border:1px solid #e5c8c1; background:#fff4f0; font-size:12px; }
 .srOnly { position:absolute; width:1px; height:1px; padding:0; margin:-1px!important; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+/* Premium 24: a quiet receipt surface, with motion retained in drawerSession. */
+.dialog {
+  --cart-ink:var(--p24-navy,#102c3d);--cart-blue:var(--p24-blue,#287cff);
+  --cart-muted:#516b7b;--cart-line:#cbd9e0;
+  font-family:var(--one-font,Manrope,"Segoe UI",sans-serif);
+}
+.panel {width:min(560px,100%);background:#f2f6f7;box-shadow:-20px 0 70px #081e2d26;}
+.header {padding:28px 32px 24px;background:#081e2d;color:white;}
+.topline>span {font:500 13px/1.5 var(--one-font,Manrope,sans-serif);letter-spacing:0;color:#b7cdd9;}
+.dialog .close {width:44px;height:44px;border-radius:2px;border-color:#6f8b9c;color:white;}
+.titleRow {margin-top:18px;}
+.titleRow h2 {font-size:54px;font-weight:750;letter-spacing:-.06em;}
+.titleRow h2 span {color:#a9d9ef;}
+.count {font:650 30px/1 var(--one-font,Manrope,sans-serif);color:#a9d9ef;font-variant-numeric:tabular-nums;}
+.count small {font-family:inherit;font-size:10px;letter-spacing:.02em;color:#b7cdd9;}
+.description {font-size:13px;color:#c5d9e4;}
+.scan {background:#287cff;height:2px;left:32px;right:32px;}
+.body {padding-inline:32px;}
+.vehicleNote {font-size:12px;padding-top:20px;}
+.item {grid-template-columns:112px minmax(0,1fr);gap:20px;padding-block:24px;}
+.image {background:#e3edf2;border:0;border-radius:2px;}
+.itemMeta {font:500 11px/1.5 var(--one-font,Manrope,sans-serif);text-transform:none;letter-spacing:0;}
+.item h3 {font-size:20px;font-weight:700;line-height:1.25;letter-spacing:-.035em;}
+.vehicle {font-size:12px;}
+.fit {font-size:11px;}
+.quantity {height:46px;border-radius:2px;background:white;}
+.dialog .quantity button {width:44px;height:44px;}
+.quantity>span {min-width:28px;}
+.rowFine {font-size:11px;margin-top:8px;}
+.dialog .remove {min-height:44px;font-size:12px;}
+.footer {padding:24px 32px max(20px,env(safe-area-inset-bottom));box-shadow:none;}
+.total {font-size:13px;}
+.total strong {font-size:29px;font-weight:700;}
+.fine {font-size:12px;line-height:1.65;}
+.dialog .primary {min-height:52px;border-radius:2px;justify-content:center;font-size:14px;background:var(--p24-action,#155cce);border-color:var(--p24-action,#155cce);transition:background-color 160ms ease,transform 120ms ease;}
+.dialog .continue {min-height:46px;font-size:13px;margin-top:4px;}
+.disclaimer {font-size:10px;letter-spacing:0;line-height:1.6;}
+.empty {text-align:left;padding:36px 0;}
+.emptyMark {width:70px;height:70px;margin:0 0 28px;transform:none;border-color:#b8ccd8;}
+.emptyMark i {display:none;}
+.emptyMark b {font:600 34px var(--one-font,Manrope,sans-serif);transform:none;}
+.empty h3 {font-size:36px;max-width:10ch;margin:0 0 18px;letter-spacing:-.05em;}
+.empty>p:not(.eyebrow) {font-size:14px;line-height:1.7;max-width:31ch;margin:0;}
+.dialog .textLink {min-height:48px;font-size:14px;margin-top:16px;}
+.dialog :is(button,a):focus-visible {outline:3px solid #287cff;outline-offset:4px;}
+.header .close:focus-visible {outline-color:#a9d9ef;}
+.dialog :is(button,a) {touch-action:manipulation;}
+@media(hover:hover) and (pointer:fine) {
+  .dialog .primary:hover {background:#1e65d5;border-color:#1e65d5;}
+  .dialog .primary:active {transform:scale(.985);}
+}
 @media(max-width:639px) {
   .panel { left:0; right:0; top:auto; height:min(92vh,780px); height:min(92dvh,780px); width:100%; border-radius:22px 22px 0 0; transform-origin:center bottom; }
   .header { padding:18px 20px; }
@@ -85,15 +136,23 @@
   .itemBottom { gap:6px; }
   .rowFine { align-items:start; }
   .rowFine > span { text-align:right; }
+  .panel {border-radius:2px 2px 0 0;}
+  .dialog .close {width:44px;height:44px;}
+  .item {grid-template-columns:80px minmax(0,1fr);}
+  .dialog .quantity button {width:44px;height:44px;}
+  .rowFine {flex-wrap:wrap;}
 }
 @media(max-height:620px) {
+  /* Scroll the complete receipt on short screens so actions and the demo disclosure stay reachable. */
+  .panel { overflow-y:auto; overscroll-behavior:contain; }
+  .body { flex:0 0 auto; overflow:visible; }
   .header { padding-top:10px; padding-bottom:12px; }
   .titleRow { margin-top:0; }
   .titleRow h2 { font-size:29px; }
   .description { font-size:11px; }
   .footer { padding-top:10px; padding-bottom:8px; }
   .fine { padding:5px 0 8px; }
-  .disclaimer { display:none; }
+  .disclaimer { display:block; font-size:10px; line-height:1.5; }
 }
 .dialog[data-motion="off"] *, .dialog[data-motion="off"] *::before, .dialog[data-motion="off"] *::after { transition:none!important; animation:none!important; }
 @media(prefers-reduced-motion:reduce) {

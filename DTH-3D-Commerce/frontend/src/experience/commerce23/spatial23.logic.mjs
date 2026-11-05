@@ -1,7 +1,8 @@
 /** Spatial Commerce 23.1. Pure presentation math; no catalogue mutation or fitment inference. */
 export const SYSTEMS23 = Object.freeze([
   {id:'suspension',label:'Suspension',short:'Suspension'},
-  {id:'wheels',label:'Wheels',short:'Wheels'},
+  {id:'rims',label:'Rims',short:'Rims'},
+  {id:'tires',label:'Tires',short:'Tires'},
   {id:'brakes',label:'Brakes',short:'Brakes'},
   {id:'exhausts',label:'Exhaust',short:'Exhaust'},
   {id:'mirrors',label:'Mirrors',short:'Mirrors'},
@@ -66,10 +67,10 @@ export function validateProfile23(value,spec,sha256){
   const fail=()=>{throw Error('Focus profile does not match this GLB. Re-author the points for this model.');};
   if(!value||typeof value!=='object'||Array.isArray(value)||value.schemaVersion!==1||value.coordinateSpace!=='normalized-stage-4-v1'||value.vehicleId!==spec?.id||value.assetFile!==spec?.file||value.sha256!==sha256||!/^[a-f0-9]{64}$/.test(sha256))fail();
   if(!vector(value.rotation)||value.rotation.some((v,i)=>v!==(spec.rotation||[0,0,0])[i]))fail();
-  if(!value.anchors||typeof value.anchors!=='object'||Array.isArray(value.anchors)||Object.keys(value.anchors).length>5)fail();
+  if(!value.anchors||typeof value.anchors!=='object'||Array.isArray(value.anchors)||Object.keys(value.anchors).length>SYSTEMS23.length+1)fail();
   const result=emptyProfile23(spec,sha256);
   for(const [id,a] of Object.entries(value.anchors)){
-    if(!isSystem23(id)||!a||!vector(a.point)||a.point.some(n=>Math.abs(n)>8)||!vector(a.normal)||Math.hypot(...a.normal)<.5||Math.hypot(...a.normal)>1.5)fail();
+    if((!isSystem23(id)&&id!=='wheels')||!a||!vector(a.point)||a.point.some(n=>Math.abs(n)>8)||!vector(a.normal)||Math.hypot(...a.normal)<.5||Math.hypot(...a.normal)>1.5)fail();
     const p=a.pose;if(!p||!vector(p.target)||p.target.some(n=>Math.abs(n)>8)||![p.radius,p.theta,p.phi].every(Number.isFinite)||p.radius<.3||p.radius>40||p.phi<.12||p.phi>Math.PI-.12||Math.abs(p.theta)>100)fail();
     result.anchors[id]={point:[...a.point],normal:[...a.normal],pose:{target:[...p.target],radius:p.radius,theta:p.theta,phi:p.phi}};
   }

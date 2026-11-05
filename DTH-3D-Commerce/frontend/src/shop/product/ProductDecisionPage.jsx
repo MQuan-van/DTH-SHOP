@@ -15,6 +15,7 @@ import { CATEGORY_LABELS, matchingPartsHref, productSpecs, purchaseState, safeSh
 import styles from './ProductDecision.module.css';
 import Disclosure from '../ux17/Disclosure';
 import '../ux17/commerce17.css';
+import '../discovery174/premium-shop.css';
 import { useScrollReveals19 } from '../../experience/scroll19/useScrollReveals19.js';
 
 export default function ProductDecisionPage({ product }) {
@@ -82,14 +83,14 @@ export default function ProductDecisionPage({ product }) {
   }
   const buttonLabel = !state.available || !state.priceOK ? 'Unavailable' : !state.match.canAdd ? 'Choose matching vehicle'
     : !state.remaining || state.full ? commerce.kind === 'in_stock' ? 'Indicative stock limit reached' : 'Demo limit reached' : receipt ? 'Added to bag' : commerce.kind === 'preorder' ? 'Place pre-order (demo)' : 'Add to bag';
-  return <section ref={root} className={styles.page} data-product-detail data-scroll19-product data-product-ux="17" data-motion={motion ? 'on' : 'off'}>
+  return <section ref={root} className={`${styles.page} p24-product`} data-premium-product data-product-detail data-scroll19-product data-product-ux="17" data-motion={motion ? 'on' : 'off'}>
     <div className={styles.container} data-ux17-container>
       <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-        <Link to={returnTo}>← Back to parts</Link><span aria-hidden="true">/</span><span aria-current="page">{product.name}</span>
+        <Link to={returnTo}>Back to parts</Link><span aria-hidden="true">/</span><span aria-current="page">{product.name}</span>
       </nav>
       <div className={styles.topline} data-ux17-topline>
         <button type="button" disabled={policy.reduced} aria-pressed={motion} onClick={() => setPaused(v => !v)}>
-          {policy.reduced ? 'Reduced motion' : motion ? 'Ⅱ Motion on' : '▷ Motion off'}</button>
+          {policy.reduced ? 'Reduced motion' : motion ? 'Pause motion' : 'Play motion'}</button>
       </div>
       <div className={styles.hero} data-ux17-hero>
         <div className={styles.mediaColumn} data-scroll19-media data-product-enter>
@@ -112,7 +113,7 @@ export default function ProductDecisionPage({ product }) {
           <div data-product-enter>
             <form className={styles.purchase} onSubmit={buy}>
               <div className={styles.quantityRow}><label htmlFor="dth-product-quantity">Quantity</label>
-                <div className={styles.quantityControl}>
+                <div className={styles.quantityControl} data-p24-quantity-control>
                   <button type="button" disabled={!state.canAdd || quantity <= 1 || cooldown} aria-label="Decrease quantity" onClick={() => changeQuantity(quantity - 1)}>−</button>
                   <select id="dth-product-quantity" value={quantity} disabled={!state.canAdd || cooldown} onChange={e => changeQuantity(e.target.value)}>
                     {Array.from({ length: Math.max(1, state.remaining) }, (_,i) => <option key={i+1} value={i+1}>{i+1}</option>)}
@@ -123,11 +124,11 @@ export default function ProductDecisionPage({ product }) {
               </div>
               <button ref={buyButton} className={styles.addButton} data-ux17-add type="submit" aria-label={state.match.canAdd && state.canAdd ? 'Add to bag' : buttonLabel}
                 data-added={!!receipt} disabled={blocked || cooldown || !state.available || !state.priceOK || (state.match.canAdd && !state.canAdd)}>
-                <span>{buttonLabel}</span><span aria-hidden="true">{receipt ? '✓' : '↗'}</span>
+                <span>{buttonLabel}</span><span className="p24-purchase-mark" data-confirmed={!!receipt} aria-hidden="true">{receipt ? '✓' : '+'}</span>
               </button>
               {state.match.canAdd && !state.canAdd && <p className={styles.formHelp}>{state.reason}</p>}
               <div className={styles.confirmation} data-ux17-confirmation role="status" aria-live="polite" aria-atomic="true">
-                {receipt && <><p><strong>{receipt.quantity} × {receipt.name}</strong> added for {receipt.vehicle}.</p><Link to="/bag">View bag <span aria-hidden="true">↗</span></Link></>}
+                {receipt && <><p><strong>{receipt.quantity} × {receipt.name}</strong> added for {receipt.vehicle}.</p><Link to="/bag">View bag</Link></>}
               </div>
               {error && <p className={styles.error} role="alert">{error}</p>}
             </form>
@@ -145,7 +146,7 @@ export default function ProductDecisionPage({ product }) {
           {compatibleVehicles.length ? <ul className={styles.vehicleList}>{compatibleVehicles.map(v => <li key={v.id}><span>{vehicleCaption(v)}</span>{store.vehicleId === v.id && <strong>Selected</strong>}</li>)}</ul>
             : <p>No known matching vehicles are listed in this catalog.</p>}
           <small>Synthetic demo mappings only. Verify real compatibility with the supplier before purchase.</small>
-          <button type="button" className={styles.textButton} onClick={chooseVehicle}>Change selected vehicle <span aria-hidden="true">↗</span></button>
+          <button type="button" className={styles.textButton} onClick={chooseVehicle}>Change selected vehicle</button>
             </Disclosure>
           </div>
         </div>

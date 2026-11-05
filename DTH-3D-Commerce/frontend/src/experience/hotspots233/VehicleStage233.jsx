@@ -29,7 +29,7 @@ export default function VehicleStage233({spec,system='',onSystem,apiRef,author=f
  },[]);
  const choose=useCallback((id,keyboard=false)=>{
    if(latest.current.blocked)return;
-   const point=profileRef.current?.anchors[id],slot=slot233(id);if(!point||!slot)return;
+   const point=profileRef.current?.anchors[id],slot=slot233(id);if(!point||!slot||slot.legacy)return;
    activeRef.current=id;setArmed('');setOrbit(false);setPending(null);
    stage.current?.setOptions({interactive:false,authoring:''});stage.current?.focus(id);
    latest.current.onSystem?.(slot.category);
@@ -98,7 +98,7 @@ export default function VehicleStage233({spec,system='',onSystem,apiRef,author=f
    if(slot233(activeRef.current)?.category===system)return;
    const id=resolveSlot233(profileRef.current,system);activeRef.current=id;
    setOrbit(false);setArmed('');setPending(null);stage.current?.setOptions({interactive:false,authoring:''});stage.current?.focus(id||system);
-   const available=SLOTS233.find(s=>s.category===system&&!['suspension','wheels','brakes','exhausts','mirrors'].includes(s.id));if(available)setEditorSlot(available.id);
+   const available=SLOTS233.find(s=>s.category===system&&s.id!==s.category);if(available)setEditorSlot(available.id);
  },[system,ready]);
  function reset(){activeRef.current='';setArmed('');setPending(null);setOrbit(false);onSystem?.('');stage.current?.reset();}
  useEffect(()=>{
@@ -130,7 +130,8 @@ export default function VehicleStage233({spec,system='',onSystem,apiRef,author=f
  function removePoint(){if(!profile?.anchors[editorSlot]||!metadata||!author)return;const anchors={...profile.anchors};delete anchors[editorSlot];apply({...profile,anchors},metadata);setDirty(true);setPending(null);setMessage('Point removed from this local profile.');}
  function exportProfile(){if(!metadata||!profile||!author)return;try{const parsed=validateProfile233(profile,metadata.spec,metadata.sha256,{bounds:metadata.bounds});download233(parsed,profileDownloadName23(metadata.spec.id));setDirty(false);setMessage('JSON exported, not published yet. Use PUBLISH-FOCUS-PC.cmd to validate and install it.');}catch(e){setMessage(e.message);}}
  async function importProfile(event){const input=event.currentTarget,file=input.files?.[0],meta=metadata;input.value='';if(!file||!meta||!author)return;try{if(file.size>65536)throw Error('Focus JSON must be 64 KB or smaller.');const data=JSON.parse(await file.text());if(!live.current||metaRef.current!==meta)return;apply(data,meta);setDirty(true);setPending(null);setMessage('Profile imported and validated against this loaded model. Export to publish.');}catch(e){if(live.current&&metaRef.current===meta)setMessage(e.message);}}
- const ids=Object.keys(profile?.anchors||{}),selected=view.slot||activeRef.current;
+ const ids=Object.keys(profile?.anchors||{}).filter(id=>!slot233(id)?.legacy),selected=view.slot||activeRef.current;
+ const legacyCount=Object.keys(profile?.anchors||{}).length-ids.length;
  return <div ref={root} className="c23-vehicle-stage h233" data-hotspots233 data-ready={ready} data-orbit={orbit} data-mode={view.mode} data-blocked={blocked}>
   <div className="c23-vehicle-shadow" aria-hidden="true"/>
   <div ref={host} className="c23-vehicle-host" role="img" aria-label={`${spec?.label||'Vehicle'} 3D preview. Use the view selector to explore authored points.`}/>
@@ -148,6 +149,7 @@ export default function VehicleStage233({spec,system='',onSystem,apiRef,author=f
   {author&&ready&&<details className="h233-editor" ref={editor}><summary>Calibrate hotspots <span>{ids.length} authored{dirty?' · not exported':''}</span></summary>
    <div className="h233-editor-body">
     <p>Mark a real surface, frame the detail, then confirm. Geometry and database are not changed.</p>
+    {!!legacyCount&&<p role="status">{legacyCount} legacy assembly points are preserved. Mark separate rim and tire surfaces to enable their focus views.</p>}
     <label>Part position<select value={editorSlot} onChange={e=>{setEditorSlot(e.target.value);setPending(null);setArmed('');setPickRadius(profile?.anchors[e.target.value]?.pickRadius||.18);}}>{SLOTS233.map(s=><option key={s.id} value={s.id}>{s.label}{profile?.anchors[s.id]?' · authored':''}</option>)}</select></label>
     <label className="h233-radius">Surface selection radius <output>{pickRadius.toFixed(2)}</output><input type="range" min="0.05" max="0.55" step="0.01" value={pickRadius} onChange={e=>setPickRadius(Number(e.target.value))}/><small>Normalized scene units, not real-world measurements. Keep small enough to avoid neighbouring parts.</small></label>
     <div className="h233-editor-actions"><button type="button" disabled={blocked||view.mode==='transition'} onClick={mark}>{armed?'Click the part':'Mark surface'}</button><button type="button" disabled={!pending||blocked||view.mode==='transition'} onClick={confirmPoint}>Confirm point & view</button><button type="button" disabled={!profile?.anchors[editorSlot]||blocked||view.mode==='transition'} onClick={captureAngle}>Update camera</button><button type="button" disabled={!profile?.anchors[editorSlot]||blocked} onClick={()=>choose(editorSlot)}>Test view</button><button type="button" disabled={!profile?.anchors[editorSlot]||blocked} onClick={removePoint}>Remove point</button></div>

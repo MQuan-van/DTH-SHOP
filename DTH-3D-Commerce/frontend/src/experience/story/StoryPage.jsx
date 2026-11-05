@@ -1,3 +1,4 @@
+import { CATEGORY_LABELS as categories } from '../../../../shared/categories.mjs';
 import { useJournalMotion } from './journal/journalMotion';
 import StoryEditorial from './journal/StoryEditorial';
 // DTH Loader 17.2 — deferred graphics startup, existing readiness preserved.
@@ -21,7 +22,7 @@ import StoryMaterialChapter from './StoryMaterialChapter';
 // DTH Story surface study - Step 9
 import StorySurfaceControls, { createSurfaceController } from './StorySurfaceControls';
 const StoryHeroScene = lazy(() => import('./StorySurfaceScene'));
-const categories = { suspension: 'Suspension', wheels: 'Wheels', exhausts: 'Exhaust', mirrors: 'Mirrors', brakes: 'Brakes' };
+
 
 class SceneBoundary extends Component {
   state = { failed: false };

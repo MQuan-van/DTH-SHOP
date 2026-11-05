@@ -129,8 +129,9 @@ export function createHotspotStage233(host, {
   function projections(now) {
     if(!current||loading||!profile||blocked||journey||authoring){visibleIds=[];onProjection([]);return;}
     current.root.updateMatrixWorld(true);camera.updateMatrixWorld();
-    // Prioritize one facing point per category, then extras; never raycast all 14 slots every tick.
+    // Prioritize one facing point per category, then extras; keep the six-candidate ray budget.
     const candidates=Object.entries(profile.anchors).filter(([id,a])=>{
+      if(slot233(id)?.legacy)return false;
       if(activeSlot&&id!==activeSlot)return false;
       const point=current.root.localToWorld(new THREE.Vector3(...a.point)),ndc=point.clone().project(camera);
       const normal=new THREE.Vector3(...a.normal).transformDirection(current.root.matrixWorld);

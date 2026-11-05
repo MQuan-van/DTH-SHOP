@@ -14,6 +14,8 @@ import './home.tokens.css';
 const CinematicHome = lazy(() => import('../../experience/home/CinematicHome'));
 // DTH Studio Atelier 22H.1
 const StudioAtelier22H = lazy(() => import('../../experience/commerce23/Studio23.jsx'));
+const StudioGallery24 = lazy(() => import('../../experience/gallery24/StudioGallery24.jsx'));
+const StudioSpatial25 = lazy(() => import('../../experience/spatial25/StudioSpatial25.jsx'));
 const SECTION_COMPONENTS = { hero: HeroSection, workflow: WorkflowSection, categories: CategoriesSection, featured: FeaturedSection, fitment: FitmentSection };
 function LegacyHomePage() {
   const { data } = useStore();
@@ -37,7 +39,8 @@ function LegacyHomePage() {
 }
 export default function HomePage() {
   const location22H = useLocation();
-  const StudioView22H = new URLSearchParams(location22H.search).get('studio') === 'classic' ? CinematicHome : StudioAtelier22H;
+  const studioMode = new URLSearchParams(location22H.search).get('studio');
+  const StudioView22H = studioMode === 'classic' ? CinematicHome : studioMode === 'precision' ? StudioAtelier22H : studioMode === 'gallery24' ? StudioGallery24 : StudioSpatial25;
   const experience=usePublishedExperience();
   if(experience.loading)return <div className="dth-empty" role="status">Opening the product studio…</div>;
   return CINEMATIC_CONFIG.enabled && experience.config.enabled ? <Suspense fallback={<div className="dth-empty" role="status">Opening the product studio…</div>}><StudioView22H config={experience.config} version={experience.version} binding={experience.binding} /></Suspense> : <LegacyHomePage />;

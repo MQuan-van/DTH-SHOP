@@ -1,4 +1,5 @@
 import { normalizeItems, quoteOrder, fitment, CATEGORIES } from '../../../../../shared/domain.mjs';
+import { categoryId } from '../../../../../shared/categories.mjs';
 import { describeBag, lineKey, validCartPrice, CART_LIMITS } from '../cart.logic.mjs';
 
 export const productPath = product => product?.active !== false && typeof product?.slug === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(product.slug)
@@ -9,7 +10,7 @@ export const payloadSignature = items => {
 export const actorKey = (mode, user) => `${mode}:${user?.id || (mode === 'preview' ? 'local' : 'guest')}`;
 export function matchingPartsPath(product) {
   const params = new URLSearchParams({ fit: 'match' });
-  if (CATEGORIES.includes(product?.category)) params.set('category', product.category);
+  if (CATEGORIES.includes(categoryId(product?.category))) params.set('category', categoryId(product.category));
   return `/shop?${params}`;
 }
 

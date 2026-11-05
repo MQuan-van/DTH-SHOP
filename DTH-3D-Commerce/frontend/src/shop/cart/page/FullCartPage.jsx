@@ -47,7 +47,7 @@ export default function FullCartPage() {
     <div className={styles.container}>
       <nav className={styles.breadcrumb} aria-label="Breadcrumb"><Link to="/shop"><Icon name="back"/>Back to parts</Link><span>/</span><span aria-current="page">Your bag</span></nav>
       <header className={styles.heading}>
-        <div><p className={styles.eyebrow}>DTH / YOUR NEXT BUILD</p><h1 ref={heading} tabIndex={-1}>Your bag<span>.</span></h1><p>One clear view of your parts. Every vehicle stays with its own line.</p></div>
+        <div><h1 ref={heading} tabIndex={-1}>Your bag<span>.</span></h1><p>Review your parts, vehicle choices and current prices.</p></div>
         <div className={styles.headingSide}>
           <button type="button" className={styles.motion} disabled={reduced} aria-pressed={!paused && !reduced} onClick={() => setPaused(v => !v)}>{reduced ? 'Reduced motion · system' : paused ? '▷ Motion off' : 'Ⅱ Motion on'}</button>
           <ol className={styles.steps} aria-label="Checkout progress"><li aria-current={!reviewing ? 'step' : undefined}><b>01</b> Bag</li><li aria-current={reviewing ? 'step' : undefined}><b>02</b> Review</li><li><b>03</b> Checkout</li><li><b>04</b> Confirmation</li></ol>
@@ -58,9 +58,9 @@ export default function FullCartPage() {
       {cart.priceChanges.length > 0 && <div className={styles.warning} role="status"><Icon name="warning"/><div><strong>Prices changed from your estimate or earlier check.</strong>{cart.priceChanges.map(change => <p key={change.key}>{change.name}: {formatMoney(change.before)} → <strong>{formatMoney(change.after)}</strong></p>)}<p>Review these updated amounts before confirming the demo acknowledgement.</p></div></div>}
       {!view.lines.length ? <div className={styles.empty}>
         <div className={styles.emptyMark} aria-hidden="true"><span/><Icon name="bag"/><i/></div>
-        <p className={styles.eyebrow}>A NEW BUILD STARTS WITH ONE PART</p><h2>Your bag is empty.</h2>
+        <h2>Your bag is empty.</h2>
         <p>Find a part, check its demo fit and inspect it in 3D before adding it here.</p>
-        <Link to="/shop" className={styles.primary}>Explore parts <Icon name="arrow"/></Link>
+        <Link to="/shop" className={styles.primary}>Explore parts </Link>
         <small>Your saved vehicle and Build Studio selections have not been cleared.</small>
       </div> : <div className={styles.layout}>
         <div className={styles.itemsColumn}>
@@ -79,11 +79,11 @@ export default function FullCartPage() {
           <div className={styles.totals}><div><span>Items <small>({view.count})</small></span><strong>{view.subtotal === null ? '—' : formatMoney(view.subtotal)}</strong></div><div><span>Delivery</span><span>Not applicable — demo</span></div><div><span>Payment</span><span>Simulated only</span></div></div>
           <div className={styles.total}><span>{quote ? 'Checked total' : 'Catalog estimate'}</span><strong key={view.subtotal ?? 'invalid'}>{view.subtotal === null ? 'Review needed' : formatMoney(view.subtotal)}</strong></div>
           <p className={styles.summaryNote}>{quote ? 'Product availability, current prices, quantity limits and each line’s demo vehicle mapping were checked. This quote does not reserve a price or check live stock.' : 'Estimate from the loaded catalog. Review order checks current prices and each line’s vehicle mapping before you continue.'}</p>
-          {!reviewing ? <button type="button" className={styles.primary} disabled={!view.canReview || busy || quoting} onClick={cart.review}>{quoting ? 'Checking current prices…' : quote ? 'Check again' : 'Review order'}<Icon name={quoting || quote ? 'refresh' : 'arrow'}/></button> : <div className={styles.reviewActions}>
+          {!reviewing ? <button type="button" className={styles.primary} disabled={!view.canReview || busy || quoting} onClick={cart.review}>{quoting ? 'Checking current prices…' : quote ? 'Check again' : 'Review order'}{(quoting || quote) && <Icon name="refresh"/>}</button> : <div className={styles.reviewActions}>
             <div className={styles.reviewReady}><Icon name="check"/>Check every line’s vehicle and the total shown above.</div>
             <label className={styles.ack}><input type="checkbox" checked={acknowledged} disabled={busy} onChange={e => cart.acknowledge(e.target.checked)}/><span>I understand this is a demonstration. No money is charged, no products are shipped, and fitment is based on synthetic data.</span></label>
             {!PREVIEW && store.authError && <p className={styles.authError} role="alert">Your session could not be verified. <button type="button" disabled={busy || store.authLoading} onClick={store.retrySession}>Retry session</button></p>}
-            {loginNeeded ? <Link className={styles.primary} to="/account?return=/checkout">Sign in to continue <Icon name="arrow"/></Link> : <button type="button" className={styles.primary} disabled={!acknowledged || busy || (!PREVIEW && (store.authLoading || !!store.authError))} onClick={() => navigate('/checkout')}>Continue to checkout <Icon name="arrow"/></button>}
+            {loginNeeded ? <Link className={styles.primary} to="/account?return=/checkout">Sign in to continue </Link> : <button type="button" className={styles.primary} disabled={!acknowledged || busy || (!PREVIEW && (store.authLoading || !!store.authError))} onClick={() => navigate('/checkout')}>Continue to checkout </button>}
             <button type="button" className={styles.secondary} disabled={busy} onClick={cart.edit}>Edit bag</button>
           </div>}
           <p className={styles.modeNote}><Icon name="lock"/>{FLOW ? 'Flow rehearsal: orders are stored in this tab, not MongoDB.' : PREVIEW ? 'Local preview: no order is sent to a server.' : 'The API checks price, quantity and vehicle mapping again when an order is submitted.'}</p>

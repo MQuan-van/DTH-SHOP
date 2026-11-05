@@ -33,12 +33,16 @@ test('frontend dependency set includes its imported runtime libraries', async ()
 test('standalone router and navigation no longer require legacy pages', async () => {
   const app = await read('frontend/src/App.jsx');
   const store = await read('frontend/src/shop/StoreApp.jsx');
+  const navigation = await read('frontend/src/experience/commerce23/DTHNavigation23.jsx');
 
   assert.doesNotMatch(app, /\.\/pages\/|legacyRoutes/);
 
   // /story is now an intentional first-class route.
   assert.doesNotMatch(store, /to="\/(?:Home|welcome|gallery)/);
-  assert.match(store, /to="\/story"/);
+  assert.match(store, /import DTHNavigation22A from ['"]\.\.\/experience\/commerce23\/DTHNavigation23['"]/);
+  assert.match(store, /<DTHNavigation22A\b/);
+  assert.match(navigation, /id:'story',label:'Story',to:'\/story'/);
+  assert.match(navigation, /<Link key=\{d\.id\} to=\{d\.to\}/);
 });
 
 test('backend no longer imports or mounts the legacy router', async () => {

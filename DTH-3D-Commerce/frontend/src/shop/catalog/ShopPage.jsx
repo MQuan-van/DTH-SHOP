@@ -102,7 +102,7 @@ export default function ShopPage() {
         </div>
       </div>
     </div>
-    {mobileFilters && <ShopDialog title="Refine your search" onClose={() => setMobileFilters(false)} restoreFocus={filterTrigger.current} motion={motion} duration={SHOP_CONFIG.motion.modalDurationMs} className={styles.filterDialog}><FilterPanel {...filterProps} /><footer className={styles.filterDialogFooter}><button type="button" className={styles.primaryButton} onClick={() => setMobileFilters(false)}>Show {visible.length} parts<ShopIcon name="arrow" /></button></footer></ShopDialog>}
+    {mobileFilters && <ShopDialog title="Refine your search" onClose={() => setMobileFilters(false)} restoreFocus={filterTrigger.current} motion={motion} duration={SHOP_CONFIG.motion.modalDurationMs} className={styles.filterDialog}><FilterPanel {...filterProps} /><footer className={styles.filterDialogFooter}><button type="button" className={styles.primaryButton} onClick={() => setMobileFilters(false)}>Show {visible.length} parts</button></footer></ShopDialog>}
     {product && <QuickView key={product.id} product={product} trigger={quick.trigger} onClose={() => setQuick(null)} onChooseVehicle={openVehicle} onExploreMatches={showCompatibleParts} motion={motion} />}
   </section>;
 }

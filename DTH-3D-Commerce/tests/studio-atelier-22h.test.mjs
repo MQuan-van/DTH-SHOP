@@ -5,7 +5,7 @@ import { STUDIO_CATEGORIES, catalog22H, playable22H, choose22H, gallery22H, boun
 const p = (id, extras={}) => ({ id, slug:id, name:id, category:'suspension', modelUrl:`/models/ai-products/${id}.glb`, active:true, price:3500000, ...extras });
 const front={position:[1,0.6,5],target:[0,0,0]};
 const run={motion:true,active:true,blocked:false,inspect:false};
-test('Category definitions cannot drift at runtime',()=>{assert.ok(Object.isFrozen(STUDIO_CATEGORIES));assert.ok(STUDIO_CATEGORIES.every(Object.isFrozen));assert.equal(new Set(STUDIO_CATEGORIES.map(c=>c.id)).size,5);});
+test('Category definitions cannot drift at runtime',()=>{assert.ok(Object.isFrozen(STUDIO_CATEGORIES));assert.ok(STUDIO_CATEGORIES.every(Object.isFrozen));assert.equal(new Set(STUDIO_CATEGORIES.map(c=>c.id)).size,6);});
 test('An empty or malformed catalog is safe',()=>{for(const value of [null,undefined,{},'x'])assert.deepEqual(catalog22H(value),[]);});
 test('Hidden products and unsafe product IDs are not surfaced',()=>{assert.deepEqual(catalog22H([p('a',{active:false}),p('../bad'),null]),[]);});
 test('Catalog does not mutate API data',()=>{const a=[p('a'),p('b',{featured:true})],before=JSON.stringify(a);catalog22H(a);choose22H(a);gallery22H(a);assert.equal(JSON.stringify(a),before);});

@@ -1,4 +1,5 @@
 /** Discovery presentation state only. Product/price/fitment authority stays in the existing catalog. */
+import { CATEGORIES, categoryId } from '../../../../shared/categories.mjs';
 export const MODES = Object.freeze(['explore', 'shop', 'build']);
 export const LAYOUTS = Object.freeze(['grid', 'wide', 'compact']);
 export const NVX_IDS = Object.freeze(['yamaha-nvx-v1', 'yamaha-nvx-v2', 'yamaha-nvx-v3']);
@@ -58,10 +59,10 @@ export function sanitizeDraft(draft, products, vehicles, vehicleId) {
   const eligible = buildProducts(products, vehicles, vehicleId);
   const seen = new Set();
   return (Array.isArray(draft) ? draft : []).map(id => eligible.find(product => product.id === id))
-    .filter(product => product && !seen.has(product.category) && seen.add(product.category)).slice(0, 5);
+    .filter(product => product && CATEGORIES.includes(categoryId(product.category)) && !seen.has(categoryId(product.category)) && seen.add(categoryId(product.category))).slice(0, CATEGORIES.length);
 }
 export function pinProduct(draft, product, eligible) {
-  if (!product || !eligible.some(item => item.id === product.id)) return [...draft];
+  if (!product || !CATEGORIES.includes(categoryId(product.category)) || !eligible.some(item => item.id === product.id && categoryId(item.category) === categoryId(product.category))) return [...draft];
   const byId = new Map(eligible.map(item => [item.id, item]));
-  return [...draft.filter(id => byId.has(id) && byId.get(id).category !== product.category), product.id].slice(0, 5);
+  return [...draft.filter(id => byId.has(id) && categoryId(byId.get(id).category) !== categoryId(product.category)), product.id].slice(0, CATEGORIES.length);
 }

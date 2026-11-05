@@ -1,7 +1,9 @@
 /** Studio 22H.1. Presentation-only helpers. Never mutate a catalog record. */
+import { categoryId, normalizeProductCategory } from '../../../../shared/categories.mjs';
 export const STUDIO_CATEGORIES = Object.freeze([
   Object.freeze({ id: 'suspension', label: 'Suspension' }),
-  Object.freeze({ id: 'wheels', label: 'Wheels' }),
+  Object.freeze({ id: 'rims', label: 'Rims' }),
+  Object.freeze({ id: 'tires', label: 'Tires' }),
   Object.freeze({ id: 'brakes', label: 'Brakes' }),
   Object.freeze({ id: 'exhausts', label: 'Exhausts' }),
   Object.freeze({ id: 'mirrors', label: 'Mirrors' }),
@@ -18,7 +20,7 @@ export function modelPath22H(url) {
 }
 export function catalog22H(products) {
   const seen = new Set();
-  return (Array.isArray(products) ? products : []).filter(p => {
+  return (Array.isArray(products) ? products : []).map(normalizeProductCategory).filter(p => {
     if (!p || p.active === false || !slug(p.id) || !categoryIds.has(p.category) || !productHref22H(p) || seen.has(p.id)) return false;
     seen.add(p.id); return true;
   });
@@ -47,7 +49,7 @@ export function boundProduct22H(product, binding) {
     ? { ...stored, settings: { ...stored.settings, assetUrl: modelUrl } } : stored;
   return { ...product, modelUrl, ...(stored ? { presentation3d } : {}) };
 }
-export function categoryName22H(id) { return STUDIO_CATEGORIES.find(c => c.id === id)?.label || 'Parts'; }
+export function categoryName22H(id) { return STUDIO_CATEGORIES.find(c => c.id === categoryId(id))?.label || 'Parts'; }
 export function swatch22H(value) { return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : '#8abdd1'; }
 export function quality22H({ compact = false, saveData = false, requested = 'ultra' } = {}) {
   // Pixel budget only. No polygon reduction, material substitution, or texture resizing.

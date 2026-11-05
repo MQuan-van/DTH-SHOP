@@ -9,7 +9,7 @@ export default function ShopIcon({ name, ...props }) {
     reset: <><path d="M3 10a9 9 0 1 1 2 9M3 4v6h6" /></>,
     bag: <><path d="M5 7h14l1 14H4L5 7Z" /><path d="M8 8V6a4 4 0 0 1 8 0v2" /></>,
     cube: <><path d="m12 2 9 5v10l-9 5-9-5V7zM3 7l9 5 9-5m-9 5v10m-5-17 10 6" /></>,
-    vehicle: <><path d="m4 10 2-5h12l2 5M3 10h18v8H3zM6 18v3m12-3v3M6 14h2m8 0h2" /></>,
+    vehicle: <><circle cx="5.5" cy="16.5" r="3.5" /><circle cx="18.5" cy="16.5" r="3.5" /><path d="m5.5 16.5 4-7h4l5 7m-13 0h8l-4-7M8 7h3m2-3h3l2.5 12.5" /></>,
     check: <path d="m5 12 4 4L19 6" />,
     filter: <><path d="M4 6h16M4 12h16M4 18h16" /><circle cx="9" cy="6" r="2" fill="currentColor" /><circle cx="15" cy="12" r="2" fill="currentColor" /><circle cx="9" cy="18" r="2" fill="currentColor" /></>,
     info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7v.1" /></>,

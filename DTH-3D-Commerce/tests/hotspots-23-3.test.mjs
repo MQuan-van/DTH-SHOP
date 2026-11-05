@@ -6,10 +6,10 @@ const spec={id:'yamaha-nvx-v2',file:'models/nvx/nvx-v2.glb',rotation:[0,0,0]},ha
 const a=()=>({point:[.5,1,.4],normal:[1,0,0],pose:{target:[.5,1,.4],radius:2.2,phi:1.2,theta:.8},pickRadius:.18,viewAspect:1.6,confirmed:true});
 const profile=()=>({...emptyProfile233(spec,hash),anchors:{'suspension-rear':a()}});
 const bounds={min:[-2,0,-1],max:[2,2,1]};
-test('Slots have unique stable IDs and five existing catalogue categories',()=>{assert.equal(new Set(SLOTS233.map(x=>x.id)).size,SLOTS233.length);assert.deepEqual([...new Set(SLOTS233.map(x=>x.category))].sort(),['brakes','exhausts','mirrors','suspension','wheels']);});
+test('Slots have unique stable IDs and six catalogue categories',()=>{assert.equal(new Set(SLOTS233.map(x=>x.id)).size,SLOTS233.length);assert.deepEqual([...new Set(SLOTS233.map(x=>x.category))].sort(),['brakes','exhausts','mirrors','rims','suspension','tires']);});
 test('Empty profile contains no fabricated anchors',()=>assert.deepEqual(emptyProfile233(spec,hash).anchors,{}));
 test('Validated profile is independent of caller mutations',()=>{const p=profile(),v=validateProfile233(p,spec,hash,{bounds});p.anchors['suspension-rear'].point[0]=7;assert.equal(v.anchors['suspension-rear'].point[0],.5);});
-test('V1 migrates without inventing a front/rear mechanical label',()=>{const p={...emptyProfile233(spec,hash),schemaVersion:1,anchors:{wheels:a()}};const v=validateProfile233(p,spec,hash);assert.equal(v.schemaVersion,2);assert.equal(slot233(Object.keys(v.anchors)[0]).label,'Wheels');});
+test('V1 migrates without inventing a front/rear mechanical label',()=>{const p={...emptyProfile233(spec,hash),schemaVersion:1,anchors:{wheels:a()}};const v=validateProfile233(p,spec,hash);assert.equal(v.schemaVersion,2);assert.equal(slot233(Object.keys(v.anchors)[0]).label,'Assembly · recalibrate');});
 const invalid=[
  ['wrong hash',p=>p.sha256='b'.repeat(64)],['wrong ID',p=>p.vehicleId='yamaha-nvx-v3'],['wrong path',p=>p.assetFile='models/nvx/other.glb'],
  ['wrong orientation',p=>p.rotation[1]=1],['wrong coordinate space',p=>p.coordinateSpace='raw'],['unknown schema',p=>p.schemaVersion=9],
@@ -24,11 +24,11 @@ const invalid=[
 ];
 for(const [name,mutate]of invalid)test('Profile rejects '+name,()=>{const p=profile();mutate(p);assert.throws(()=>validateProfile233(p,spec,hash,{bounds}));});
 test('Normals are normalized without editing the asset',()=>{const p=profile();p.anchors['suspension-rear'].normal=[1.2,0,0];assert.deepEqual(validateProfile233(p,spec,hash).anchors['suspension-rear'].normal,[1,0,0]);});
-test('Front/rear wheels resolve independently with the same category',()=>{const p={...profile(),anchors:{'wheels-front':a(),'wheels-rear':a()}};assert.equal(resolveSlot233(p,'wheels'),'wheels-front');assert.equal(resolveSlot233(p,'wheels','wheels-rear'),'wheels-rear');assert.equal(resolveSlot233(p,'brakes'),'');});
+test('Front/rear rims resolve independently with the same category',()=>{const p={...profile(),anchors:{'rims-front':a(),'rims-rear':a()}};assert.equal(resolveSlot233(p,'rims'),'rims-front');assert.equal(resolveSlot233(p,'rims','rims-rear'),'rims-rear');assert.equal(resolveSlot233(p,'brakes'),'');});
 test('A visible real surface hit selects its authored neighbourhood',()=>assert.equal(pickSlot233([.52,1,.4],profile(),['suspension-rear']),'suspension-rear'));
 test('A body click outside authored regions selects nothing',()=>assert.equal(pickSlot233([-1,1,0],profile(),['suspension-rear']),null));
 test('An occluded anchor is not selectable through the body',()=>assert.equal(pickSlot233([.5,1,.4],profile(),[]),null));
-test('Ambiguous overlap does not silently pick one part',()=>{const p={...profile(),anchors:{'wheels-front':a(),'brakes-front':a()}};assert.equal(pickSlot233([.51,1,.4],p,['wheels-front','brakes-front']),null);});
+test('Ambiguous overlap does not silently pick one part',()=>{const p={...profile(),anchors:{'rims-front':a(),'brakes-front':a()}};assert.equal(pickSlot233([.51,1,.4],p,['rims-front','brakes-front']),null);});
 const down={id:7,x:100,y:100,time:1000,primary:true,button:0};
 test('Short primary tap is a click',()=>assert.equal(isClick233(down,{...down,time:1100,x:103}),true));
 for(const [name,change]of [['drag',{x:110}],['long press',{time:2000}],['other pointer',{id:8}],['secondary touch',{primary:false}],['time reversed',{time:999}]])test('Picking ignores '+name,()=>assert.equal(isClick233(down,{...down,time:1100,...change}),false));
@@ -45,7 +45,7 @@ for(const [w,h]of [[320,320],[390,440],[720,560],[1280,720],[1920,900]])test(`La
 });
 test('Narrow layout limits floating labels but not profile contents',()=>{assert.ok(layout233(points,390,440).length<=3);assert.equal(points.length,9);});
 test('Selected point is the only prominent callout',()=>{assert.deepEqual(layout233(points,1000,650,{active:points[2].id}).map(p=>p.id),[points[2].id]);});
-test('Side hysteresis avoids label flipping around the centre',()=>{const p={id:'wheels-front',x:510,y:200,visible:true};assert.equal(layout233([p],1000,650,{previousSides:{'wheels-front':'left'}})[0].side,'left');});
-test('Offscreen and hidden points are excluded',()=>assert.deepEqual(layout233([{id:'wheels-front',x:-1,y:200,visible:true},{id:'wheels-rear',x:100,y:200,visible:false}],1000,600),[]));
+test('Side hysteresis avoids label flipping around the centre',()=>{const p={id:'rims-front',x:510,y:200,visible:true};assert.equal(layout233([p],1000,650,{previousSides:{'rims-front':'left'}})[0].side,'left');});
+test('Offscreen and hidden points are excluded',()=>assert.deepEqual(layout233([{id:'rims-front',x:-1,y:200,visible:true},{id:'rims-rear',x:100,y:200,visible:false}],1000,600),[]));
 test('Engine preserves original materials and one renderer',()=>{const s=fs.readFileSync(new URL('../frontend/src/experience/hotspots233/createHotspotStage233.mjs',import.meta.url),'utf8');assert.equal((s.match(/new THREE.WebGLRenderer/g)||[]).length,1);assert.doesNotMatch(s,/\.material\.(?:color|metalness|roughness)\s*=/);assert.match(s,/controls\.enableZoom=false/);assert.match(s,/controller\?\.abort/);assert.match(s,/profile\.anchors/);});
 test('UI keeps the existing stage contract, no commerce/auth writes',()=>{const s=fs.readFileSync(new URL('../frontend/src/experience/hotspots233/VehicleStage233.jsx',import.meta.url),'utf8');assert.match(s,/spec,system='',onSystem,apiRef,author=false/);assert.doesNotMatch(s,/onPin\(|authenticate\(|studioRequest\(|\/api\//);assert.doesNotMatch(s,/Pause motion|Browse the edit/);assert.match(s,/context\.revert\(\)/);});

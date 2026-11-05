@@ -1,3 +1,4 @@
+import { normalizeCatalogCategories } from '../shared/categories.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
@@ -7,7 +8,7 @@ const data = JSON.parse(await readFile(new URL('../shared/catalog.json', import.
 const p = data.products[0], vehicle = data.vehicles.find(v => p.vehicleIds.includes(v.id));
 const item = { productId: p.id, vehicleId: vehicle.id, quantity: 2 };
 test('catalog contains exactly 20 unique active demo products', () => { assert.equal(data.products.length, 20); assert.equal(new Set(data.products.map(p => p.id)).size, 20); assert.ok(data.products.every(p => p.demoOnly && p.active)); });
-test('five supported categories, four products in each', () => { for (const c of CATEGORIES) assert.equal(data.products.filter(p => p.category === c).length, 4); });
+test('six supported categories retain the legacy fixture without inventing Tires', () => { const view = normalizeCatalogCategories(data); for (const c of CATEGORIES) assert.equal(view.products.filter(p => p.category === c).length, c === 'tires' ? 0 : 4); });
 test('eight unique fictional demo vehicles', () => { assert.equal(new Set(data.vehicles.map(v => v.id)).size, 8); assert.ok(data.vehicles.every(v => v.demoOnly && v.make.startsWith('Demo '))); });
 test('all compatibility references resolve', () => { for (const product of data.products) for (const id of product.vehicleIds) assert.ok(data.vehicles.some(v => v.id === id)); });
 test('every product points at an existing valid GLB and preview file', async () => {

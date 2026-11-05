@@ -11,12 +11,14 @@ import useIntroCover from '../journey/useIntroCover.js';
 import StoryPhoto22S from '../story22s/StoryPhoto22S.jsx';
 import StudioIcon from '../studio22h2/StudioIcons22H2.jsx';
 import { CATEGORIES22H2, catalog22H2, playable22H2, choose22H2, bindProduct22H2, gallery22H2, categoryLabel22H2, href22H2, swatch22H2, createSignal22H2 } from '../studio22h2/studio22h2.logic.mjs';
-import { useShell22H2, useStageLease22H2, useStudioEffects22H2, useProductEntrance22H2 } from '../studio22h2/useStudioEffects22H2.js';
+import { useShell22H2, useStageLease22H2, useProductEntrance22H2 } from '../studio22h2/useStudioEffects22H2.js';
+import { usePrecisionStudioMotion } from '../premium24/usePrecisionStudioMotion.js';
 import { filterStudioSuspension22H2 } from '../studio22h2/studioSuspensionCatalog.mjs';
 import '../studio22h2/studio22h2.css';
 import '../story22s/story22s.css';
 import './commerce23.css';
 import './surfaces23.css';
+import '../premium24/studio-story24.css';
 const ProductStage22H2 = lazy(() => import('../studio22h2/ProductStage22H2.jsx'));
 const modeNames = { overview: 'Full view', pick: 'Pick a detail', orbit: 'Free orbit' };
 const price = p => Number.isSafeInteger(p?.price) && p.price >= 0 ? formatMoney(p.price) : 'Price unavailable';
@@ -24,7 +26,7 @@ function Gallery22H2({ products, currentId }) {
   const edit = useMemo(() => gallery22H2(products, currentId), [products, currentId]);
   if (!edit.length) return null;
   return <section className="s222-edit" aria-labelledby="s222-edit-title">
-    <header className="s222-edit-head" data-studio-reveal><h2 id="s222-edit-title">A different detail.</h2><Link to="/shop" className="s222-button s222-ink" data-precision-button>View collection</Link></header>
+    <header className="s222-edit-head" data-studio-reveal><h2 id="s222-edit-title">Find your next detail.</h2><Link to="/shop" className="s222-button s222-ink p24-action" data-precision-button>View collection</Link></header>
     <div className="s222-edit-grid" data-count={edit.length}>{edit.map((p, index) => <article key={p.id} className={`s222-edit-card ${index === 0 ? 's222-edit-lead' : ''}`} data-studio-reveal>
       <Link to={href22H2(p)} className="s222-edit-media" aria-label={`View ${p.name}`}><ProductImage product={p}/><span>View part</span></Link>
       <div className="s222-edit-caption"><div><p>{categoryLabel22H2(p.category)}</p><h3><Link to={href22H2(p)}>{p.name}</Link></h3></div><span>{price(p)}</span></div>
@@ -47,7 +49,7 @@ export default function Studio23({ config, version = 0, binding }) {
   const match = product ? fitment(product, store.vehicleId, vehicles) : null;
   const chooseVehicle = outlet?.chooseVehicle || (() => {});
   const siblings = candidates.filter(p => p.category === product?.category);
-  useStudioEffects22H2(root, !policy.reduced && !covered);
+  usePrecisionStudioMotion(root, !policy.reduced && !covered);
   useProductEntrance22H2(sceneLayer, key, !policy.reduced && !covered);
   useLayoutEffect(() => { signal.set({ active: owner === 'hero' && !covered, reduced: policy.reduced, mode }); }, [signal, owner, covered, policy.reduced, mode]);
   useEffect(() => { setMode('overview'); setPickState(''); setReadyKey(''); signal.set({ mode: 'overview', serial: signal.state.serial + 1 }); }, [key, signal]);
@@ -61,11 +63,12 @@ export default function Studio23({ config, version = 0, binding }) {
   function setView(next) { if (!ready) return; setMode(next); setPickState(''); signal.set({ mode: next, serial: signal.state.serial + 1 }); }
   function selectPart(id) { if (candidates.some(p => p.id === id)) { setSelected(id); setMode('overview'); signal.set({ mode: 'overview', serial: signal.state.serial + 1 }); } }
   function selectCategory(id) { const p = candidates.find(p => p.category === id && p.featured) || candidates.find(p => p.category === id); if (p) selectPart(p.id); }
-  return <div ref={root} className="s222 c23-studio" data-studio="23.1" data-motion={policy.reduced ? 'reduced' : 'auto'} data-experience-version={version}>
+  return <div ref={root} className="s222 c23-studio p24-studio" data-studio="23.1" data-motion={policy.reduced ? 'reduced' : 'auto'} data-experience-version={version}>
     {product ? <section className="s222-hero" ref={hero} aria-label="Interactive parts atelier" data-mode={mode}>
       <div className="s222-stage-light" aria-hidden="true"/><div className="c23-studio-waterline" aria-hidden="true"/>
       <div className="s222-edition" data-studio-enter><Link to="/shop?mode=build" className="c23-studio-build-link">Build your NVX</Link><i/><span>{String(candidates.findIndex(p => p.id === product.id) + 1).padStart(2, '0')} / {String(candidates.length).padStart(2, '0')}</span></div>
       <div className="s222-scene" ref={sceneLayer} data-mode={mode}>
+        <div className="p24-stage-meta" aria-hidden="true"><span><i/>{ready ? 'Original 3D' : 'Preparing original 3D'}</span><span>{modeNames[mode]}</span></div>
         <div className="s222-ground" aria-hidden="true"/>
         {owner === 'hero' ? <Suspense fallback={<div className="s222-loading" role="status">Opening 3D</div>}>
           <ProductStage22H2 product={product} signal={signal} api={api} active={owner === 'hero'} reduced={policy.reduced || policy.saveData} mode={mode} onStatus={onStatus} onPicked={onPicked}/>
@@ -74,8 +77,8 @@ export default function Studio23({ config, version = 0, binding }) {
       <div className="s222-info" data-studio-enter><p className="s222-overline">{categoryLabel22H2(product.category)}</p><h1>{product.name}</h1>
         <p className="s222-finish"><i style={{ background: swatch22H2(product.accent) }}/>{product.finish || 'Original finish'}</p>
         <p className="s222-price">{price(product)}<small>Demo price</small></p>
-        <div className="s222-actions"><Link className="s222-button s222-primary" data-precision-button to={href22H2(product)}>View part</Link>
-          <button ref={inspectButton} className="s222-button s222-ghost" type="button" data-precision-button disabled={!ready} aria-pressed={mode !== 'overview'} onClick={() => setView(mode === 'overview' ? 'orbit' : 'overview')}><StudioIcon name={mode === 'overview' ? 'orbit' : 'close'}/>{mode === 'overview' ? 'Inspect 3D' : 'Exit inspection'}</button></div>
+        <div className="s222-actions"><Link className="s222-button s222-primary p24-action" data-precision-button to={href22H2(product)}>View part</Link>
+          <button ref={inspectButton} className="s222-button s222-ghost p24-action p24-action-secondary" type="button" data-precision-button disabled={!ready} aria-pressed={mode !== 'overview'} onClick={() => setView(mode === 'overview' ? 'orbit' : 'overview')}><StudioIcon name={mode === 'overview' ? 'orbit' : 'close'}/>{mode === 'overview' ? 'Inspect 3D' : 'Exit inspection'}</button></div>
         <button className="s222-fit-link" type="button" onClick={chooseVehicle}>{vehicle ? vehicleLabel(vehicle) : 'Select vehicle'}</button>
         {vehicle && <p className="s222-fit-status" data-match={match.status}>{match.text}</p>}
       </div>
@@ -95,11 +98,11 @@ export default function Studio23({ config, version = 0, binding }) {
           return <button key={c.id} type="button" data-precision-button disabled={!count} aria-pressed={product.category === c.id} onClick={() => selectCategory(c.id)}><StudioIcon name={c.id}/><span>{c.label}</span><b>{String(count).padStart(2, '0')}</b></button>; })}</nav>
         {siblings.length > 1 && <div className="s222-product-switch" role="group" aria-label="Choose product">{siblings.map(p => <button key={p.id} type="button" aria-pressed={p.id === product.id} onClick={() => selectPart(p.id)}>{p.name}</button>)}</div>}
       </div>
-    </section> : <section className="s222-empty"><h1>The atelier.</h1><p>No published 3D product is available.</p><Link to="/shop" className="s222-button s222-primary">Explore parts</Link></section>}
+    </section> : <section className="s222-empty"><h1>The parts atelier.</h1><p>No published 3D product is available.</p><Link to="/shop" className="s222-button s222-primary p24-action">Explore parts</Link></section>}
     <Gallery22H2 products={catalog} currentId={product?.id}/>
     <section ref={garage} className="c23-studio-invitation">
       <div className="c23-studio-invite-photo"><StoryPhoto22S name="lineup" sizes="(max-width: 800px) 100vw, 60vw" /></div>
-      <div className="c23-studio-invite-copy"><p>Your vehicle. Your choice.</p><h2>Start with<br/>your NVX.</h2><Link to="/shop?mode=build" className="s222-button s222-primary" data-precision-button>Open interactive build</Link><Link to="/story" className="s222-text-link">Meet the riders</Link><small>Explore parts in vehicle context. Demo compatibility, not installation advice.</small></div>
+      <div className="c23-studio-invite-copy"><p>Your vehicle. Your choice.</p><h2>Start with<br/>your NVX.</h2><Link to="/shop?mode=build" className="s222-button s222-primary p24-action" data-precision-button>Open interactive build</Link><Link to="/story" className="s222-text-link">Meet the riders</Link><small>Explore parts in vehicle context. Demo compatibility, not installation advice.</small></div>
     </section>
   </div>;
 }

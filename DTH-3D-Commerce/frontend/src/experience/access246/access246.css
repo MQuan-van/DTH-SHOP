@@ -1,0 +1,64 @@
+/* Blue Vault: one spatial light source, a quiet reading region, opaque credential controls. */
+.a245-access.a246-vault{
+  --a245-paper:#061522;--a245-ink:#edf6ff;--a245-muted:#aec7dc;--a245-blue:#5b9dff;
+  background:#061522;color:#edf6ff;color-scheme:dark;
+}
+.a246-vault .a245-top{border-bottom:1px solid #badfff12}
+.a246-vault .a245-brand img{filter:brightness(0) invert(1);opacity:1}
+.a246-vault .a245-brand>span{color:#b1c8dc;border-color:#91bad544}
+.a246-vault .a245-help-toggle{color:#d5e7f6}
+.a246-vault .a245-help-toggle>span{border-color:#a6d2ee66;color:#b7d8f3}
+.a246-vault .a245-help{background:#102a3e;border-color:#5d87a3;color:#edf6ff;box-shadow:0 24px 65px #0005}
+.a246-vault .a245-help p{color:#c0d5e7}
+.a246-vault .a245-showcase{isolation:isolate;background:transparent}
+.a246-atmosphere{position:absolute;inset:-85px 0 0;z-index:0;overflow:clip;pointer-events:none;background:radial-gradient(ellipse at 75% 38%,#0a376a 0%,#0c2440 34%,#061522 73%)}
+.a246-light-follow{position:absolute;inset:-10% -8%;pointer-events:none}
+.a246-aperture{position:absolute;inset:0;transform-origin:70% 45%}
+.a246-light-cut{position:absolute;inset:-25% -4% -30% 40%;transform:rotate(-22deg);background:linear-gradient(90deg,transparent 0%,#1664d415 20%,#247cff55 48%,#75bfff33 49%,#287cff18 50%,transparent 79%);clip-path:polygon(22% 0,100% 0,69% 100%,0 100%)}
+.a246-light-spill{position:absolute;inset:6% -8% 0 32%;background:radial-gradient(ellipse at 64% 48%,#2b86ff50,transparent 61%);transform:rotate(-14deg)}
+/* The wheel moves an existing field of color; gradients are never repainted by the tween. */
+.a246-atmosphere .a247-wheel-wash{position:absolute;top:-26%;right:-14%;width:89%;height:149%;transform-origin:66% 45%;pointer-events:none}
+.a246-atmosphere .a247-dye{position:absolute;inset:0;opacity:0}
+.a246-atmosphere .a247-dye--ice{background:radial-gradient(ellipse 58% 35% at 60% 44%,#63eaffc4 0%,#14badca8 28%,#0a8ed769 51%,#0c77aa26 72%,transparent 100%),radial-gradient(ellipse 62% 19% at 66% 64%,#206cff83,transparent 96%)}
+.a246-atmosphere .a247-dye--iris{background:radial-gradient(ellipse 61% 38% at 62% 42%,#b4a0ffe0 0%,#7c65eeb8 27%,#5c48cd78 53%,#32329538 75%,transparent 100%),radial-gradient(ellipse 48% 22% at 47% 64%,#297cf083,transparent 98%)}
+.a246-atmosphere .a247-dye--cobalt{background:radial-gradient(ellipse 64% 40% at 61% 45%,#7baaffcf 0%,#3a73ffae 29%,#1a47d06c 57%,#192d8e32 78%,transparent 100%),radial-gradient(ellipse 49% 24% at 63% 64%,#3aa8df7f,transparent 98%)}
+.a246-floor-fade{position:absolute;inset:62% 0 0;background:linear-gradient(180deg,transparent,#0c203c70 39%,#061522);border-bottom:1px solid #9bcbff22}
+.a246-reading-veil{position:absolute;inset:0;background:linear-gradient(90deg,#061522ed 0%,#061522b8 25%,transparent 58%)}
+.a246-vault .a245-editorial{max-width:39%;z-index:2}
+.a246-vault .a245-product-name{color:#f0f7ff;letter-spacing:-.055em;text-wrap:balance;text-shadow:0 6px 45px #06152255}
+.a246-vault .a245-kicker{color:#b3cfe6;letter-spacing:.025em}
+.a246-vault .a245-finish{color:#abc8e0}
+.a246-vault .a245-stage-area{z-index:1}
+.a246-vault .a245-poster img{mix-blend-mode:normal;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent),linear-gradient(0deg,transparent,#000 6%,#000 94%,transparent);mask-composite:intersect;-webkit-mask-composite:source-in}
+.a246-vault .a245-stage-footer{z-index:3}
+.a246-vault .a245-stage-caption{color:#b3d1e9}
+.a246-vault .a245-stage-caption i{width:5px;height:5px;background:#88c8ff;box-shadow:0 0 9px #5a9fff80}
+.a246-vault .a245-camera-tools{padding:3px;background:#081e32cc;border:1px solid #a3d3ff2b;border-radius:4px}
+.a246-vault .a245-camera-tools button{color:#bdd5eb}
+.a246-vault .a245-camera-tools button[aria-pressed=true]{background:#284d72;border-color:#84b9ea66;color:#f1f8ff}
+.a246-vault .a245-camera-tools button:last-child{border-left-color:#7398ba45}
+.a246-vault .a245-console{background:#0a1d2d;border-top:1px solid #78bcf652;box-shadow:0 -18px 70px #04121c40}
+.a246-vault .a245-deck{position:relative}
+.a246-vault .a245-deck::before{content:'';position:absolute;top:-1px;left:4%;width:38%;height:1px;background:linear-gradient(90deg,#e0f5ffb0,#4f9bff80,transparent);pointer-events:none}
+.a246-vault .a245-deck>h1{font-weight:550}
+.a246-vault .a245-deck>.a243-lead{color:#bdd2e3}
+.a246-vault .a245-deck>.a243-fine{color:#a9c2d6}
+.a246-vault .a245-deck .a243-field input{background:#112d42;border-color:#6185a1;color:#f6fbff;box-shadow:inset 0 1px 0 #daedff08}
+.a246-vault .a245-deck .a243-field input:focus{background:#173c56;border-color:#91caff;outline-color:#75b8ff55}
+.a246-vault .a245-deck .a243-submit{background:linear-gradient(115deg,#b7e2ff,#6db5ff);border-color:#a0d6ff;color:#08233e;box-shadow:inset 0 1px 0 #f0faff80,0 6px 25px #1478ec1c}
+.a246-vault .a245-footer{background:#0a1d2d;color:#a9c2d6}
+.a246-vault .a245-footer button{color:#c2dcef}
+.a246-vault .a245-retry{color:#d4eaff;border-color:#92bade}
+@media(hover:hover) and (pointer:fine){
+  .a246-vault .a245-help-toggle:hover{color:#8ac9ff}
+  .a246-vault .a245-camera-tools button:hover:not(:disabled){color:#fff;border-color:#9dc9f3;background:#264763}
+  .a246-vault .a245-deck .a243-submit:hover:not(:disabled){background:linear-gradient(115deg,#ddf1ff,#9dcfff)}
+}
+@media(max-width:860px){
+  .a246-atmosphere{inset:-73px 0 0;background:radial-gradient(ellipse at 82% 45%,#15477b,#0b2542 42%,#061522 81%)}
+  .a246-light-cut{left:35%;opacity:.7}.a246-reading-veil{background:linear-gradient(90deg,#061522b8,transparent 70%)}
+  .a246-vault .a245-editorial{max-width:51%}.a246-vault .a245-console{box-shadow:none}
+  .a246-vault .a245-deck::before{left:24px;width:calc(100% - 48px)}
+  .a246-vault .a245-deck>.a243-fine{font-size:11px}.a246-vault .a245-footer{font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){.a246-light-follow,.a246-aperture{transform:none!important}.a246-atmosphere .a247-wheel-wash{display:none}}

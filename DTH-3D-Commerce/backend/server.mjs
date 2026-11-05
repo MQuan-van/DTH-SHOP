@@ -2,14 +2,19 @@ import { mongoUri } from './commerce/config.mjs';
 import mongoose from 'mongoose';
 import { makeApp } from './commerce/app.mjs';
 import { Product, Vehicle, User, Session, Order } from './commerce/models.mjs';
+import { startupFailure } from './commerce/startup.mjs';
+let stage = 'MongoDB connection';
 try {
   await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 8000 });
+  stage = 'collection/index initialization';
   await Promise.all([Product, Vehicle, User, Session, Order].map(model => model.init()));
+  stage = 'application initialization';
   const app = await makeApp();
   const port = Number(process.env.PORT || 5000), host = process.env.HOST || '127.0.0.1';
+  stage = 'HTTP listen';
   const server = app.listen(port, host, () => console.log(`DTH demonstration API listening at http://${host}:${port}`));
   server.on('error', async error => {
-    console.error(`HTTP server error (${error.code || error.name}). Check whether the port is already in use.`);
+    console.error(startupFailure(error, 'HTTP listen'));
     app.locals.supportHub?.close(); await mongoose.disconnect(); process.exitCode = 1;
   });
   let stopping=false;
@@ -21,6 +26,6 @@ try {
   };
   process.on('SIGINT', shutdown); process.on('SIGTERM', shutdown);
 } catch (error) {
-  console.error(`Startup failed (${error.name}). Check MongoDB, environment settings and whether the port is available.`);
+  console.error(startupFailure(error, stage));
   await mongoose.disconnect(); process.exitCode = 1;
 }

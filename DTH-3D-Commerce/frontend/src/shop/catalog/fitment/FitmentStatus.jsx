@@ -28,10 +28,10 @@ export default function FitmentStatus({ product, vehicleId, vehicles, compact = 
       <p className={styles.reason}>{state.detail}</p>
       <div className={styles.actions}>
         {typeof onChooseVehicle === 'function' && <button type="button" onClick={onChooseVehicle}>
-          {vehicleId ? 'Change vehicle' : 'Choose vehicle'} <span aria-hidden="true">↗</span>
+          {vehicleId ? 'Change vehicle' : 'Choose vehicle'}
         </button>}
         {state.canExplore && typeof onExploreMatches === 'function' && <button type="button" onClick={onExploreMatches}>
-          Show matching parts <span aria-hidden="true">→</span>
+          Show matching parts
         </button>}
       </div>
       {state.canExplore && onExploreMatches && <small className={styles.fineprint}>Keeps your current search, category and price filters.</small>}

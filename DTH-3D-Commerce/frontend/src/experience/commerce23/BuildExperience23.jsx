@@ -35,11 +35,16 @@ export default function BuildExperience23({store,query,matches,eligible,draft,mo
  function inspect(p,event){partTrigger.current=event.currentTarget;setPart(p.id);onSelect(p.id);}
  function closeStudy(){setPart(null);partTrigger.current?.focus();}
  function chooseVehicle(id){if(id!==store.vehicleId&&draft.length&&!window.confirm('Changing vehicle clears this unsaved shortlist. Continue?'))return;onVehicle(id);}
- return <section ref={root} className="c23 c23-build" data-commerce-build="23.1" data-refinement232 data-study={!!currentPart}>
-  <header className="c23-build-head" data-c23-enter><div><p className="c23-eyebrow">Your next configuration</p><h1>{preview?.model||'Build your NVX'}<span>.</span></h1></div>
+ return <section ref={root} className="c23 c23-build p24-build" data-commerce-build="23.1" data-refinement232 data-study={!!currentPart}>
+  <header className="c23-build-head" data-c23-enter><div><p className="c23-eyebrow">Build your NVX</p><h1>{preview?.model||'Build your NVX'}</h1></div>
    <div className="c23-version-switch" role="group" aria-label="Choose NVX version">{vehicles.map(v=><button key={v.id} type="button" aria-pressed={store.vehicleId===v.id} onClick={()=>chooseVehicle(v.id)} data-c23-light>{v.model.replace('NVX ','')}</button>)}</div>
    <Link to="/account?view=vehicle" className="c23-text-link">My garage</Link>
   </header>
+  <ol className="p24-build-progress" aria-label="Build progress">
+   <li data-complete={!!selectedVehicle} aria-current={!selectedVehicle?'step':undefined}><span>Vehicle</span><strong>{selectedVehicle?selectedVehicle.model:'Choose your version'}</strong></li>
+   <li data-complete={!!system} aria-current={selectedVehicle&&!system?'step':undefined}><span>System</span><strong>{system?SYSTEMS23.find(s=>s.id===system).label:'Choose a detail'}</strong></li>
+   <li data-complete={!!draft.length} aria-current={selectedVehicle&&!!system?'step':undefined}><span>Shortlist</span><strong>{draft.length?`${draft.length} selected`:'Your next part'}</strong></li>
+  </ol>
   <div className="c23-build-workspace" data-has-panel={!!system}>
    <div className="c23-build-stage">
     {!currentPart&&spec&&<Suspense fallback={<div className="c23-scene-status" role="status">Opening vehicle…</div>}><VehicleStage23 spec={spec} system={system} onSystem={selectSystem} apiRef={api} reduced={reduced||!motion} compact={policy.compact||policy.saveData} blocked={blocked} author={author}/></Suspense>}
@@ -59,7 +64,7 @@ export default function BuildExperience23({store,query,matches,eligible,draft,mo
    </aside>
   </div>
   <nav className="c23-system-rail" aria-label="Vehicle systems">{SYSTEMS23.map(s=><button key={s.id} type="button" aria-pressed={system===s.id} onClick={()=>onCategory(system===s.id?'':s.id)} data-c23-light><Icon23 name={s.id}/><span>{s.label}</span>{draft.some(p=>p.category===s.id)&&<i className="c23-selected-dot" aria-label="Part shortlisted"/>}</button>)}</nav>
-  <footer className="c23-build-footer"><div><strong>{draft.length?`${draft.length} selected ${draft.length===1?'part':'parts'}`:'Your configuration'}</strong><span>{draft.length?'Unsaved shortlist · one per category':'Select a system on the vehicle or in the toolbar.'}</span></div><div className="c23-build-total"><span>Catalogue estimate</span><strong>{!draft.length?'—':estimate===null?'Unavailable':formatMoney(estimate)}</strong></div><button type="button" className="c23-button" disabled={!draft.length} onClick={()=>setSummary(v=>!v)} aria-expanded={summary}>Review build</button></footer>
+  <footer className="c23-build-footer"><div><strong>{draft.length?`${draft.length} selected ${draft.length===1?'part':'parts'}`:'Your shortlist'}</strong><span>{draft.length?'Unsaved shortlist · one per category':'Select a system on the vehicle or in the toolbar.'}</span></div><div className="c23-build-total"><span>Catalogue estimate</span><strong>{!draft.length?'—':estimate===null?'Unavailable':formatMoney(estimate)}</strong></div><button type="button" className="c23-button" disabled={!draft.length} onClick={()=>setSummary(v=>!v)} aria-expanded={summary}>Review build</button></footer>
   {summary&&<section className="c23-summary" aria-label="Build shortlist"><h2 ref={summaryHeading232} tabIndex={-1}>Your shortlist</h2>{draft.map(p=><div key={p.id}><span>{SYSTEMS23.find(s=>s.id===p.category)?.label}</span><Link to={safeProductHref23(p)||'/shop'} state={{fromShop}}>{p.name}</Link><strong>{formatMoney(p.price)}</strong><button type="button" onClick={()=>onRemove(p.id)}>Remove</button></div>)}<p>This list stays in this page only. It does not change your bag or reserve stock. Review each product before ordering.</p></section>}
   {feedback232.error&&<p className="r232-build-error" role="alert">{feedback232.error}</p>}
   <BuildFeedback232 receipt={feedback232.receipt} onClose={feedback232.close} onReview={()=>{feedback232.close();setSummary(true);requestAnimationFrame(()=>summaryHeading232.current?.focus({preventScroll:false}));}}/>

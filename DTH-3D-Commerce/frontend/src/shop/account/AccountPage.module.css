@@ -145,3 +145,25 @@
 @keyframes account-error-pulse{0%,100%{box-shadow:0 34px 100px #07111a30}50%{box-shadow:0 34px 100px #e53b4926}}
 @media(max-width:760px){.authLayout[data-cinematic-auth]{border-radius:16px;background:#fff}.authLayout[data-cinematic-auth] .brandPanel{display:none}.authLayout[data-cinematic-auth] .authPanel{background:#fff}}
 @media(prefers-reduced-motion:reduce){.authLayout[data-cinematic-auth],.authLayout[data-cinematic-auth] *{animation:none!important;transition:none!important}.authLayout[data-cinematic-auth] .visual{transform:none}}
+
+/* Premium 24 fallback account surface; the main member stage is Account23. */
+.root {font-family:var(--one-font,Manrope,"Segoe UI",sans-serif);color:var(--p24-navy,#102c3d);}
+.authLayout[data-cinematic-auth] {border-radius:2px;box-shadow:none;border-color:#cbd9e0;}
+.authLayout[data-cinematic-auth] .authPanel {background:#f2f6f7;}
+.authLayout[data-cinematic-auth] .authBody {max-width:420px;}
+.authLayout[data-cinematic-auth] .authBody h1 {font-size:clamp(38px,4vw,58px);font-weight:750;line-height:1;letter-spacing:-.06em;}
+.authLayout[data-cinematic-auth] .field input {border:1px solid #b6cbd7;border-radius:2px;min-height:52px;padding:13px 14px;background:white;font-size:16px;transition:border-color 160ms ease;}
+.authLayout[data-cinematic-auth] .password input {padding-right:70px;}
+.authLayout[data-cinematic-auth] .password>button {min-height:44px;min-width:60px;top:4px;right:4px;border-radius:0;}
+.authLayout[data-cinematic-auth] .field input:focus {transform:none;outline:2px solid #287cff4a;outline-offset:2px;border-color:#287cff;}
+.authLayout[data-cinematic-auth] .primary {border-radius:2px;min-height:52px;background:var(--p24-action,#155cce);border-color:var(--p24-action,#155cce);font-size:14px;transition:background-color 160ms ease,transform 120ms ease;}
+.switchMode {font-size:14px;}
+.switchMode button {min-height:44px;}
+.fine {font-size:12px;line-height:1.7;}
+.dialog {border-radius:2px;font-family:var(--one-font,Manrope,sans-serif);}
+.dialog :is(button,input) {min-height:48px;border-radius:2px;}
+.dialog .checkbox {min-height:48px;}
+.dialog .checkbox input {min-height:0;}
+.preview {border-radius:2px;}
+.root :is(button,a,input):focus-visible {outline:3px solid #287cff;outline-offset:4px;}
+.root :is(button,a) {touch-action:manipulation;}

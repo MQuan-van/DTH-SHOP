@@ -19,7 +19,7 @@ function CustomerPanel({id,identity,revision}){
   return <div className={s.customerInner}><span className={s.eyebrow}>CUSTOMER CONTEXT</span><ResourceState resource={resource} label="customer"/>{data&&<>
     <div className={s.customerAvatar}>{(data.customer?.email||'?')[0].toUpperCase()}</div><h3>{data.customer?.email||'Customer'}</h3>
     <div className={s.customerRide}><ProIcon name="vehicle"/><span><small>ACCOUNT DEFAULT</small><strong>{vehicleName(data.vehicle)}</strong></span></div>
-    <h4>Recent demo orders</h4>{!data.orders?.length?<p className={s.note}>No recorded orders.</p>:(data.orders||[]).map(o=><Link key={o.id} className={s.customerOrder} to={`/admin/orders/${encodeURIComponent(o.id)}`}><span>{o.id}</span><strong>{formatMoney(o.total)} <ProIcon name="arrow" size={12}/></strong><time>{relativeTime(o.createdAt)}</time></Link>)}
+    <h4>Recent demo orders</h4>{!data.orders?.length?<p className={s.note}>No recorded orders.</p>:(data.orders||[]).map(o=><Link key={o.id} className={s.customerOrder} to={`/admin/orders/${encodeURIComponent(o.id)}`}><span>{o.id}</span><strong>{formatMoney(o.total)} </strong><time>{relativeTime(o.createdAt)}</time></Link>)}
     <p className={s.contextDisclaimer}>The saved vehicle is account context, not a fitment guarantee.</p>
   </>}</div>;
 }
@@ -54,39 +54,9 @@ export default function InboxPro(){
   return <div ref={root} className={`${s.root} ${calm.inboxRoot} ${kinetic.root}`} data-admin-pro="inbox" data-motion={ui.motion?'on':'off'}>
     <Topbar label="Inbox" status={support.status}>
       <Link className={calm.backToOverview} to="/admin" aria-label="Back to Admin overview"><ProIcon name="back" size={16}/><span>Overview</span></Link>
-      <Link className={calm.siteHome} data-website-home to="/" aria-label="Go to website home">Website home <ProIcon name="arrow" size={13}/></Link>
-      <button type="button" className={s.focusButton} aria-pressed={ui.focus} onClick={()=>ui.setFocus(!ui.focus)}><ProIcon name="focus" size={16}/>{ui.focus?'Exit focus':'Focus inbox'}</button>
+      <Link className={calm.siteHome} data-website-home to="/" aria-label="Go to website home">Website home </Link>
     </Topbar>
     <Hero inbox ui={ui} status={support.status}/>
-    {/* <section className={`${calm.inboxLead} ${kinetic.lead}`} data-pro-enter data-inbox-lead aria-label="Support workspace introduction">
-      <div><span className={calm.leadEyebrow}>SUPPORT / WORKSPACE</span><h2>Every rider. Every detail.</h2><p>Find a conversation, review the context, and reply with confidence.</p></div>
-      <div className={kinetic.signal} aria-hidden="true"><i/><i/><i/><i/><i/></div>
-    </section> */}
-    <div className={`${s.inboxSummary} ${calm.inboxSummary}`} data-inbox-summary aria-label="Queue metrics" data-pro-enter><div>
-      {/* <span>Matching conversations
-        <small>
-          All results pages
-        </small>
-      </span> */}
-      {/* <Value value={result.data?.total} motion={ui.motion}/> */}
-    </div>
-    <div>
-      {/* <span>Open
-        <small>
-          Current results page
-        </small>
-       </span> */}
-      {/* <Value value={result.data?numbers.open:null} motion={ui.motion}/> */}
-    </div>
-    <div>
-      {/* <span>Unread conversations
-        <small>
-          Current results page
-        </small>
-      </span> */}
-      {/* <Value value={result.data?numbers.unread:null} motion={ui.motion}/> */}
-    </div>
-    </div>
     <div className={`${s.workspace} ${calm.workspace}`} data-inbox-workspace data-selected={!!id} data-pro-enter>
       <aside className={`${s.queue} ${calm.queue}`} aria-label="Conversation queue"><div className={`${s.queueTop} ${calm.queueTop}`}><div className={calm.queueHeading}><span>SUPPORT QUEUE</span><h2>Conversations</h2></div><span className={calm.queueCount} title="Matching conversations across all pages">{result.data?.total??'—'}</span></div>
         <form className={`${s.queueSearch} ${calm.queueSearch}`} onSubmit={e=>{e.preventDefault();change({q:draft.trim(),page:''},true);}}><label className={s.srOnly} htmlFor="pro-inbox-search">Find customer by email</label><input id="pro-inbox-search" type="search" value={draft} onChange={e=>setDraft(e.target.value)} maxLength={100} placeholder="Search customer email"/><button type="submit" aria-label="Search conversations"><ProIcon name="search" size={17}/></button></form>
@@ -94,15 +64,15 @@ export default function InboxPro(){
         <div className={`${s.queueOrder} ${calm.queueOrder}`}><span>{rows.length} on this page</span><select aria-label="Order conversations on this page" value={order} onChange={e=>setOrder(e.target.value)}><option value="recent">Recent first</option><option value="unread">Unread first</option></select></div>
         <div className={`${s.queueItems} ${calm.queueItems}`} data-inbox-scroll-list aria-busy={result.busy}><ResourceState resource={result} label="conversations"/>{result.data&&!rows.length&&<div className={calm.noResults}><Empty title="Queue is clear">No conversations match these filters.</Empty>{(q||status)&&<button type="button" className={calm.clearFilters} onClick={()=>{setDraft('');change({q:'',status:'',page:''},true);}}>Clear search and filters <ProIcon name="refresh" size={14}/></button>}</div>}
           {ordered.map(c=><button key={c.id} data-inbox-queue-item type="button" className={`${s.queueItem} ${calm.queueItem}`} aria-current={id===c.id?'true':undefined} data-unread={c.unread>0} onClick={()=>change({thread:c.id})}><span className={s.avatar}>{(c.customer?.email||'?')[0].toUpperCase()}</span><span className={`${s.queueItemCopy} ${calm.queueItemCopy}`}><strong>{c.customer?.email||'Customer'}</strong><small>{c.lastPreview||'Conversation started'}</small><em data-resolved={c.status==='resolved'}>{c.status==='resolved'?'Resolved':'Open'}</em></span><span className={s.queueTime}><time>{relativeTime(c.lastMessageAt||c.updatedAt)}</time>{c.unread>0&&<b>{c.unread>99?'99+':c.unread}</b>}</span></button>)}
-        </div><div className={`${s.queueBottom} ${calm.queueBottom}`}><span>Page {page}</span>{(result.data?.total||0)>(result.data?.pageSize||30)&&<><button type="button" disabled={page<=1} onClick={()=>change({page:page-1},true)} aria-label="Previous conversations page">←</button><button type="button" disabled={page*(result.data?.pageSize||30)>=result.data.total} onClick={()=>change({page:page+1},true)} aria-label="Next conversations page">→</button></>}</div>
+        </div><div className={`${s.queueBottom} ${calm.queueBottom}`}><span>Page {page}</span>{(result.data?.total||0)>(result.data?.pageSize||30)&&<><button type="button" disabled={page<=1} onClick={()=>change({page:page-1},true)} aria-label="Previous conversations page">Previous</button><button type="button" disabled={page*(result.data?.pageSize||30)>=result.data.total} onClick={()=>change({page:page+1},true)} aria-label="Next conversations page">Next</button></>}</div>
       </aside>
-      <section className={`${s.conversation} ${calm.conversation}`} aria-label="Active conversation">{!id?<div className={`${s.emptyConversation} ${calm.emptyConversation}`}><div className={s.emptyGeometry} aria-hidden="true"><i/><i/><ProIcon name="inbox" size={36}/></div><h2>The next conversation<br/>starts here.</h2><p>{invalidThread?'This conversation link is invalid. Choose a thread from the queue.':'Choose a rider to see messages, photos and context.'}</p>{ordered[0]&&<button type="button" className={s.primary} onClick={()=>change({thread:ordered[0].id})}>Open first conversation <ProIcon name="arrow"/></button>}</div>:<>
+      <section className={`${s.conversation} ${calm.conversation}`} aria-label="Active conversation">{!id?<div className={`${s.emptyConversation} ${calm.emptyConversation}`}><div className={s.emptyGeometry} aria-hidden="true"><i/><i/><ProIcon name="inbox" size={36}/></div><h2>The next conversation<br/>starts here.</h2><p>{invalidThread?'This conversation link is invalid. Choose a thread from the queue.':'Choose a rider to see messages, photos and context.'}</p>{ordered[0]&&<button type="button" className={s.primary} onClick={()=>change({thread:ordered[0].id})}>Open first conversation </button>}</div>:<>
         <header key={id} data-inbox-thread-head className={`${s.conversationHead} ${calm.conversationHead}`}><button className={s.backMobile} type="button" aria-label="Back to conversations" onClick={()=>change({thread:''})}><ProIcon name="back"/></button><span className={s.avatar}>{(chosen?.customer?.email||'?')[0].toUpperCase()}</span><div className={s.conversationIdentity}><strong>{chosen?.customer?.email||'Conversation'}</strong><span><i data-resolved={chosen?.status==='resolved'}/>{chosen?.status==='resolved'?'Resolved':'Customer support'}<small> · {chosen?.lastMessageAt?relativeTime(chosen.lastMessageAt):'Current thread'}</small></span></div><button type="button" className={s.customerButton} onClick={()=>setContextOpen(true)} aria-haspopup="dialog" aria-label="Open customer context"><ProIcon name="user"/></button><button type="button" className={s.primary} disabled={busy||!chosen} onClick={resolve}><ProIcon name={chosen?.status==='resolved'?'refresh':'check'} size={16}/>{busy?'Saving…':chosen?.status==='resolved'?'Reopen':'Resolve'}</button></header>
         <ErrorPanel>{error}</ErrorPanel>{notice&&<p className={s.statusNote} role="status">{notice}</p>}
         <ChatThread key={`${identity}:${id}`} conversationId={id} onMeta={setMeta} composerTools={args=><ReplyTools {...args}/>}/>
       </>}</section>
       {id&&<aside className={`${s.contextRail} ${calm.contextRail}`} aria-label="Customer context"><CustomerPanel id={id} identity={identity} revision={support.revision}/></aside>}
-    </div><p className={`${s.footerNote} ${calm.footerNote}`}>Support status indicates your server connection, not the customer's online presence. <Link to="/" className={calm.footerLink}>Website home <ProIcon name="arrow" size={12}/></Link></p>
+    </div><p className={`${s.footerNote} ${calm.footerNote}`}>Support status indicates your server connection, not the customer's online presence. <Link to="/" className={calm.footerLink}>Website home </Link></p>
     {contextOpen&&id&&<ContextDialog id={id} identity={identity} revision={support.revision} onClose={()=>setContextOpen(false)}/>}
   </div>;
 }

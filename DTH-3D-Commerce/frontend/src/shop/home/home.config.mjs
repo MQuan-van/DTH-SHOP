@@ -105,4 +105,4 @@ export function resolveExhibits(products, definitions = HOME_CONFIG.hero.exhibit
 export function enabledSections(config = HOME_CONFIG) {
   return config.sections.filter(s => s.enabled).map(s => s.id);
 }
-export const CATEGORY_LABELS = { suspension: 'Suspension', wheels: 'Wheels', exhausts: 'Exhausts', mirrors: 'Mirrors', brakes: 'Brakes' };
+export { CATEGORY_LABELS } from '../../../../shared/categories.mjs';

@@ -1,8 +1,9 @@
 /** Domain rules shared by browser preview, API and tests. All money is integer VND. */
+import { categoryId, categorySearchText, isCategory } from './categories.mjs';
+export { CATEGORIES } from './categories.mjs';
 export class InputError extends Error {
   constructor(message, status = 400) { super(message); this.name = 'InputError'; this.status = status; }
 }
-export const CATEGORIES = ['suspension', 'wheels', 'exhausts', 'mirrors', 'brakes'];
 export const formatMoney = value => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value);
 export function fitment(product, vehicleId, vehicles) {
   if (!vehicleId) return { status: 'unselected', text: 'Select a demo vehicle' };
@@ -15,9 +16,9 @@ export function fitment(product, vehicleId, vehicles) {
 export function filterProducts(products, { search = '', category = '', maxPrice = Infinity, vehicleId = '' } = {}, vehicles = []) {
   const query = String(search).trim().toLowerCase();
   return products.filter(p => p.active !== false
-    && (!category || p.category === category)
+    && (!category || categoryId(p.category) === categoryId(category))
     && p.price <= maxPrice
-    && (!query || `${p.name} ${p.category} ${p.finish}`.toLowerCase().includes(query))
+    && (!query || `${p.name} ${categorySearchText(p.category)} ${p.finish}`.toLowerCase().includes(query))
     && (!vehicleId || fitment(p, vehicleId, vehicles).status === 'compatible'));
 }
 export function normalizeItems(items) {
@@ -64,7 +65,8 @@ export function validateProduct(body, vehicles) {
   const id = text('id', 80);
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) throw new InputError('Use a lowercase, hyphenated product ID.');
   const category = text('category', 40);
-  if (!CATEGORIES.includes(category)) throw new InputError('Unknown category.');
+  // Old clients may still save a legacy record without silently reclassifying it.
+  if (!isCategory(category)) throw new InputError('Unknown category.');
   if (!Number.isSafeInteger(body.price) || body.price < 1 || body.price > 1000000000) throw new InputError('Price must be a positive integer in VND.');
   const modelUrl = text('modelUrl', 200), imageUrl = text('imageUrl', 200);
   if (!/^\/models\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]+\.glb$/.test(modelUrl)) throw new InputError('Use a local /models/...glb URL.');

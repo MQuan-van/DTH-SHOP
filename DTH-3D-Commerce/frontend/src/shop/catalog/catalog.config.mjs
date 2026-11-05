@@ -16,7 +16,8 @@ export const SHOP_CONFIG = {
   },
   categories: [
     { id: 'suspension', label: 'Suspension' },
-    { id: 'wheels', label: 'Wheels' },
+    { id: 'rims', label: 'Rims' },
+    { id: 'tires', label: 'Tires' },
     { id: 'exhausts', label: 'Exhausts' },
     { id: 'mirrors', label: 'Mirrors' },
     { id: 'brakes', label: 'Brakes' },

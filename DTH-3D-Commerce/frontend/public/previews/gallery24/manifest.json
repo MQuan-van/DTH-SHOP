@@ -1,0 +1,17 @@
+{
+  "created": "2026-11-02",
+  "records": [
+    {
+      "image": "/previews/gallery24/x1r-gtr.png",
+      "modelUrl": "/models/ai-products/40762c2a-50bd-4514-a523-1ff523c9a9f0.glb",
+      "sha256": "d10bf8d005a9a648135e1b7a3cc2a2a2d3fcd7ed9da6102de98a3ae143acd0f0",
+      "source": "Actual first settled GalleryStage24 WebGL frame; original geometry/materials; 512px pearl 2D pixel copy"
+    },
+    {
+      "image": "/previews/gallery24/ohlins-ttx.png",
+      "modelUrl": "/models/ai-products/0262d0bd-690d-439e-8132-8b07088abadb.glb",
+      "sha256": "79d2b2bdf8824a775e5cc8adffce313e2a687fb864fcef540c09eb084d536e98",
+      "source": "Actual first settled GalleryStage24 WebGL frame; original geometry/materials; 512px pearl 2D pixel copy"
+    }
+  ]
+}

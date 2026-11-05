@@ -7,13 +7,14 @@ import s from './adminPro.module.css';
 // const { chars } = splitText(target, { chars: true });
 
 export function Topbar({label,status,children}) {
-  return <div className={s.topbar}><div className={s.breadcrumb}><Link to="/admin">DTH Studio</Link><span>/</span><strong>{label}</strong></div><div className={s.topActions}>
+  return <div className={s.topbar} data-admin-contextbar><div className={s.breadcrumb}><Link to="/admin">DTH Studio</Link><span>/</span><strong>{label}</strong></div><div className={s.topActions}>
     <span className={s.connection} data-live={status==='live'}><i/>{connectionLabel(status)}</span>
     {children}
   </div></div>;
 
 }
 export function Hero({inbox=false,ui,status}) {
+  if(inbox)return <header className="p24-admin-inbox-heading" data-inbox-hero="true"><div><h1>Inbox</h1><p>Conversations, context, and replies.</p></div></header>;
   return <header className={`${s.hero} ${calm.calmHero}`} data-compact={inbox} data-inbox-hero={inbox?'true':undefined} data-pro-enter>
     <div className={s.heroGrid} aria-hidden="true"/><div className={s.heroCopy}><span className={s.eyebrow}>DTH / {inbox?'CUSTOMER CARE':'OPERATIONS'}</span>
       <h1>{inbox?<>Inbox.<br/><em>Closer to the rider.</em></>:<>Your studio.<br/><em>In control.</em></>}</h1>

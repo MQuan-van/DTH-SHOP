@@ -75,7 +75,7 @@
 .a22-selection{position:absolute;left:4.5%;right:4.5%;bottom:24px;z-index:6}
 .a22-selection-meta{display:flex;justify-content:space-between;align-items:center;gap:20px;font-size:11px;color:#92a5b5;padding-bottom:18px}
 .a22-selection-meta>span:first-child::before{content:"";display:inline-block;width:4px;height:4px;background:#b1d7e8;border-radius:50%;vertical-align:middle;margin-right:8px}
-.a22-category-rail{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:22px;border-top:1px solid var(--a22-rule)}
+.a22-category-rail{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:22px;border-top:1px solid var(--a22-rule)}
 .a22 .a22-category-rail button{position:relative;background:none;border:0;border-top:2px solid transparent;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:66px;padding:17px 0 12px;text-align:left;color:#9cabb9;font-size:clamp(14px,1.25vw,20px);font-weight:500;letter-spacing:-.02em;transition:color .25s,border-color .3s}
 .a22-category-rail button>span{font-size:10px;color:#8097a8;font-variant-numeric:tabular-nums;font-weight:400}
 .a22 .a22-category-rail button[aria-pressed="true"]{border-color:var(--a22-ice);color:white}
@@ -145,7 +145,7 @@ html[data-dth-atelier="true"] .dth-header :is(a,button):focus-visible{outline-co
  .a22-view-rail{position:relative;right:auto;top:auto;order:3;flex-direction:row;width:auto;gap:24px;margin-top:14px}
  .a22 .a22-view-rail button{gap:7px;min-height:44px}.a22-view-rail button[aria-pressed="true"]::after{display:none}
  .a22-selection{position:relative;inset:auto;order:5;margin-top:20px;width:100%}.a22-selection-meta{display:none}
- .a22-category-rail{gap:6px;grid-template-columns:repeat(5,minmax(0,1fr))}
+ .a22-category-rail{gap:6px;grid-template-columns:repeat(6,minmax(0,1fr))}
  .a22 .a22-category-rail button{font-size:12px;flex-direction:column;align-items:flex-start;gap:7px;min-height:64px}
  .a22-part-choices{max-height:100px;gap:2px 18px}.a22 .a22-part-choices button{min-height:44px}
  .a22-hero[data-inspect="true"] .a22-info{width:100%;padding:10px 0}.a22-hero[data-inspect="true"] .a22-info h1{font-size:28px;max-width:22ch}

@@ -9,17 +9,17 @@ import RecommendationCard from './RecommendationCard';
 import styles from './ProductRecommendations.module.css';
 
 const TEXT = {
-  build: { eyebrow: 'DTH / SAME VEHICLE. NEW POSSIBILITIES.', title: 'Complete your build.',
+  build: { title: 'Complete your build.',
     note: 'Explore other categories mapped to your selected vehicle. Each part matches individually; this is not a validated kit.' },
-  alternatives: { eyebrow: 'DTH / FIND YOUR NEXT MATCH', title: 'Compatible alternatives.',
+  alternatives: { title: 'Compatible alternatives.',
     note: 'This part has no match in the demo data. These alternatives are from the same category and map to your selected vehicle.' },
-  unknown: { eyebrow: 'DTH / COMPATIBILITY NOT ESTABLISHED', title: 'Known demo matches.',
+  unknown: { title: 'Known demo matches.',
     note: 'The current part has no established compatibility result. The parts below have a mapping for your selected vehicle in this category.' },
-  unselected: { eyebrow: 'DTH / START WITH YOUR VEHICLE', title: 'Find the right direction.',
+  unselected: { title: 'Find the right direction.',
     note: 'Select a vehicle before we suggest compatible parts. We do not guess a match from the product image or 3D model.' },
-  'unknown-vehicle': { eyebrow: 'DTH / CHECK YOUR VEHICLE', title: 'Your vehicle needs an update.',
+  'unknown-vehicle': { title: 'Your vehicle needs an update.',
     note: 'The saved vehicle is missing or ambiguous in this catalog. Choose a listed vehicle to see mapped recommendations.' },
-  unavailable: { eyebrow: 'DTH / CATALOG UPDATE', title: 'Recommendations unavailable.',
+  unavailable: { title: 'Recommendations unavailable.',
     note: 'This product cannot be used as a recommendation reference. Browse the current catalog or choose another vehicle.' },
 };
 
@@ -79,14 +79,14 @@ export default function ProductRecommendations({ product, products, vehicles, ve
     onBlurCapture={event => { if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget)) focusedId.current = null; }}>
     <div className={styles.rule} aria-hidden="true"><i data-rec-sweep /></div>
     <header className={styles.heading}>
-      <div><p className={styles.eyebrow}>{text.eyebrow}</p>
+      <div>
         <h2 id={titleId} ref={heading} tabIndex={-1}>{text.title}</h2>
         <p className={styles.intro}>{text.note}</p>
       </div>
       <div className={styles.vehicle}>
-        <span>SELECTED VEHICLE</span><strong>{label || (vehicleId ? 'Not in this catalog' : 'Not selected')}</strong>
+        <span>Selected vehicle</span><strong>{label || (vehicleId ? 'Not in this catalog' : 'Not selected')}</strong>
         <button type="button" onClick={onChooseVehicle} disabled={blocked}>
-          {vehicleId ? 'Change vehicle' : 'Select vehicle'} <span aria-hidden="true">↗</span>
+          {vehicleId ? 'Change vehicle' : 'Select vehicle'}
         </button>
       </div>
     </header>
@@ -99,13 +99,13 @@ export default function ProductRecommendations({ product, products, vehicles, ve
         </div>}
       </div>
       <ul id={trackId} ref={track} className={styles.grid} data-count={result.items.length} style={{ '--rec-columns': result.items.length }} data-recommendation-track aria-label={text.title}>
-        {result.items.map((item, index) => <li key={item.id} data-rec-enter>
-          <RecommendationCard product={item} vehicleLabel={label} fromShop={fromShop} index={index} motion={animated}/>
+        {result.items.map(item => <li key={item.id} data-rec-enter>
+          <RecommendationCard product={item} vehicleLabel={label} fromShop={fromShop} motion={animated}/>
         </li>)}
       </ul>
       <div className={styles.footer}>
         <p>Demo mappings only. Verify real fitment with your supplier. {result.mode === 'build' ? 'Not a bundle or installation guide.' : 'Same category; not a claim of identical specifications.'}</p>
-        <Link to={browseHref}>{result.mode === 'build' ? 'Browse matching parts' : 'All matches in this category'} <span aria-hidden="true">↗</span></Link>
+        <Link to={browseHref}>{result.mode === 'build' ? 'Browse matching parts' : 'All matches in this category'}</Link>
       </div>
       <details className={styles.explanation}><summary>Why these parts?</summary>
         <p>Only active, linkable parts with a valid VND price and a matching vehicle mapping are eligible. Featured items come first; ties use price distance, name and ID. {result.mode === 'build' ? 'One item is selected within each other category.' : 'Only the current category is considered.'} This is a rules-based selection, not an AI or quality rating. Shop search filters are kept in your Back to parts link, but do not restrict this section.</p>
@@ -115,8 +115,8 @@ export default function ProductRecommendations({ product, products, vehicles, ve
       <div><h3>{vehicleKnown && result.mode !== 'unavailable' ? 'No mapped suggestions yet.' : result.mode === 'unselected' ? 'Start with your ride.' : 'A clearer match starts with the catalog.'}</h3>
         <p>{vehicleKnown && result.mode !== 'unavailable' ? empty : text.note}</p>
         <div className={styles.emptyActions}>
-          <button type="button" onClick={onChooseVehicle} disabled={blocked}>{vehicleId ? 'Change vehicle' : 'Select vehicle'} <span aria-hidden="true">↗</span></button>
-          <Link to="/shop">Browse all parts <span aria-hidden="true">→</span></Link>
+          <button type="button" onClick={onChooseVehicle} disabled={blocked}>{vehicleId ? 'Change vehicle' : 'Select vehicle'}</button>
+          <Link to="/shop">Browse all parts</Link>
         </div>
       </div>
     </div>}

@@ -20,7 +20,7 @@ test('no search results produces no invented fallback', () => assert.equal(pick(
 test('query length is bounded', () => assert.equal(query(`q=${'a'.repeat(500)}`).search.length, 160));
 test('multiple selected categories use OR, then AND with other filters', () => assert.equal(pick('category=wheels&category=suspension&q=Apex').length, 2));
 test('old Home single-category URLs remain compatible', () => assert.equal(pick('category=mirrors').length, 4));
-test('comma-delimited categories and duplicates normalize', () => assert.deepEqual(query('category=wheels,suspension&category=wheels').categories, ['wheels','suspension']));
+test('comma-delimited categories and duplicates normalize', () => assert.deepEqual(query('category=wheels,suspension&category=wheels').categories, ['rims','suspension']));
 test('unknown category and sort are sanitized', () => { assert.deepEqual(query('category=unknown').categories, []); assert.equal(query('sort=random').sort, 'featured'); });
 test('zero maximum price is not replaced by the default', () => { assert.equal(query('max=0').maxPrice, 0); assert.equal(pick('max=0').length, 0); });
 test('negative price clamps to zero', () => assert.equal(query('max=-7').maxPrice, 0));

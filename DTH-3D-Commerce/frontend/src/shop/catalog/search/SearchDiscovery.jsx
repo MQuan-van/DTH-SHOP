@@ -128,13 +128,13 @@ export default function SearchDiscovery({ products, vehicles, vehicleId, query, 
         aria-expanded={expanded} aria-controls={expanded ? listId : undefined}
         aria-activedescendant={expanded && selectedIndex >= 0 ? `${listId}-${selectedIndex}` : undefined}
         aria-describedby={helpId} autoComplete="off" maxLength={SEARCH_DISCOVERY.maxLength}
-        placeholder="Search suspension, wheels, exhausts…" value={value}
+        placeholder="Search rims, tires, suspension…" value={value}
         onChange={event => { onValueChange(event.target.value); setSelection(null); setOpen(true); }}
         onFocus={() => { if (!suppressFocus.current) setOpen(true); }} onClick={() => setOpen(true)} onKeyDown={keys}
         onCompositionStart={() => { composing.current = true; setComposing(true); }}
         onCompositionEnd={event => { composing.current = false; setComposing(false); onValueChange(event.currentTarget.value); setSelection(null); setOpen(true); }} />
       {value && <button className={styles.clearButton} type="button" aria-label="Clear search" onClick={() => { close(); onClear(); field.current?.focus(); }}><ShopIcon name="close" /></button>}
-      <button type="submit" className={styles.searchButton}>Search <ShopIcon name="arrow" /></button>
+      <button type="submit" className={styles.searchButton}>Search</button>
     </form>
     <p id={helpId} className={styles.srOnly}>Type at least two characters for product suggestions. Current filters and selected demo vehicle still apply.</p>
     <span role="status" aria-live="polite" aria-atomic="true" className={styles.srOnly}>{announcement}</span>
@@ -159,12 +159,12 @@ export default function SearchDiscovery({ products, vehicles, vehicleId, query, 
                     <strong><Match term={results.term}>{product.name}</Match></strong>
                     <span className={styles.fit} data-fit={fit.status}>{fit.label}</span>
                   </span>
-                  <span className={styles.optionEnd}><span>{formatMoney(product.price)}</span><ShopIcon name="arrow" /></span>
+                  <span className={styles.optionEnd}><span>{formatMoney(product.price)}</span></span>
                 </a>
               </li>;
             })}
           </ul>
-          {!results.items.length && <div className={styles.empty}><ShopIcon name="search" /><strong>No parts match “{results.term}”.</strong><p>Try another term or reset product filters. Your selected vehicle will be kept.</p><button type="button" onClick={() => { close(); onReset(); field.current?.focus(); }}>Reset product filters <span aria-hidden="true">↗</span></button></div>}
+          {!results.items.length && <div className={styles.empty}><ShopIcon name="search" /><strong>No parts match “{results.term}”.</strong><p>Try another term or reset product filters. Your selected vehicle will be kept.</p><button type="button" onClick={() => { close(); onReset(); field.current?.focus(); }}>Reset product filters</button></div>}
         </div>
         {preview && <aside className={styles.preview} aria-hidden="true">
           <div className={styles.previewScene} key={preview.id}>
@@ -177,7 +177,7 @@ export default function SearchDiscovery({ products, vehicles, vehicleId, query, 
       </div>
       <div className={styles.panelFooter}>
         <span>↑ ↓ select · Enter open · Esc close</span>
-        <button type="button" tabIndex={-1} onMouseDown={event => event.preventDefault()} onClick={submit}>View all {results.total} results <ShopIcon name="arrow" /></button>
+        <button type="button" tabIndex={-1} onMouseDown={event => event.preventDefault()} onClick={submit}>View all {results.total} results</button>
       </div>
     </div>}
   </div>;

@@ -98,7 +98,7 @@ export default function CheckoutPage() {
     } finally { setPlacing(false); }
   }
 
-  if (!items.length) return <section className={styles.empty}><p className={styles.eyebrow}>03 / CHECKOUT</p><h1>Your bag is empty.</h1><p>Add a compatible part before opening checkout.</p><Link className={styles.primary} to="/shop">Explore parts <Icon name="arrow"/></Link></section>;
+  if (!items.length) return <section className={styles.empty}><h1>Your bag is empty.</h1><p>Add a compatible part before opening checkout.</p><Link className={styles.primary} to="/shop">Explore parts</Link></section>;
 
   const checkedAt = quote?.quotedAt ? new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(quote.quotedAt)) : '';
   const blocked = quoting || placing || !quote?.valid || !acknowledged || (!PREVIEW && (!store.user || store.authLoading || !!store.authError));
@@ -107,7 +107,7 @@ export default function CheckoutPage() {
     <div className={styles.container}>
       <nav className={styles.breadcrumb} aria-label="Breadcrumb"><Link to="/bag"><Icon name="back"/>Back to bag</Link><span>/</span><span aria-current="page">Checkout</span></nav>
       <header className={styles.heading}>
-        <div><p className={styles.eyebrow}>DTH / CHECKOUT 1.0</p><h1>Confirm the build<span>.</span></h1><p>A final server-side check happens immediately before the demonstrator creates the order snapshot.</p></div>
+        <div><h1>Confirm the build<span>.</span></h1><p>Review your details and the checked total before placing a demo order.</p></div>
         <ol className={styles.steps} aria-label="Checkout progress"><li><b>01</b> Bag</li><li><b>02</b> Review</li><li aria-current="step"><b>03</b> Checkout</li><li><b>04</b> Confirmation</li></ol>
       </header>
       {error && <div className={styles.error} role="alert"><Icon name="warning"/><div><strong>Checkout needs attention.</strong><p>{error}</p></div></div>}
@@ -116,17 +116,17 @@ export default function CheckoutPage() {
           <section className={styles.card}>
             <div className={styles.cardTitle}><div><small>01</small><h2>Contact</h2></div><span>Use test details for this FYP demonstrator.</span></div>
             <div className={styles.grid}>
-              <label className={styles.wide}>Recipient name<input autoComplete="name" maxLength="80" value={form.recipientName} onChange={e => update('recipientName', e.target.value)} required/></label>
-              <label>Phone<input inputMode="tel" autoComplete="tel" maxLength="24" value={form.phone} onChange={e => update('phone', e.target.value)} required/></label>
-              <label>Email<input type="email" autoComplete="email" maxLength="120" value={form.email} onChange={e => update('email', e.target.value)} required/></label>
+              <label className={styles.wide}>Recipient name<input name="recipientName" autoComplete="name" maxLength="80" value={form.recipientName} onChange={e => update('recipientName', e.target.value)} required/></label>
+              <label>Phone<input name="phone" type="tel" inputMode="tel" autoComplete="tel" maxLength="24" value={form.phone} onChange={e => update('phone', e.target.value)} required/></label>
+              <label>Email<input name="email" type="email" inputMode="email" spellCheck={false} autoComplete="email" maxLength="120" value={form.email} onChange={e => update('email', e.target.value)} required/></label>
             </div>
           </section>
           <section className={styles.card}>
             <div className={styles.cardTitle}><div><small>02</small><h2>Demo delivery</h2></div><span>No physical shipment will be created.</span></div>
             <div className={styles.grid}>
-              <label className={styles.wide}>Address<input autoComplete="street-address" maxLength="180" value={form.addressLine} onChange={e => update('addressLine', e.target.value)} required/></label>
-              <label className={styles.wide}>City<input autoComplete="address-level2" maxLength="80" value={form.city} onChange={e => update('city', e.target.value)} required/></label>
-              <label className={styles.wide}>Order note <span>(optional)</span><textarea maxLength="300" value={form.note} onChange={e => update('note', e.target.value)} rows="3"/></label>
+              <label className={styles.wide}>Address<input name="addressLine" autoComplete="street-address" maxLength="180" value={form.addressLine} onChange={e => update('addressLine', e.target.value)} required/></label>
+              <label className={styles.wide}>City<input name="city" autoComplete="address-level2" maxLength="80" value={form.city} onChange={e => update('city', e.target.value)} required/></label>
+              <label className={styles.wide}>Order note <span>(optional)</span><textarea name="note" maxLength="300" value={form.note} onChange={e => update('note', e.target.value)} rows="3"/></label>
             </div>
           </section>
           <section className={styles.card}>
@@ -144,7 +144,7 @@ export default function CheckoutPage() {
           <ul className={styles.lines}>{(quote?.lines || []).map(line => <li key={`${line.productId}:${line.vehicleId}`}><div><strong>{line.name}</strong><span>{line.vehicleLabel || line.vehicleId}</span><small>{line.quantity} × {formatMoney(line.unitPrice)}</small></div><b>{formatMoney(line.lineTotal)}</b></li>)}</ul>
           <dl className={styles.totals}><div><dt>Subtotal</dt><dd>{quote ? formatMoney(quote.subtotal) : '—'}</dd></div><div><dt>Delivery</dt><dd>Demo · 0 ₫</dd></div><div className={styles.total}><dt>Demo total</dt><dd>{quote ? formatMoney(quote.total) : '—'}</dd></div></dl>
           {!PREVIEW && store.authError && <p className={styles.quoteError}>Session check failed. Return to your account, then reopen checkout.</p>}
-          {!PREVIEW && !store.user ? <Link className={styles.primary} to="/account?return=/checkout">Sign in to continue <Icon name="arrow"/></Link> : <button type="button" className={styles.primary} disabled={blocked} onClick={() => document.querySelector('[data-checkout] form')?.requestSubmit()}>{placing ? 'Creating order…' : quoting ? 'Checking current prices…' : 'Place demo order'}<Icon name={placing ? 'lock' : 'arrow'}/></button>}
+          {!PREVIEW && !store.user ? <Link className={styles.primary} to="/account?return=/checkout">Sign in to continue</Link> : <button type="button" className={styles.primary} disabled={blocked} onClick={() => document.querySelector('[data-checkout] form')?.requestSubmit()}>{placing ? 'Creating order…' : quoting ? 'Checking current prices…' : 'Place demo order'}{placing && <Icon name="lock"/>}</button>}
           <p className={styles.note}>Place demo order performs the final backend revalidation. A price, product status or vehicle-fit change stops creation and keeps the bag intact.</p>
           <Link className={styles.edit} to="/bag">Edit bag</Link>
         </aside>

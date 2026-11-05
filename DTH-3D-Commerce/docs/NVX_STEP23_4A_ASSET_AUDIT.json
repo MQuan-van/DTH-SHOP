@@ -1,0 +1,963 @@
+{
+  "schemaVersion": 1,
+  "kind": "NVX part architecture offline GLB evidence; no physical fitment or rendering certification",
+  "projectRelativeRoot": ".",
+  "configSource": "frontend/src/shop/discovery174/nvx3d/nvx3d.config.mjs",
+  "normalizedVehicleSize": 4,
+  "publication": {
+    "source": "data/ai-assets/generated/.dth-ai-studio/state.json",
+    "status": "not found",
+    "overridesVerified": false,
+    "note": "Runtime publication overrides local NVX_MODELS. Environment-configured output folders and running API state are not read by this offline tool."
+  },
+  "assets": [
+    {
+      "id": "yamaha-nvx-v2",
+      "source": "local NVX_MODELS configuration",
+      "path": "frontend/public/models/nvx/nvx-v2.glb",
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "normalization": "vehicle-viewer",
+      "status": "audited",
+      "schemaVersion": 1,
+      "evidence": "Offline static structure and indexed vertex measurements; no semantic or physical certification.",
+      "bytes": 129837080,
+      "sha256": "57040fe8e411c8f4338ddd2672d3842f0cfb01d863ba04bd02f252031e74cadc",
+      "glbVersion": 2,
+      "gltfVersion": "2.0",
+      "generator": "pygltflib@v1.16.5",
+      "chunks": [
+        {
+          "type": 1313821514,
+          "bytes": 2312
+        },
+        {
+          "type": 5130562,
+          "bytes": 129834740
+        }
+      ],
+      "selectedScene": 0,
+      "scenes": [
+        {
+          "index": 0,
+          "name": "",
+          "roots": [
+            0
+          ]
+        }
+      ],
+      "counts": {
+        "nodes": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "materials": 1,
+        "positions": 2250977,
+        "triangles": 4110220
+      },
+      "nodes": [
+        {
+          "index": 0,
+          "name": "",
+          "parent": null,
+          "children": [],
+          "mesh": 0,
+          "inSelectedScene": true,
+          "localTransform": {
+            "matrix": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "localMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "sceneMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "ownGeometrySceneBounds": {
+            "min": [
+              -0.9505040049552917,
+              -0.5598829984664917,
+              -0.3740119934082031
+            ],
+            "max": [
+              0.947953999042511,
+              0.561706006526947,
+              0.35418498516082764
+            ],
+            "dimensions": [
+              1.8984580039978027,
+              1.1215890049934387,
+              0.7281969785690308
+            ]
+          },
+          "metadataKeys": [],
+          "unsupportedEvaluation": null
+        }
+      ],
+      "meshes": [
+        {
+          "index": 0,
+          "name": "",
+          "nodes": [
+            0
+          ],
+          "metadataKeys": [],
+          "primitives": [
+            {
+              "index": 0,
+              "mode": 4,
+              "positionAccessor": 0,
+              "indexAccessor": 3,
+              "vertices": 2250977,
+              "referencedVertices": 2250977,
+              "indices": 12330660,
+              "triangles": 4110220,
+              "material": 0,
+              "attributes": {
+                "POSITION": 0,
+                "NORMAL": 2,
+                "TEXCOORD_0": 1
+              },
+              "localBounds": {
+                "min": [
+                  -0.9505040049552917,
+                  -0.5598829984664917,
+                  -0.3740119934082031
+                ],
+                "max": [
+                  0.947953999042511,
+                  0.561706006526947,
+                  0.35418498516082764
+                ],
+                "dimensions": [
+                  1.8984580039978027,
+                  1.1215890049934387,
+                  0.7281969785690308
+                ]
+              },
+              "fullPositionAccessorBounds": {
+                "min": [
+                  -0.9505040049552917,
+                  -0.5598829984664917,
+                  -0.3740119934082031
+                ],
+                "max": [
+                  0.947953999042511,
+                  0.561706006526947,
+                  0.35418498516082764
+                ],
+                "dimensions": [
+                  1.8984580039978027,
+                  1.1215890049934387,
+                  0.7281969785690308
+                ]
+              },
+              "boundsStatus": "measured-indexed-base-positions",
+              "limitations": []
+            }
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "index": 0,
+          "name": "",
+          "usedBy": [
+            {
+              "mesh": 0,
+              "primitive": 0
+            }
+          ],
+          "alphaMode": "OPAQUE",
+          "doubleSided": true,
+          "extensions": [],
+          "metadataKeys": []
+        }
+      ],
+      "sceneBounds": {
+        "coordinateSpace": "gltf-scene-space",
+        "status": "measured",
+        "bounds": {
+          "min": [
+            -0.9505040049552917,
+            -0.5598829984664917,
+            -0.3740119934082031
+          ],
+          "max": [
+            0.947953999042511,
+            0.561706006526947,
+            0.35418498516082764
+          ],
+          "dimensions": [
+            1.8984580039978027,
+            1.1215890049934387,
+            0.7281969785690308
+          ]
+        }
+      },
+      "orientedBounds": {
+        "rotationXYZ": [
+          0,
+          0,
+          0
+        ],
+        "bounds": {
+          "min": [
+            -0.9505040049552917,
+            -0.5598829984664917,
+            -0.3740119934082031
+          ],
+          "max": [
+            0.947953999042511,
+            0.561706006526947,
+            0.35418498516082764
+          ],
+          "dimensions": [
+            1.8984580039978027,
+            1.1215890049934387,
+            0.7281969785690308
+          ]
+        }
+      },
+      "rendererFramingBounds": {
+        "coordinateSpace": "oriented-geometry-aabb",
+        "bounds": {
+          "min": [
+            -0.9505040049552917,
+            -0.5598829984664917,
+            -0.3740119934082031
+          ],
+          "max": [
+            0.947953999042511,
+            0.561706006526947,
+            0.35418498516082764
+          ],
+          "dimensions": [
+            1.8984580039978027,
+            1.1215890049934387,
+            0.7281969785690308
+          ]
+        },
+        "note": "Current non-precise Box3 framing, including unused accessor vertices and declared bounds; distinct from referenced-vertex geometry bounds."
+      },
+      "displayNormalization": {
+        "coordinateSpace": "normalized-stage-4-v1",
+        "algorithm": "Current viewer: rotate XYZ; transform geometry AABB corners; uniform scale to largest dimension; center X/Z and ground minimum Y.",
+        "rotationXYZ": [
+          0,
+          0,
+          0
+        ],
+        "targetSize": 4,
+        "scale": 2.106973128495198,
+        "translation": [
+          0.0026863969678664677,
+          1.1796584328702162,
+          0.020887486797836415
+        ],
+        "dimensions": [
+          4,
+          2.363157894736842,
+          1.5342914660963416
+        ],
+        "physicalUnitsVerified": false
+      },
+      "coordinateNotes": [
+        "glTF declares right-handed +Y-up coordinates and meter convention; this asset has no verified physical scale.",
+        "Bounds are from referenced static base POSITION values. Display normalization is not a physical measurement.",
+        "An AABB does not identify which axis is motorcycle forward or which triangle is a suspension."
+      ],
+      "suspensionCandidates": [],
+      "separability": {
+        "classification": "INDETERMINATE",
+        "mechanicallyVerified": false,
+        "structuralIsolation": "single-primitive-whole-scene",
+        "evidence": "Mechanical identity requires visual/source-author evidence. This utility never labels anonymous triangles as a part."
+      },
+      "externalResources": [],
+      "extensionsUsed": [],
+      "extensionsRequired": [],
+      "warnings": []
+    },
+    {
+      "id": "yamaha-nvx-v3",
+      "source": "local NVX_MODELS configuration",
+      "path": "frontend/public/models/nvx/nvx-v3.glb",
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "normalization": "vehicle-viewer",
+      "status": "audited",
+      "schemaVersion": 1,
+      "evidence": "Offline static structure and indexed vertex measurements; no semantic or physical certification.",
+      "bytes": 56563680,
+      "sha256": "ac4f05734647df3f514fdf6c5753e3f0087ca062ce414666513c5bf93898ca99",
+      "glbVersion": 2,
+      "gltfVersion": "2.0",
+      "generator": "pygltflib@v1.16.5",
+      "chunks": [
+        {
+          "type": 1313821514,
+          "bytes": 2288
+        },
+        {
+          "type": 5130562,
+          "bytes": 56561364
+        }
+      ],
+      "selectedScene": 0,
+      "scenes": [
+        {
+          "index": 0,
+          "name": "",
+          "roots": [
+            0
+          ]
+        }
+      ],
+      "counts": {
+        "nodes": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "materials": 1,
+        "positions": 907277,
+        "triangles": 1698814
+      },
+      "nodes": [
+        {
+          "index": 0,
+          "name": "",
+          "parent": null,
+          "children": [],
+          "mesh": 0,
+          "inSelectedScene": true,
+          "localTransform": {
+            "matrix": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "localMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "sceneMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "ownGeometrySceneBounds": {
+            "min": [
+              -0.9513520002365112,
+              -0.5506410002708435,
+              -0.3691120147705078
+            ],
+            "max": [
+              0.9506800174713135,
+              0.5585479736328125,
+              0.3680979907512665
+            ],
+            "dimensions": [
+              1.9020320177078247,
+              1.109188973903656,
+              0.7372100055217743
+            ]
+          },
+          "metadataKeys": [],
+          "unsupportedEvaluation": null
+        }
+      ],
+      "meshes": [
+        {
+          "index": 0,
+          "name": "",
+          "nodes": [
+            0
+          ],
+          "metadataKeys": [],
+          "primitives": [
+            {
+              "index": 0,
+              "mode": 4,
+              "positionAccessor": 0,
+              "indexAccessor": 3,
+              "vertices": 907277,
+              "referencedVertices": 907277,
+              "indices": 5096442,
+              "triangles": 1698814,
+              "material": 0,
+              "attributes": {
+                "POSITION": 0,
+                "NORMAL": 2,
+                "TEXCOORD_0": 1
+              },
+              "localBounds": {
+                "min": [
+                  -0.9513520002365112,
+                  -0.5506410002708435,
+                  -0.3691120147705078
+                ],
+                "max": [
+                  0.9506800174713135,
+                  0.5585479736328125,
+                  0.3680979907512665
+                ],
+                "dimensions": [
+                  1.9020320177078247,
+                  1.109188973903656,
+                  0.7372100055217743
+                ]
+              },
+              "fullPositionAccessorBounds": {
+                "min": [
+                  -0.9513520002365112,
+                  -0.5506410002708435,
+                  -0.3691120147705078
+                ],
+                "max": [
+                  0.9506800174713135,
+                  0.5585479736328125,
+                  0.3680979907512665
+                ],
+                "dimensions": [
+                  1.9020320177078247,
+                  1.109188973903656,
+                  0.7372100055217743
+                ]
+              },
+              "boundsStatus": "measured-indexed-base-positions",
+              "limitations": []
+            }
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "index": 0,
+          "name": "",
+          "usedBy": [
+            {
+              "mesh": 0,
+              "primitive": 0
+            }
+          ],
+          "alphaMode": "OPAQUE",
+          "doubleSided": true,
+          "extensions": [],
+          "metadataKeys": []
+        }
+      ],
+      "sceneBounds": {
+        "coordinateSpace": "gltf-scene-space",
+        "status": "measured",
+        "bounds": {
+          "min": [
+            -0.9513520002365112,
+            -0.5506410002708435,
+            -0.3691120147705078
+          ],
+          "max": [
+            0.9506800174713135,
+            0.5585479736328125,
+            0.3680979907512665
+          ],
+          "dimensions": [
+            1.9020320177078247,
+            1.109188973903656,
+            0.7372100055217743
+          ]
+        }
+      },
+      "orientedBounds": {
+        "rotationXYZ": [
+          0,
+          0,
+          0
+        ],
+        "bounds": {
+          "min": [
+            -0.9513520002365112,
+            -0.5506410002708435,
+            -0.3691120147705078
+          ],
+          "max": [
+            0.9506800174713135,
+            0.5585479736328125,
+            0.3680979907512665
+          ],
+          "dimensions": [
+            1.9020320177078247,
+            1.109188973903656,
+            0.7372100055217743
+          ]
+        }
+      },
+      "rendererFramingBounds": {
+        "coordinateSpace": "oriented-geometry-aabb",
+        "bounds": {
+          "min": [
+            -0.9513520002365112,
+            -0.5506410002708435,
+            -0.3691120147705078
+          ],
+          "max": [
+            0.9506800174713135,
+            0.5585479736328125,
+            0.3680979907512665
+          ],
+          "dimensions": [
+            1.9020320177078247,
+            1.109188973903656,
+            0.7372100055217743
+          ]
+        },
+        "note": "Current non-precise Box3 framing, including unused accessor vertices and declared bounds; distinct from referenced-vertex geometry bounds."
+      },
+      "displayNormalization": {
+        "coordinateSpace": "normalized-stage-4-v1",
+        "algorithm": "Current viewer: rotate XYZ; transform geometry AABB corners; uniform scale to largest dimension; center X/Z and ground minimum Y.",
+        "rotationXYZ": [
+          0,
+          0,
+          0
+        ],
+        "targetSize": 4,
+        "scale": 2.103014020142772,
+        "translation": [
+          0.0007065945882525923,
+          1.1580057436350237,
+          0.0010662533646130234
+        ],
+        "dimensions": [
+          4,
+          2.3326399631071637,
+          1.5503629774018215
+        ],
+        "physicalUnitsVerified": false
+      },
+      "coordinateNotes": [
+        "glTF declares right-handed +Y-up coordinates and meter convention; this asset has no verified physical scale.",
+        "Bounds are from referenced static base POSITION values. Display normalization is not a physical measurement.",
+        "An AABB does not identify which axis is motorcycle forward or which triangle is a suspension."
+      ],
+      "suspensionCandidates": [],
+      "separability": {
+        "classification": "INDETERMINATE",
+        "mechanicallyVerified": false,
+        "structuralIsolation": "single-primitive-whole-scene",
+        "evidence": "Mechanical identity requires visual/source-author evidence. This utility never labels anonymous triangles as a part."
+      },
+      "externalResources": [],
+      "extensionsUsed": [],
+      "extensionsRequired": [],
+      "warnings": []
+    },
+    {
+      "id": "ohlins-ttx-candidate",
+      "source": "Previously identified local TTX file; identity/provenance is not certified by the filename.",
+      "path": "frontend/public/models/ai-products/0262d0bd-690d-439e-8132-8b07088abadb.glb",
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "normalization": "vehicle-formula-for-comparison-only",
+      "status": "audited",
+      "schemaVersion": 1,
+      "evidence": "Offline static structure and indexed vertex measurements; no semantic or physical certification.",
+      "bytes": 43225496,
+      "sha256": "79d2b2bdf8824a775e5cc8adffce313e2a687fb864fcef540c09eb084d536e98",
+      "glbVersion": 2,
+      "gltfVersion": "2.0",
+      "generator": "pygltflib@v1.16.5",
+      "chunks": [
+        {
+          "type": 1313821514,
+          "bytes": 2284
+        },
+        {
+          "type": 5130562,
+          "bytes": 43223184
+        }
+      ],
+      "selectedScene": 0,
+      "scenes": [
+        {
+          "index": 0,
+          "name": "",
+          "roots": [
+            0
+          ]
+        }
+      ],
+      "counts": {
+        "nodes": 1,
+        "meshes": 1,
+        "primitives": 1,
+        "materials": 1,
+        "positions": 629838,
+        "triangles": 1181746
+      },
+      "nodes": [
+        {
+          "index": 0,
+          "name": "",
+          "parent": null,
+          "children": [],
+          "mesh": 0,
+          "inSelectedScene": true,
+          "localTransform": {
+            "matrix": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          "localMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "sceneMatrix": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            0,
+            0,
+            1
+          ],
+          "ownGeometrySceneBounds": {
+            "min": [
+              -0.4972119927406311,
+              -0.8798480033874512,
+              -0.9516440033912659
+            ],
+            "max": [
+              0.4975009858608246,
+              0.8794389963150024,
+              0.9499239921569824
+            ],
+            "dimensions": [
+              0.9947129786014557,
+              1.7592869997024536,
+              1.9015679955482483
+            ]
+          },
+          "metadataKeys": [],
+          "unsupportedEvaluation": null
+        }
+      ],
+      "meshes": [
+        {
+          "index": 0,
+          "name": "",
+          "nodes": [
+            0
+          ],
+          "metadataKeys": [],
+          "primitives": [
+            {
+              "index": 0,
+              "mode": 4,
+              "positionAccessor": 0,
+              "indexAccessor": 3,
+              "vertices": 629838,
+              "referencedVertices": 629838,
+              "indices": 3545238,
+              "triangles": 1181746,
+              "material": 0,
+              "attributes": {
+                "POSITION": 0,
+                "NORMAL": 2,
+                "TEXCOORD_0": 1
+              },
+              "localBounds": {
+                "min": [
+                  -0.4972119927406311,
+                  -0.8798480033874512,
+                  -0.9516440033912659
+                ],
+                "max": [
+                  0.4975009858608246,
+                  0.8794389963150024,
+                  0.9499239921569824
+                ],
+                "dimensions": [
+                  0.9947129786014557,
+                  1.7592869997024536,
+                  1.9015679955482483
+                ]
+              },
+              "fullPositionAccessorBounds": {
+                "min": [
+                  -0.4972119927406311,
+                  -0.8798480033874512,
+                  -0.9516440033912659
+                ],
+                "max": [
+                  0.4975009858608246,
+                  0.8794389963150024,
+                  0.9499239921569824
+                ],
+                "dimensions": [
+                  0.9947129786014557,
+                  1.7592869997024536,
+                  1.9015679955482483
+                ]
+              },
+              "boundsStatus": "measured-indexed-base-positions",
+              "limitations": []
+            }
+          ]
+        }
+      ],
+      "materials": [
+        {
+          "index": 0,
+          "name": "",
+          "usedBy": [
+            {
+              "mesh": 0,
+              "primitive": 0
+            }
+          ],
+          "alphaMode": "OPAQUE",
+          "doubleSided": true,
+          "extensions": [],
+          "metadataKeys": []
+        }
+      ],
+      "sceneBounds": {
+        "coordinateSpace": "gltf-scene-space",
+        "status": "measured",
+        "bounds": {
+          "min": [
+            -0.4972119927406311,
+            -0.8798480033874512,
+            -0.9516440033912659
+          ],
+          "max": [
+            0.4975009858608246,
+            0.8794389963150024,
+            0.9499239921569824
+          ],
+          "dimensions": [
+            0.9947129786014557,
+            1.7592869997024536,
+            1.9015679955482483
+          ]
+        }
+      },
+      "orientedBounds": {
+        "rotationXYZ": [
+          0,
+          0,
+          0
+        ],
+        "bounds": {
+          "min": [
+            -0.4972119927406311,
+            -0.8798480033874512,
+            -0.9516440033912659
+          ],
+          "max": [
+            0.4975009858608246,
+            0.8794389963150024,
+            0.9499239921569824
+          ],
+          "dimensions": [
+            0.9947129786014557,
+            1.7592869997024536,
+            1.9015679955482483
+          ]
+        }
+      },
+      "rendererFramingBounds": {
+        "coordinateSpace": "oriented-geometry-aabb",
+        "bounds": {
+          "min": [
+            -0.4972119927406311,
+            -0.8798480033874512,
+            -0.9516440033912659
+          ],
+          "max": [
+            0.4975009858608246,
+            0.8794389963150024,
+            0.9499239921569824
+          ],
+          "dimensions": [
+            0.9947129786014557,
+            1.7592869997024536,
+            1.9015679955482483
+          ]
+        },
+        "note": "Current non-precise Box3 framing, including unused accessor vertices and declared bounds; distinct from referenced-vertex geometry bounds."
+      },
+      "displayNormalization": {
+        "coordinateSpace": "normalized-stage-4-v1",
+        "algorithm": "Current viewer: rotate XYZ; transform geometry AABB corners; uniform scale to largest dimension; center X/Z and ground minimum Y.",
+        "rotationXYZ": [
+          0,
+          0,
+          0
+        ],
+        "targetSize": 4,
+        "scale": 2.1035271993241267,
+        "translation": [
+          -0.00030395244437226736,
+          1.8507842063965299,
+          0.001809045207229147
+        ],
+        "dimensions": [
+          2.09240580600888,
+          3.700708055291448,
+          4
+        ],
+        "physicalUnitsVerified": false
+      },
+      "coordinateNotes": [
+        "glTF declares right-handed +Y-up coordinates and meter convention; this asset has no verified physical scale.",
+        "Bounds are from referenced static base POSITION values. Display normalization is not a physical measurement.",
+        "An AABB does not identify which axis is motorcycle forward or which triangle is a suspension."
+      ],
+      "suspensionCandidates": [],
+      "separability": {
+        "classification": "INDETERMINATE",
+        "mechanicallyVerified": false,
+        "structuralIsolation": "single-primitive-whole-scene",
+        "evidence": "Mechanical identity requires visual/source-author evidence. This utility never labels anonymous triangles as a part."
+      },
+      "externalResources": [],
+      "extensionsUsed": [],
+      "extensionsRequired": [],
+      "warnings": []
+    }
+  ]
+}

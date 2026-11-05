@@ -17,6 +17,7 @@ import '../../shop/design22a/tokens22a.css';
 import '../../shop/account22a/account22a.css';
 import './commerce23.css';
 import './surfaces23.css';
+import '../../shop/account/premium-account.css';
 
 function useBlocked22A(){
   const [blocked,set]=useState(false);
@@ -51,7 +52,7 @@ export default function Account23({member:m,orderDetail}) {
   function shop(){if(selected&&vehicles.some(v=>v.id===selected.id)&&!m.store.loading&&!m.store.error)m.store.setVehicle(selected.id);}
   function startAddSelected(){if(selected&&!isSaved){setCandidate(selected.id);setDialog({kind:'add'});}}
   const welcomeCount=m.records?.total;
-  return <div ref={root} className="aa22 c23-account" data-account-one data-view={m.view} data-reduced={reduced}>
+  return <div ref={root} className="aa22 c23-account p24-account" data-account-one data-view={m.view} data-reduced={reduced}>
     <AccountAtmosphere22A root={root} calm={!sceneView}/>
     <div className="aa22-shell">
       <aside className="aa22-sidebar" aria-label="Your account">

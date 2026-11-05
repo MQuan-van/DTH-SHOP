@@ -13,6 +13,7 @@ import StoryPhoto22S from '../story22s/StoryPhoto22S.jsx';
 import '../story22s/story22s.css';
 import './commerce23.css';
 import './surfaces23.css';
+import '../premium24/studio-story24.css';
 
 const StudyScene22S = lazy(() => import('../story22s/StoryStudyScene22S.jsx'));
 const CHAPTERS = Object.freeze([['opening', 'The ride'], ['riders', 'The crew'], ['craft', 'The form'], ['detail', 'The detail'], ['closing', 'Your next']]);
@@ -49,7 +50,7 @@ export default function Story23() {
     event.preventDefault(); seek.current(key);
     // Navigation never captures wheel/touch or traps the user in the Story.
   };
-  return <article ref={root} className="dth-story22s c23-story" data-story-version="23.1" data-compact={policy.compact}
+  return <article ref={root} className="dth-story22s c23-story p24-story" data-story-version="23.1" data-compact={policy.compact}
     data-motion={motion ? 'on' : 'off'} aria-label="DTH Story">
     <nav ref={nav} className="s22-chapter-nav" aria-label="Story chapters">
       <span className="s22-nav-label">Story</span>
@@ -71,7 +72,7 @@ export default function Story23() {
       <div className="s22-signature" aria-hidden="true"><i /><i /><i /></div>
       <div className="s22-opening-copy" data-s22-hero-copy>
         <h1 id="s22-title"><span>Built around</span><span>the ride.</span></h1>
-        <a className="s22-button s22-button-light" href="#s22-riders" onClick={go('riders')}><span>Explore the story</span></a>
+        <a className="s22-button s22-button-light p24-action" href="#s22-riders" onClick={go('riders')}><span>Explore the story</span></a>
       </div>
     </section>
 
@@ -112,7 +113,7 @@ export default function Story23() {
           {product && <>
             <h3 className="s22-product-name">{product.name}</h3>
             {product.finish && <p className="s22-product-finish">{product.finish}</p>}
-            <Link className="s22-button s22-button-dark" to={productLink22S(product)} onClick={enter}><span>View product</span></Link>
+            <Link className="s22-button s22-button-dark p24-action" to={productLink22S(product)} onClick={enter}><span>View product</span></Link>
           </>}
           <div className="s22-study-tabs" role="group" aria-label="Product camera positions">
             <button type="button" onClick={() => seek.current('craft')} aria-pressed={chapter !== 'detail'}>Overview</button>
@@ -129,7 +130,7 @@ export default function Story23() {
       <div className="s22-closing-copy">
         <h2 id="s22-closing-title">Make it<br />your own.</h2>
         <div className="s22-closing-actions">
-          <Link className="s22-button s22-button-light" to="/shop?mode=shop&view=story" onClick={enter}><span>Explore parts</span></Link>
+          <Link className="s22-button s22-button-light p24-action" to="/shop?mode=shop&view=story" onClick={enter}><span>Explore parts</span></Link>
           <Link className="s22-text-link s22-text-link-light" to="/shop?mode=build" onClick={enter}>Build your NVX</Link>
         </div>
       </div>
